@@ -1,0 +1,16 @@
+C:\Users\NV_USER\Desktop\CinemaVerse\CinemaVerse.Services\bin\Debug\net9.0\CinemaVerse.Services.deps.json
+C:\Users\NV_USER\Desktop\CinemaVerse\CinemaVerse.Services\bin\Debug\net9.0\CinemaVerse.Services.dll
+C:\Users\NV_USER\Desktop\CinemaVerse\CinemaVerse.Services\bin\Debug\net9.0\CinemaVerse.Services.pdb
+C:\Users\NV_USER\Desktop\CinemaVerse\CinemaVerse.Services\bin\Debug\net9.0\CinemaVerse.Data.dll
+C:\Users\NV_USER\Desktop\CinemaVerse\CinemaVerse.Services\bin\Debug\net9.0\CinemaVerse.Data.pdb
+C:\Users\NV_USER\Desktop\CinemaVerse\CinemaVerse.Services\obj\Debug\net9.0\CinemaVerse.Services.csproj.AssemblyReference.cache
+C:\Users\NV_USER\Desktop\CinemaVerse\CinemaVerse.Services\obj\Debug\net9.0\CinemaVerse.Services.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\NV_USER\Desktop\CinemaVerse\CinemaVerse.Services\obj\Debug\net9.0\CinemaVerse.Services.AssemblyInfoInputs.cache
+C:\Users\NV_USER\Desktop\CinemaVerse\CinemaVerse.Services\obj\Debug\net9.0\CinemaVerse.Services.AssemblyInfo.cs
+C:\Users\NV_USER\Desktop\CinemaVerse\CinemaVerse.Services\obj\Debug\net9.0\CinemaVerse.Services.csproj.CoreCompileInputs.cache
+C:\Users\NV_USER\Desktop\CinemaVerse\CinemaVerse.Services\obj\Debug\net9.0\CinemaVerse.Services.sourcelink.json
+C:\Users\NV_USER\Desktop\CinemaVerse\CinemaVerse.Services\obj\Debug\net9.0\CinemaVe.985FF05C.Up2Date
+C:\Users\NV_USER\Desktop\CinemaVerse\CinemaVerse.Services\obj\Debug\net9.0\CinemaVerse.Services.dll
+C:\Users\NV_USER\Desktop\CinemaVerse\CinemaVerse.Services\obj\Debug\net9.0\refint\CinemaVerse.Services.dll
+C:\Users\NV_USER\Desktop\CinemaVerse\CinemaVerse.Services\obj\Debug\net9.0\CinemaVerse.Services.pdb
+C:\Users\NV_USER\Desktop\CinemaVerse\CinemaVerse.Services\obj\Debug\net9.0\ref\CinemaVerse.Services.dll
