@@ -21,10 +21,20 @@ namespace CinemaVerse.Data.Data.Configurations
                 .IsRequired().HasDefaultValue(BookingStatus.Pending).HasConversion<int>();
             builder.Property(b => b.TotalAmount).IsRequired().HasColumnType("decimal(18,2)");
 
-            builder.Property(u => u.CreatedAt).HasDefaultValueSql("GETUTCDATE()")
+            builder.Property(b => b.CreatedAt).HasDefaultValueSql("GETUTCDATE()")
             .IsRequired();
 
             //relationships configured here 
+            builder.HasOne(b => b.User)
+                .WithMany(u => u.Bookings)
+                .HasForeignKey(b=>b.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(b => b.MovieShowTime)
+                .WithMany(mst => mst.Bookings)
+                .HasForeignKey(b => b.MovieShowTimeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
         }
     }
 }

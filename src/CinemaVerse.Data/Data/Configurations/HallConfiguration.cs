@@ -22,7 +22,11 @@ namespace CinemaVerse.Data.Data.Configurations
 
             builder.Property(h => h.BranchId).IsRequired();
 
-            // ---------------------------------- //
+            // Relationships configured here
+            builder.HasOne(h => h.Branch)
+                .WithMany(b => b.Halls)
+                .HasForeignKey(h => h.BranchId)
+                .OnDelete(DeleteBehavior.Cascade);
 
         }
     }

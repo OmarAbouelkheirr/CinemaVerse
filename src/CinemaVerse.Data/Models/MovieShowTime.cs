@@ -15,5 +15,10 @@ namespace CinemaVerse.Data.Models
 
         public DateTime ShowEndTime { get; set; } //updated to be calculated based on movie duration
         public decimal Price { get; set; }
+
+        // Navigation Properties
+        public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+        public Movie Movie { get; set; } = null!;
+        public Hall Hall { get; set; } = null!;
     }
 }

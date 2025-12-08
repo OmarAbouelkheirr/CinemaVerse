@@ -14,7 +14,11 @@ namespace CinemaVerse.Data.Data.Configurations
 
             builder.Property(mi => mi.ImageUrl).IsRequired().HasMaxLength(300);
 
-            // ---------------------------------- //
+            // Relationships configured here
+            builder.HasOne(mi => mi.Movie)
+                .WithMany(m => m.MovieImages)
+                .HasForeignKey(mi => mi.MovieId)
+                .OnDelete(DeleteBehavior.Cascade);
 
         }
     }

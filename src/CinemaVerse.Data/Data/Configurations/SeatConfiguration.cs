@@ -14,7 +14,11 @@ namespace CinemaVerse.Data.Data.Configurations
 
             builder.Property(s => s.SeatLabel).IsRequired().HasMaxLength(10);
 
-            // ---------------------------------- //
+            // Relationships configured here
+            builder.HasOne(s => s.Hall)
+                .WithMany(h => h.Seats)
+                .HasForeignKey(s => s.HallId)
+                .OnDelete(DeleteBehavior.Cascade);
 
         }
     }

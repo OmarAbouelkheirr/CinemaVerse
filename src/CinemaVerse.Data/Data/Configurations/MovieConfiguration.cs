@@ -28,7 +28,6 @@ namespace CinemaVerse.Data.Data.Configurations
 
             builder.Property(m => m.ReleaseDate).IsRequired();
 
-            // ---------------------------------- //
 
 
         }

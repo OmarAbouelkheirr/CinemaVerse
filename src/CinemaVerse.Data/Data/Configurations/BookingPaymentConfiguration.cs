@@ -19,18 +19,22 @@ namespace CinemaVerse.Data.Data.Configurations
             builder.Property(bp => bp.Amount)
                 .IsRequired()
                 .HasColumnType("decimal(18,2)");
-            builder.Property(bp => bp.PaymentInentId).HasMaxLength(100);
+            builder.Property(bp => bp.PaymentIntentId).HasMaxLength(100);
             builder.Property(bp => bp.Currency)
                 .IsRequired()
                 .HasMaxLength(10)
                 .HasDefaultValue("EGP");
-            builder.Property(bp => bp.TrasnactionDate)
+            builder.Property(bp => bp.TransactionDate)
                 .IsRequired().HasDefaultValueSql("GETUTCDATE()");
 
             builder.Property(bp=>bp.Status).HasDefaultValue(PaymentStatus.Pending).HasConversion<int>()
                 .IsRequired();
 
             //relationships configured here
+            builder.HasOne(bp => bp.Booking)
+                .WithMany(b => b.BookingPayments)
+                .HasForeignKey(bp => bp.BookingId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

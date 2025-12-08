@@ -2,8 +2,11 @@
 {
     public class MovieGenre
     {
-        public int Id { get; set; }
-        public int MovieGenreID { get; set; }
+        public int GenreID { get; set; }
         public int MovieID { get; set; }
+
+        // Navigation Properties
+        public Movie Movie { get; set; } = null!;
+        public Genre Genre { get; set; } = null!;
     }
 }

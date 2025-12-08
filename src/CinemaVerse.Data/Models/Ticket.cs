@@ -12,9 +12,13 @@ namespace CinemaVerse.Data.Models
         public int Id { get; set; }
         public string TicketNumber { get; set; } = string.Empty;
         public int BookingId { get; set; }
-        public string SeatId { get; set; } = string.Empty;
+        public int SeatId { get; set; } 
         public decimal Price { get; set; }
         public TicketStatus Status { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;                  
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // Navigation Properties
+        public Booking Booking { get; set; } = null!;
+        public Seat Seat { get; set; } = null!;
     }
 }

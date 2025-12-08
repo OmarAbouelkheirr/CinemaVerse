@@ -25,6 +25,7 @@ namespace CinemaVerse.Data.Data.Configurations
             builder.Property(u=>u.CreatedAt).HasDefaultValueSql("GETUTCDATE()")
                 .IsRequired();
             builder.Property(u=>u.Gender).HasConversion<int>();
+
             //relationships configured here 
 
         }

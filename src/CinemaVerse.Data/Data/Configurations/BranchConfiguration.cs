@@ -22,7 +22,8 @@ namespace CinemaVerse.Data.Data.Configurations
             
             builder.Property(b => b.BranchLocation).IsRequired().HasMaxLength(300);
 
-            // ---------------------------------- //
+            // Relationships configured here
+
 
         }
     }

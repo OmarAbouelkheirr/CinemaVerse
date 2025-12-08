@@ -20,6 +20,15 @@ namespace CinemaVerse.Data.Data.Configurations
             builder.Property(mst => mst.ShowEndTime).IsRequired();//updated to be calculated based on movie duration
 
             // Relationships can be configured here if needed
+            builder.HasOne(mst => mst.Movie)
+                .WithMany(m => m.MovieShowTimes)
+                .HasForeignKey(mst => mst.MovieId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(mst => mst.Hall)
+                .WithMany(h => h.MovieShowTimes)
+                .HasForeignKey(mst => mst.HallId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

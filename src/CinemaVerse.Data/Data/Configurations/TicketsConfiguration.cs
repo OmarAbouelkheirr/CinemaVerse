@@ -27,6 +27,15 @@ namespace CinemaVerse.Data.Data.Configurations
                 .HasDefaultValueSql("GETUTCDATE()");
 
             // Relationships can be configured here if needed
+            builder.HasOne(t => t.Booking)
+                .WithMany(b => b.Tickets)
+                .HasForeignKey(t => t.BookingId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(t => t.Seat)
+                   .WithMany(s => s.Tickets)
+                   .HasForeignKey(t => t.SeatId)
+                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

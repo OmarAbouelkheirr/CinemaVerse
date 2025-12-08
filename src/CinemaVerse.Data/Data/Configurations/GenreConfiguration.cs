@@ -16,7 +16,7 @@ namespace CinemaVerse.Data.Data.Configurations
                    .IsRequired()
                    .HasMaxLength(100);
 
-            // ---------------------------------- //
+            
 
 
         }
