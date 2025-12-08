@@ -13,6 +13,7 @@ namespace CinemaVerse.Data.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<ApplicationUser> builder)
         {
+            builder.ToTable("ApplicationUsers");
             builder.Property(u => u.FirstName)
                 .IsRequired()
                 .HasMaxLength(100);
@@ -23,7 +24,7 @@ namespace CinemaVerse.Data.Data.Configurations
                 .IsRequired();
             builder.Property(u=>u.CreatedAt).HasDefaultValueSql("GETUTCDATE()")
                 .IsRequired();
-
+            builder.Property(u=>u.Gender).HasConversion<int>();
             //relationships configured here 
 
         }

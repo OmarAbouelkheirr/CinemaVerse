@@ -14,10 +14,11 @@ namespace CinemaVerse.Data.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<Booking> builder)
         {
+            builder.ToTable("Bookings");
             builder.HasKey(b => b.Id);
 
             builder.Property(b => b.Status)
-                .IsRequired().HasDefaultValue(BookingStatus.Pending);
+                .IsRequired().HasDefaultValue(BookingStatus.Pending).HasConversion<int>();
             builder.Property(b => b.TotalAmount).IsRequired().HasColumnType("decimal(18,2)");
 
             builder.Property(u => u.CreatedAt).HasDefaultValueSql("GETUTCDATE()")

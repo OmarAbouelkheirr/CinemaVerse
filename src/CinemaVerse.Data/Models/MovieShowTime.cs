@@ -12,7 +12,8 @@ namespace CinemaVerse.Data.Models
         public int MovieId { get; set; }
         public int HallId { get; set; }
         public DateTime ShowStartTime { get; set; }
-        //public DateTime ShowEndTime { get; set; } updated to be calculated based on movie duration
+
+        public DateTime ShowEndTime { get; set; } //updated to be calculated based on movie duration
         public decimal Price { get; set; }
     }
 }

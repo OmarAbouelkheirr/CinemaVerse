@@ -13,6 +13,7 @@ namespace CinemaVerse.Data.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<BookingPayment> builder)
         {
+            builder.ToTable("BookingPayments");
             builder.HasKey(bp => bp.Id);
 
             builder.Property(bp => bp.Amount)
@@ -26,7 +27,7 @@ namespace CinemaVerse.Data.Data.Configurations
             builder.Property(bp => bp.TrasnactionDate)
                 .IsRequired().HasDefaultValueSql("GETUTCDATE()");
 
-            builder.Property(bp=>bp.Status).HasDefaultValue(PaymentStatus.Pending)
+            builder.Property(bp=>bp.Status).HasDefaultValue(PaymentStatus.Pending).HasConversion<int>()
                 .IsRequired();
 
             //relationships configured here

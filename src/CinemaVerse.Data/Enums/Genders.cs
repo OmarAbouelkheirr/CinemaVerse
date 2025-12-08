@@ -1,4 +1,4 @@
-﻿namespace CinemaVerse.Data.Models
+﻿namespace CinemaVerse.Data.Enums
 {
     public enum Genders
     {
