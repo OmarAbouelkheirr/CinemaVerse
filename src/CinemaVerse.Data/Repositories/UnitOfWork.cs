@@ -1,0 +1,104 @@
+﻿using CinemaVerse.Data.Data;
+using CinemaVerse.Data.Models;
+using CinemaVerse.Data.Repositories.Implementations;
+using CinemaVerse.Data.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Data.Common;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CinemaVerse.Data.Repositories
+{
+    public class UnitOfWork : IUnitOfWork
+    {
+        private IBookingRepository? _bookings;
+        private IRepository<BookingPayment>? _bookingPayments;
+        private IRepository<Branch>? _branchs;
+        private IRepository<Genre>? _genres;
+        private IMovieRepository? _movies;
+        private IMovieShowTimeRepository? _movieShowTimes;
+        private IRepository<Seat>? _seats;
+        private ITicketsRepository? _tickets;
+        private IRepository<Hall>? _halls;
+        private IRepository<MovieGenre>? _movieGenres;
+        private IRepository<MovieImage>? _movieImages;
+
+        private readonly AppDbContext _context;
+        private IDbContextTransaction? _transaction;
+        private readonly ILoggerFactory _loggerFactory;
+
+        public UnitOfWork(AppDbContext Context,ILoggerFactory loggerFactory)
+        {
+            _context = Context;
+            _loggerFactory = loggerFactory;
+
+        }
+
+        public IBookingRepository Bookings => _bookings ??= new BookingRepository(_context, _loggerFactory.CreateLogger<Booking>());
+        public IRepository<BookingPayment> BookingPayments => _bookingPayments ??= new Repository<BookingPayment>(_context, _loggerFactory.CreateLogger<BookingPayment>());
+        public IRepository<Branch> Branchs => _branchs ??= new Repository<Branch>(_context, _loggerFactory.CreateLogger<Branch>());
+        public IRepository<Genre> Genres => _genres ??= new Repository<Genre>(_context, _loggerFactory.CreateLogger<Genre>());
+        public IMovieRepository Movies => _movies ??= new MovieRepository(_context, _loggerFactory.CreateLogger<Movie>());
+        public IMovieShowTimeRepository MovieShowTimes => _movieShowTimes ??= new MovieShowTimeRepository(_context, _loggerFactory.CreateLogger<MovieShowTime>());
+        public IRepository<Seat> Seats => _seats ??= new Repository<Seat>(_context, _loggerFactory.CreateLogger<Seat>());
+        public ITicketsRepository Tickets => _tickets ??= new TicketsRepository(_context, _loggerFactory.CreateLogger<Ticket>());
+        public IRepository<Hall> Halls => _halls ??= new Repository<Hall>(_context, _loggerFactory.CreateLogger<Hall>());
+        public IRepository<MovieGenre> MovieGenres => _movieGenres ??= new Repository<MovieGenre>(_context, _loggerFactory.CreateLogger<MovieGenre>());
+        public IRepository<MovieImage> MovieImages => _movieImages ??= new Repository<MovieImage>(_context, _loggerFactory.CreateLogger<MovieImage>());
+
+
+
+        public async Task BeginTransactionAsync()
+        {
+            _transaction = await _context.Database.BeginTransactionAsync();
+        }
+
+        public async Task CommitTransactionAsync()
+        {
+            if (_transaction is null)
+                return;
+            try
+            {
+                if (_transaction is null) return;
+
+                await _transaction.CommitAsync();
+                await _transaction.DisposeAsync();
+                _transaction = null;
+            }
+            catch (Exception ex)
+            {
+                await RollbackTransactionAsync();
+                throw;
+            }
+            finally
+            {
+                await _transaction.DisposeAsync();
+                _transaction = null;
+            }
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            return _context.DisposeAsync();
+        }
+
+        public async Task RollbackTransactionAsync()
+        {
+            if (_transaction != null)
+            {
+                await _transaction.RollbackAsync();
+                await _transaction.DisposeAsync();
+            }
+            _transaction = null;
+        }
+
+        public async Task<int> SaveChangesAsync()
+        {
+            return await  _context.SaveChangesAsync();
+        }
+    }
+}
