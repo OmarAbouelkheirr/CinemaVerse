@@ -19,7 +19,5 @@ namespace CinemaVerse.Data.Repositories.Interfaces
         Task<IEnumerable<T>> FindAllAsync(Expression<Func<T, bool>>? Predicate);
         Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> Predicate);
         Task<bool> AnyAsync(Expression<Func<T, bool>> Predicate);
-
-
     }
 }
