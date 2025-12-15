@@ -25,7 +25,7 @@ namespace CinemaVerse.Data.Repositories
 
                 var movies = await _context.Movies
                     .Include(m => m.MovieGenres)
-                    .Where(m => m.Id == genreId)
+                    .Where(m => m.MovieGenres.Any(g => g.GenreID == genreId))
                     .ToListAsync();
 
                 _logger.LogInformation("Retrieved {Count} movies for GenreId: {GenreId}",

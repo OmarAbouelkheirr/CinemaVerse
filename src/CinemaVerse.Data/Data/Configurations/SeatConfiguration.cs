@@ -14,6 +14,9 @@ namespace CinemaVerse.Data.Data.Configurations
 
             builder.Property(s => s.SeatLabel).IsRequired().HasMaxLength(10);
 
+            builder.HasIndex(s=> new {s.SeatLabel,s.HallId})
+                .IsUnique();
+
             // Relationships configured here
             builder.HasOne(s => s.Hall)
                 .WithMany(h => h.Seats)

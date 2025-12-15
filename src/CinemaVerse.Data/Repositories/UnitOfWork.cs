@@ -63,11 +63,8 @@ namespace CinemaVerse.Data.Repositories
                 return;
             try
             {
-                if (_transaction is null) return;
-
                 await _transaction.CommitAsync();
                 await _transaction.DisposeAsync();
-                _transaction = null;
             }
             catch (Exception ex)
             {
@@ -81,9 +78,14 @@ namespace CinemaVerse.Data.Repositories
             }
         }
 
-        public ValueTask DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
-            return _context.DisposeAsync();
+            if (_transaction != null)
+            {
+                await _transaction.RollbackAsync();
+                await _transaction.DisposeAsync();
+            }
+            await _context.DisposeAsync();
         }
 
         public async Task RollbackTransactionAsync()

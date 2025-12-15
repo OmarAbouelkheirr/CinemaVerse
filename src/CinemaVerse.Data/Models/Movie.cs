@@ -5,7 +5,7 @@
         public int Id { get; set; }
         public string MovieName { get; set; } = string.Empty;
         public string MovieDescription { get; set;} = string.Empty;
-        public int MovieDuration {  get; set; }
+        public TimeSpan MovieDuration {  get; set; }
         public string MovieCast{ get; set; } = string.Empty;
         public decimal Rating { get; set; } 
         public int MovieAgeRating { get; set; }

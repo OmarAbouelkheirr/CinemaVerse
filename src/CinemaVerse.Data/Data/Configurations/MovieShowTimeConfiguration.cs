@@ -14,12 +14,26 @@ namespace CinemaVerse.Data.Data.Configurations
         public void Configure(EntityTypeBuilder<MovieShowTime> builder)
         {
             builder.ToTable("MovieShowTimes");
+
             builder.HasKey(mst => mst.Id);
-            builder.Property(mst => mst.Price).HasColumnType("decimal(18,2)").IsRequired();
-            builder.Property(mst => mst.ShowStartTime).IsRequired();
-            builder.Property(mst => mst.ShowEndTime).IsRequired();//updated to be calculated based on movie duration
+
+            builder.Property(mst => mst.Price)
+                .HasColumnType("decimal(18,2)")
+                .IsRequired();
+
+            builder.Property(mst => mst.ShowStartTime)
+                .IsRequired();
+
+            builder.Property(mst => mst.ShowEndTime)
+                .IsRequired();
+            //updated to be calculated based on movie duration
+
+            builder.HasIndex(s => new { s.HallId, s.MovieId, s.ShowStartTime })
+                    .IsUnique();
+
 
             // Relationships can be configured here if needed
+
             builder.HasOne(mst => mst.Movie)
                 .WithMany(m => m.MovieShowTimes)
                 .HasForeignKey(mst => mst.MovieId)
