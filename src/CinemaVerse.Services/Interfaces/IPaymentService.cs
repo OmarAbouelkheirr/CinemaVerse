@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace CinemaVerse.Services.Interfaces
 {
-    internal interface IPaymentService
+    public interface IPaymentService
     {
+        Task CreatePaymentIntent();
+        Task <bool> ConfirmPaymentAsync();
+        Task RefundPaymentAsync();
     }
 }

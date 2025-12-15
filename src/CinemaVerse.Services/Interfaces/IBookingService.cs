@@ -8,5 +8,6 @@ namespace CinemaVerse.Services.Interfaces
 {
     internal interface IBookingService
     {
+
     }
 }
