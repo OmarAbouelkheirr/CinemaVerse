@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using CinemaVerse.Services.DTOs.Ticket.Response;
+
 
 namespace CinemaVerse.Services.Interfaces
 {
     public interface ITicketService
     {
-        Task  GenerateTicketDetailsAsync(int BookingId);
-        Task<string> GenerateTicketQrAsync(int ticketId); 
+        Task<TicketDetailsDto> IssueTicketAsync(int bookingId);
+        Task<string> GenerateTicketQrAsync(int TicketId);
 
     }
 }

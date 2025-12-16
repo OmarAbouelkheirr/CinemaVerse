@@ -6,10 +6,10 @@
         public string MovieName { get; set; } = string.Empty;
         public string MovieDescription { get; set;} = string.Empty;
         public TimeSpan MovieDuration {  get; set; }
-        public string MovieCast{ get; set; } = string.Empty;
+        public List<string> MovieCast{ get; set; } = new List<string>();
         public decimal Rating { get; set; } 
-        public int MovieAgeRating { get; set; }
-        public DateTime ReleaseDate { get; set; }
+        public string MovieAgeRating { get; set; } = string.Empty;
+        public DateOnly ReleaseDate { get; set; }
         public string TrailerUrl { get; set; } = string.Empty;
 
         // Navigation Properties
