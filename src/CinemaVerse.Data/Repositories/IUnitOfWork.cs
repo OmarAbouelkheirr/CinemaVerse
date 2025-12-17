@@ -22,6 +22,7 @@ namespace CinemaVerse.Data.Repositories
         IRepository<Hall> Halls { get; }
         IRepository<MovieGenre> MovieGenres { get; }
         IRepository<MovieImage> MovieImages { get; }
+        IRepository<BookingSeat> BookingSeat { get; }
 
         Task<int> SaveChangesAsync();
         Task BeginTransactionAsync();

@@ -32,6 +32,16 @@ namespace CinemaVerse.Data.Data.Configurations
                 .IsRequired()
                 .HasDefaultValueSql("GETUTCDATE()");
 
+            builder.HasIndex(t => new { t.BookingId, t.SeatId })
+                .IsUnique();
+
+            builder.HasIndex(t => t.QrToken)
+                .IsUnique();
+
+            builder.Property(t => t.QrToken)
+                .IsRequired()
+                .HasMaxLength(128);
+
             // Relationships can be configured here if needed
             builder.HasOne(t => t.Booking)
                 .WithMany(b => b.Tickets)

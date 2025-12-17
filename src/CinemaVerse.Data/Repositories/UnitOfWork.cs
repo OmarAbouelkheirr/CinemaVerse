@@ -21,6 +21,7 @@ namespace CinemaVerse.Data.Repositories
         private IRepository<Hall>? _halls;
         private IRepository<MovieGenre>? _movieGenres;
         private IRepository<MovieImage>? _movieImages;
+        private IRepository<BookingSeat>? _bookingSeats;
 
         private readonly AppDbContext _context;
         private IDbContextTransaction? _transaction;
@@ -44,8 +45,7 @@ namespace CinemaVerse.Data.Repositories
         public IRepository<Hall> Halls => _halls ??= new Repository<Hall>(_context, _loggerFactory.CreateLogger<Hall>());
         public IRepository<MovieGenre> MovieGenres => _movieGenres ??= new Repository<MovieGenre>(_context, _loggerFactory.CreateLogger<MovieGenre>());
         public IRepository<MovieImage> MovieImages => _movieImages ??= new Repository<MovieImage>(_context, _loggerFactory.CreateLogger<MovieImage>());
-
-
+        public IRepository<BookingSeat> BookingSeat => _bookingSeats ??= new Repository<BookingSeat>(_context, _loggerFactory.CreateLogger<BookingSeat>());
 
         public async Task BeginTransactionAsync()
         {

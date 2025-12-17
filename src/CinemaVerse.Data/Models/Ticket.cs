@@ -11,6 +11,7 @@ namespace CinemaVerse.Data.Models
     {
         public int Id { get; set; }
         public string TicketNumber { get; set; } = string.Empty;
+        public string QrToken { get; set; } = string.Empty;
         public int BookingId { get; set; }
         public int SeatId { get; set; } 
         public decimal Price { get; set; }

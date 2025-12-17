@@ -18,7 +18,30 @@ namespace CinemaVerse.Data.Repositories.Implementations
         public TicketsRepository(AppDbContext context, ILogger<Ticket> logger)
             : base(context, logger)
         {}
+        public async Task<List<int>> GetIssuedSeatIdsAsync(int bookingId)
+        {
+            try
+            {
+                _logger.LogInformation("Getting issued seat IDs for booking {BookingId}", bookingId);
+                if (bookingId<=0)
+                {
+                    _logger.LogWarning("Invalid Booking ID: {BookingId}", bookingId);
+                    throw new ArgumentException("Invalid Booking ID.");
+                }
+                var IssuedSeat = await _dbSet
+                .Where(t => t.BookingId == bookingId)
+                .Select(t => t.SeatId)
+                .ToListAsync();
 
+                return IssuedSeat;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,"Error getting issued seat IDs for booking {BookingId}", bookingId);
+                throw;
+            }
+            
+        }
         public async Task<Ticket?> GetByTicketNumberAsync(string TicketNumber)
         {
             try
@@ -54,6 +77,11 @@ namespace CinemaVerse.Data.Repositories.Implementations
         {
             try
             {
+                if (TicketId <= 0)
+                {
+                    _logger.LogWarning("Invalid Ticket ID: {TicketId}", TicketId);
+                    throw new ArgumentException("Invalid Ticket ID.");
+                }
                 _logger.LogInformation("Getting ticket {TicketId} with details", TicketId);
                 var Result = await _dbSet
                     .AsNoTracking()
@@ -65,6 +93,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
                         .ThenInclude(b => b.MovieShowTime)
                             .ThenInclude(ms => ms.Movie)
                     .FirstOrDefaultAsync(t => t.Id == TicketId);
+
                 if (Result == null)
                 {
                     _logger.LogWarning("Ticket with ticket Id {TicketId} not found", TicketId);
@@ -106,5 +135,6 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 throw;
             }
         }
+        
     }
 }

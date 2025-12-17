@@ -21,5 +21,8 @@ namespace CinemaVerse.Data.Models
         public MovieShowTime MovieShowTime { get; set; } = null!;
         public ICollection<BookingPayment> BookingPayments { get; set; } = new List<BookingPayment>();
         public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
+        public List<BookingSeat> BookingSeats { get; set; } = new();
+
+      
     }
 }

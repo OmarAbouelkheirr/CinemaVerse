@@ -13,11 +13,12 @@ namespace CinemaVerse.Services.DTOs.Ticket.Response
         public string HallNumber { get; set; } = string.Empty;
         public HallType HallType { get; set; }
         public string SeatLabel { get; set; } = string.Empty;
-        public string MoviePosterUrl { get; set; } = string.Empty;
+        public string MoviePoster { get; set; } = string.Empty;
         public string MovieAgeRating { get; set; } = string.Empty;
-        public string QrValue { get; set; } = string.Empty;
+        public string QrToken { get; set; } = string.Empty;
         public TicketStatus Status { get; set; }
         public decimal Price { get; set; }
         public string BranchName { get; set; } = string.Empty;
+
     }
 }

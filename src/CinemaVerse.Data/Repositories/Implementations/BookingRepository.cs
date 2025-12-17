@@ -31,6 +31,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
                     .Include(b => b.MovieShowTime)
                         .ThenInclude(m => m.Movie)
                     .Include(b=>b.BookingPayments)
+                    .Include(b=>b.BookingSeats)
                     .OrderByDescending(b=>b.CreatedAt)
                     .ToListAsync();
 
@@ -102,5 +103,6 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 throw;
             }
         }
+
     }
 }

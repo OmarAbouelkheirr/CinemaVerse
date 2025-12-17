@@ -12,6 +12,7 @@ namespace CinemaVerse.Data.Repositories.Interfaces
         Task<IEnumerable<Ticket>> GetUserTicketsAsync(Guid UserId);
         Task<Ticket?> GetByTicketNumberAsync(string TicketNumber);
         Task<Ticket?> GetTicketWithDetailsAsync(int TicketId);
+        Task<List<int>> GetIssuedSeatIdsAsync(int bookingId);
 
     }
 }
