@@ -4,12 +4,7 @@ using CinemaVerse.Data.Repositories.Implementations;
 using CinemaVerse.Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace CinemaVerse.Data.Repositories
 {

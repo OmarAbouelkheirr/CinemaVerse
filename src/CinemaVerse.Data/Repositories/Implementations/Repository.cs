@@ -175,10 +175,8 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 _logger.LogError(ex, "Error getting {EntityType} by ID: {Id}", typeof(T).Name, Id);
                 throw;
             }
-
         }
         
-
         public async Task<T?> GetByIdAsync(string Id)
         {
             try
@@ -200,7 +198,6 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 _logger.LogError(ex, "Error getting {EntityType} by ID: {Id}", typeof(T).Name, Id);
                 throw;
             }
-
         }
 
         public async Task UpdateAsync(T entity)

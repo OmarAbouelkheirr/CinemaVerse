@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using CinemaVerse.Services.DTOs.HallSeat.Responses;
 
 namespace CinemaVerse.Services.Interfaces
 {
-    internal interface IHallSeatService
+    public interface IHallSeatService
     {
+        //Task<HallWithSeatsDto> GetHallWithSeatsAsync(int HallId);
     }
 }

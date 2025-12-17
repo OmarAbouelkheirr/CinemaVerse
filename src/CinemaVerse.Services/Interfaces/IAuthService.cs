@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CinemaVerse.Services.Interfaces
 {
-    internal interface IAuthService
+    public interface IAuthService
     {
 
     }
