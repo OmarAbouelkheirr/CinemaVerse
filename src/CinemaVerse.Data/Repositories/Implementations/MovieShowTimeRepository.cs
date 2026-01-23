@@ -1,4 +1,5 @@
 using CinemaVerse.Data.Data;
+using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -59,6 +60,22 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 _logger.LogError(ex, "Error getting available seats for movie show time {MovieShowTimeId}", movieShowTimeId);
                 throw;
             }
+        }
+        public async Task<List<Seat>> GetReservedSeatsAsync(int movieShowTimeId)
+        {
+            var reservedSeats = await (
+                from t in _context.Tickets.AsNoTracking()
+                where t.Booking.MovieShowTimeId == movieShowTimeId
+                      && t.Status != TicketStatus.Cancelled
+                      && t.Booking.Status != BookingStatus.Cancelled
+                join s in _context.Seats.AsNoTracking() on t.SeatId equals s.Id
+                select s
+            )
+            .Distinct()
+            .OrderBy(s => s.SeatLabel)
+            .ToListAsync();
+
+            return reservedSeats;
         }
 
         public async Task<MovieShowTime?> GetMovieShowTimeWithDetailsAsync(int movieShowTimeId)
@@ -126,6 +143,31 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 throw;
             }
         }
+        public async Task<bool> IsSeatReservedAsync(int movieShowTimeId, int seatId)
+        {
+            try
+            {
+                _logger.LogInformation("Checking if seat {SeatId} is reserved for movie show time {MovieShowTimeId}",
+                    seatId, movieShowTimeId);
 
+                var isReserved = await _context.Tickets
+                    .AsNoTracking()
+                    .AnyAsync(t => t.Booking.MovieShowTimeId == movieShowTimeId
+                                && t.SeatId == seatId
+                                && t.Status != TicketStatus.Cancelled
+                                && t.Booking.Status != BookingStatus.Cancelled);
+
+                _logger.LogInformation("Seat {SeatId} for movie show time {MovieShowTimeId} is {Status}",
+                    seatId, movieShowTimeId, isReserved ? "Reserved" : "Available");
+
+                return isReserved;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking seat {SeatId} reservation for movie show time {MovieShowTimeId}",
+                    seatId, movieShowTimeId);
+                throw;
+            }
+        }
     }
 }

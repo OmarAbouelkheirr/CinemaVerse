@@ -10,7 +10,7 @@ namespace CinemaVerse.Services.DTOs.Movie.Requests
     {
         public string? Query { get; set; } = string.Empty;
         public int? GenreId { get; set; }
-        public double? Rating { get; set; }
+        public decimal? Rating { get; set; }
         public DateOnly? Date { get; set; }
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 12;

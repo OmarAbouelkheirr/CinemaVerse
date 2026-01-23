@@ -12,6 +12,6 @@ namespace CinemaVerse.Data.Repositories.Interfaces
     {
         Task<Booking?> GetBookingWithDetailsAsync(int BookingId);
         Task<IEnumerable<Booking>> GetBookingsByStatusAsync(BookingStatus Status);
-        Task<IEnumerable<Booking>> GetUserBookingsAsync(Guid UserId);
+        Task<IEnumerable<Booking>> GetUserBookingsAsync(string userId);
     }
 }

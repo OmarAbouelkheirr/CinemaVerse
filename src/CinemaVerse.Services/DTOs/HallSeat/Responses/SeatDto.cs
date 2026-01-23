@@ -10,5 +10,7 @@ namespace CinemaVerse.Services.DTOs.HallSeat.Responses
     {
         public int SeatId { get; set; }
         public string SeatLabel { get; set; } = string.Empty;
+        public string SeatRow { get; set; } = string.Empty;
+        public string SeatColumn { get; set; }= string.Empty;
     }
 }

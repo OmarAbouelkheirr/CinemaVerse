@@ -6,11 +6,11 @@ using System.Linq.Expressions;
 
 namespace CinemaVerse.Data.Repositories.Implementations
 {
-    public class Repository<T>  : IRepository<T> where T : class
+    public class Repository<T> : IRepository<T> where T : class
     {
-        protected readonly AppDbContext _context ;
-        protected readonly DbSet<T> _dbSet ;
-        protected readonly ILogger<T> _logger ;
+        protected readonly AppDbContext _context;
+        protected readonly DbSet<T> _dbSet;
+        protected readonly ILogger<T> _logger;
 
         public Repository(AppDbContext Context, ILogger<T> Logger)
         {
@@ -41,9 +41,9 @@ namespace CinemaVerse.Data.Repositories.Implementations
             {
                 _logger.LogInformation("Checking if any {EntityType} exists with predicate", typeof(T).Name);
 
-                    var Result = await _dbSet.AnyAsync(Predicate);
-                    _logger.LogInformation("{EntityType} exists check result: {Result}", typeof(T).Name, Result);
-                    return Result;
+                var Result = await _dbSet.AnyAsync(Predicate);
+                _logger.LogInformation("{EntityType} exists check result: {Result}", typeof(T).Name, Result);
+                return Result;
             }
             catch (Exception ex)
             {
@@ -56,7 +56,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
         {
             try
             {
-                _logger.LogInformation("Counting entities of type {EntityType}",typeof(T).Name);
+                _logger.LogInformation("Counting entities of type {EntityType}", typeof(T).Name);
                 if (Predicate != null)
                 {
                     var Count = await _dbSet.CountAsync(Predicate);
@@ -73,7 +73,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error counting entity of {EntityType}",typeof(T).Name);
+                _logger.LogError(ex, "Error counting entity of {EntityType}", typeof(T).Name);
                 throw;
             }
         }
@@ -123,7 +123,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
         {
             try
             {
-                _logger.LogInformation("getting first or default {EntityType} with predicate",typeof(T).Name);
+                _logger.LogInformation("getting first or default {EntityType} with predicate", typeof(T).Name);
                 var Result = await _dbSet.FirstOrDefaultAsync(Predicate);
                 if (Result == null)
                     _logger.LogDebug("No {EntityType} found matching predicate", typeof(T).Name);
@@ -133,7 +133,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting first or default {EntityType} with predicate",typeof(T).Name);
+                _logger.LogError(ex, "Error getting first or default {EntityType} with predicate", typeof(T).Name);
                 throw;
             }
         }
@@ -166,7 +166,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 }
                 else
                 {
-                    _logger.LogInformation( "{EntityType} with ID: {Id} retrieved successfully", typeof(T).Name, Id);
+                    _logger.LogInformation("{EntityType} with ID: {Id} retrieved successfully", typeof(T).Name, Id);
                 }
                 return Result;
             }
@@ -176,7 +176,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 throw;
             }
         }
-        
+
         public async Task<T?> GetByIdAsync(string Id)
         {
             try
@@ -189,7 +189,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 }
                 else
                 {
-                    _logger.LogInformation( "{EntityType} with ID: {Id} retrieved successfully", typeof(T).Name, Id);
+                    _logger.LogInformation("{EntityType} with ID: {Id} retrieved successfully", typeof(T).Name, Id);
                 }
                 return Result;
             }
@@ -211,6 +211,75 @@ namespace CinemaVerse.Data.Repositories.Implementations
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating entity of type {EntityType}", typeof(T).Name);
+                throw;
+            }
+        }
+
+        public IQueryable<T> GetQueryable()
+        {
+            try
+            {
+                _logger.LogDebug("Creating queryable for {EntityType}", typeof(T).Name);
+                return _dbSet.AsQueryable();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating queryable for {EntityType}", typeof(T).Name);
+                throw;
+            }
+        }
+
+        public async Task<int> CountAsync(IQueryable<T> query)
+        {
+            try
+            {
+                _logger.LogInformation("Counting entities from custom query for type {EntityType}", typeof(T).Name);
+                var count = await query.CountAsync();
+                _logger.LogInformation("Counted {Count} entities of type {EntityType} from custom query", count, typeof(T).Name);
+                return count;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error counting entities from custom query for type {EntityType}", typeof(T).Name);
+                throw;
+            }
+        }
+
+        public async Task<List<T>> GetPagedAsync(
+            IQueryable<T> query,
+            Func<IQueryable<T>, IOrderedQueryable<T>> orderBy,
+            int skip,
+            int take,
+            string? includeProperties = null)
+        {
+            try
+            {
+                _logger.LogInformation("Getting paged entities of type {EntityType} (Skip: {Skip}, Take: {Take})", typeof(T).Name, skip, take);
+
+                // Apply eager loading if specified
+                if (!string.IsNullOrWhiteSpace(includeProperties))
+                {
+                    foreach (var includeProperty in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        query = query.Include(includeProperty.Trim());
+                    }
+                }
+
+                // Apply ordering
+                var orderedQuery = orderBy(query);
+
+                // Apply pagination
+                var results = await orderedQuery
+                    .Skip(skip)
+                    .Take(take)
+                    .ToListAsync();
+
+                _logger.LogInformation("Retrieved {Count} paged entities of type {EntityType}", results.Count, typeof(T).Name);
+                return results;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting paged entities of type {EntityType}", typeof(T).Name);
                 throw;
             }
         }

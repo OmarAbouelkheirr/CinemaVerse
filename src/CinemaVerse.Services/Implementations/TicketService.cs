@@ -75,25 +75,25 @@ namespace CinemaVerse.Services.Implementations
                         Price = Booking.MovieShowTime.Price,
                         CreatedAt = DateTime.UtcNow,
                         Status = TicketStatus.Active,
-                        QrToken=  GenerateSecureQrToken()
+                        QrToken = GenerateSecureQrToken()
                     };
                     await _unitOfWork.Tickets.AddAsync(Ticket);
                     CreatedTickets.Add(Ticket);
                 }
                 await _unitOfWork.SaveChangesAsync();
                 _logger.LogInformation("Successfully issued {TicketCount} tickets for Booking ID: {BookingId}", CreatedTickets.Count, BookingId);
-                
+
                 var TicketDtos = new List<TicketDetailsDto>();
                 foreach (var ticket in CreatedTickets)
                 {
-                    TicketDtos.Add( MapToDto(ticket));
+                    TicketDtos.Add(MapToDto(ticket));
                 }
                 await _unitOfWork.CommitTransactionAsync();
                 return TicketDtos;
             }
             catch (Exception ex)
             {
-                _logger.LogError( ex,"Error issuing tickets for Booking ID: {BookingId}", BookingId);
+                _logger.LogError(ex, "Error issuing tickets for Booking ID: {BookingId}", BookingId);
                 await _unitOfWork.RollbackTransactionAsync();
                 throw;
             }
@@ -106,7 +106,7 @@ namespace CinemaVerse.Services.Implementations
             string uniquePart = Guid.NewGuid().ToString("N")[..6].ToUpper();
             return $"{Prefix}-{DatePart}-{uniquePart}";
         }
-        public  TicketDetailsDto MapToDto(Ticket Ticket)
+        public TicketDetailsDto MapToDto(Ticket Ticket)
         {
             var Booking = Ticket.Booking;
             var MoviePoster = Booking.MovieShowTime.Movie.MovieImages.FirstOrDefault();

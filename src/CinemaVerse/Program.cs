@@ -1,9 +1,26 @@
+using CinemaVerse.Data.Data;
+using CinemaVerse.Data.Repositories;
+using CinemaVerse.Services.Implementations;
+using CinemaVerse.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")??
+    throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IMovieService, MovieService>();
+builder.Services.AddScoped<ITicketService, TicketService>();
+builder.Services.AddScoped<IHallSeatService, HallSeatService>();
+
+
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 var app = builder.Build();

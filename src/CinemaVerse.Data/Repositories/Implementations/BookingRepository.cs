@@ -76,15 +76,15 @@ namespace CinemaVerse.Data.Repositories.Implementations
             }
         }
 
-        public async Task<IEnumerable<Booking>> GetUserBookingsAsync(Guid UserId)
+        public async Task<IEnumerable<Booking>> GetUserBookingsAsync(string userId)
         {
             try
             {
-                _logger.LogInformation("Getting bookings for user: {UserId}", UserId);
+                _logger.LogInformation("Getting bookings for user: {UserId}", userId);
 
                 var Result = await _dbSet
                     .AsNoTracking()
-                    .Where(b => b.UserId == UserId)
+                    .Where(b => b.UserId == userId)
                     .Include(b => b.User)
                     .Include(b => b.Tickets)
                     .Include(b => b.MovieShowTime)
@@ -93,13 +93,13 @@ namespace CinemaVerse.Data.Repositories.Implementations
                     .OrderByDescending(b => b.CreatedAt)
                     .ToListAsync();
 
-                _logger.LogDebug("Retrieved {Count} bookings for user {UserId}", Result.Count, UserId);
+                _logger.LogDebug("Retrieved {Count} bookings for user {UserId}", Result.Count, userId);
                 return Result;
 
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting bookings for user {UserId}", UserId);
+                _logger.LogError(ex, "Error getting bookings for user {UserId}", userId);
                 throw;
             }
         }

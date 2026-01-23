@@ -4,6 +4,6 @@ namespace CinemaVerse.Services.Interfaces
 {
     public interface IHallSeatService
     {
-        //Task<HallWithSeatsDto> GetHallWithSeatsAsync(int HallId);
+        Task<HallWithSeatsDto> GetHallWithSeatsAsync(int MovieShowTimeId);
     }
 }

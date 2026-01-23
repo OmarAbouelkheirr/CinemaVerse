@@ -1,4 +1,4 @@
-﻿using CinemaVerse.Data.Enums;
+using CinemaVerse.Data.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,7 @@ namespace CinemaVerse.Data.Models
     public class Booking
     {
         public int Id { get; set; }
-        public Guid UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
         public int MovieShowTimeId { get; set; }
         public BookingStatus Status { get; set; }
         public decimal TotalAmount { get; set; }

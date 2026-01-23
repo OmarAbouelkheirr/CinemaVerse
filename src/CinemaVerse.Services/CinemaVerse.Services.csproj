@@ -7,11 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CinemaVerse.Data\CinemaVerse.Data.csproj" />
+    <Compile Remove="DTOs\MovieShowTime\**" />
+    <EmbeddedResource Remove="DTOs\MovieShowTime\**" />
+    <None Remove="DTOs\MovieShowTime\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="DTOs\MovieShowTime\" />
+    <ProjectReference Include="..\CinemaVerse.Data\CinemaVerse.Data.csproj" />
   </ItemGroup>
 
 </Project>

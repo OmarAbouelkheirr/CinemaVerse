@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CinemaVerse.Data.Enums;
+﻿using CinemaVerse.Data.Enums;
 using CinemaVerse.Services.DTOs.Booking.Helpers;
+using CinemaVerse.Services.DTOs.HallSeat.Responses;
 using CinemaVerse.Services.DTOs.Ticket.Response;
 
 namespace CinemaVerse.Services.DTOs.Booking.Responses
@@ -15,8 +11,10 @@ namespace CinemaVerse.Services.DTOs.Booking.Responses
         public BookingStatus Status { get; set; }
         public decimal TotalAmount { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime? ExpiresAt { get; set; }
 
+        public ShowtimeDto Showtime { get; set; } = new();
+        public List<SeatDto> BookedSeats { get; set; } = new();
         public List<TicketDetailsDto> Tickets { get; set; } = new();
-        public ShowtimeDto Showtime { get; set; } = null!;
     }
 }

@@ -7,7 +7,7 @@
         public string MovieDescription { get; set;} = string.Empty;
         public TimeSpan MovieDuration {  get; set; }
         public List<string> MovieCast{ get; set; } = new List<string>();
-        public decimal Rating { get; set; } 
+        public decimal MovieRating { get; set; } 
         public string MovieAgeRating { get; set; } = string.Empty;
         public DateOnly ReleaseDate { get; set; }
         public string TrailerUrl { get; set; } = string.Empty;
