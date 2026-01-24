@@ -1,4 +1,4 @@
-﻿using CinemaVerse.Data.Enums;
+using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -10,12 +10,15 @@ using System.Threading.Tasks;
 
 namespace CinemaVerse.Data.Data.Configurations
 {
-    public class BookingConfiguration : IEntityTypeConfiguration<Booking>
+    public class BookingConfiguration : IEntityTypeConfiguration<Booking>   
     {
         public void Configure(EntityTypeBuilder<Booking> builder)
         {
             builder.ToTable("Bookings");
             builder.HasKey(b => b.Id);
+
+            builder.Property(b => b.UserId)
+                .IsRequired();
 
             builder.Property(b => b.Status)
                 .IsRequired().HasDefaultValue(BookingStatus.Pending).HasConversion<int>();
@@ -27,7 +30,7 @@ namespace CinemaVerse.Data.Data.Configurations
             //relationships configured here 
             builder.HasOne(b => b.User)
                 .WithMany(u => u.Bookings)
-                .HasForeignKey(b=>b.UserId)
+                .HasForeignKey(b => b.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasOne(b => b.MovieShowTime)

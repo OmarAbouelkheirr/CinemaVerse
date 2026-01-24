@@ -41,6 +41,7 @@ namespace CinemaVerse.Services.Implementations
                     _logger.LogWarning("Invalid Argument UserId is null or empty");
                     throw new ArgumentException("UserId cannot be null or empty.", nameof(userId));
                 }
+
                 if (request.MovieShowTimeId <= 0)
                 {
                     _logger.LogWarning("Invalid Argument MovieShowTimeId {MovieShowTimeId}, UserId {UserId}", request.MovieShowTimeId, userId);
@@ -159,7 +160,7 @@ namespace CinemaVerse.Services.Implementations
             }
             catch (Exception ex)
             {
-                await _unitOfWork.RollbackTransactionAsync(); // ✅ Critical: Rollback on error
+                await _unitOfWork.RollbackTransactionAsync();
                 _logger.LogError(ex, "Error creating booking for UserId {UserId}", userId);
                 throw;
             }
@@ -167,6 +168,29 @@ namespace CinemaVerse.Services.Implementations
 
         public Task<BookingDetailsDto> GetUserBookingByIdAsync(string userId, int bookingId)
         {
+
+            //await _unitOfWork.BeginTransactionAsync();
+
+            //try
+            //{
+            //    _logger.LogInformation("Getting BookingId {BookingId} for UserId {UserId}", bookingId, userId);
+            //    if (string.IsNullOrWhiteSpace(userId))
+            //    {
+            //        _logger.LogWarning("Invalid Argument UserId is null or empty");
+            //        throw new ArgumentException("UserId cannot be null or empty.", nameof(userId));
+            //    }
+
+            //    //_unitOfWork.
+
+            //    //throw new NotImplementedException();
+
+            //}
+            //catch (Exception ex)
+            //{
+            //    await _unitOfWork.RollbackTransactionAsync(); 
+            //    _logger.LogError(ex, "Error getting BookingId {BookingId} for UserId {UserId}", bookingId, userId);
+            //    throw;
+            //}
             throw new NotImplementedException();
         }
 

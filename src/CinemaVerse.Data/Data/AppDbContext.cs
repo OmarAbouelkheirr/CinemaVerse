@@ -1,16 +1,16 @@
 ﻿using CinemaVerse.Data.Models;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using CinemaVerse.Data.Models.Users;
 using Microsoft.EntityFrameworkCore;
 
 
 namespace CinemaVerse.Data.Data
 {
-    public class AppDbContext : IdentityDbContext<ApplicationUser>
+    public class AppDbContext : DbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-        {}
-        
-        public DbSet<ApplicationUser> ApplicationUsers { get; set; } = null!;
+        { }
+
+        public DbSet<User> Users { get; set; } = null!;
         public DbSet<Movie> Movies { get; set; } = null!;
         public DbSet<Genre> Genres { get; set; } = null!;
         public DbSet<Booking> Bookings { get; set; } = null!;
