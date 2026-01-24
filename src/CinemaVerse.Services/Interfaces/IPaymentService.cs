@@ -11,8 +11,8 @@ namespace CinemaVerse.Services.Interfaces
 {
     public interface IPaymentService
     {
-        Task<CreatePaymentIntentResponseDto> CreatePaymentIntent(CreatePaymentIntentRequestDto CreatePaymentDto);
-        Task <bool> ConfirmPaymentAsync(ConfirmPaymentRequestDto ConfrimPaymentDto);
+        Task<CreatePaymentIntentResponseDto> CreatePaymentIntent(string userId,CreatePaymentIntentRequestDto CreatePaymentDto);
+        Task <bool> ConfirmPaymentAsync(string userId, ConfirmPaymentRequestDto ConfrimPaymentDto);
         Task<bool> RefundPaymentAsync(RefundPaymentRequestDto RefundPaymentDto);
     }
 }

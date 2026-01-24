@@ -169,5 +169,35 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 throw;
             }
         }
+        public async Task<List<int>> GetReservedSeatIdsAsync(int movieShowTimeId)
+        {
+            try
+            {
+                _logger.LogInformation("Getting reserved seat IDs for MovieShowTimeId {MovieShowTimeId}", movieShowTimeId);
+
+                var reservedSeatIds = await _context.BookingSeat
+                    .AsNoTracking()
+                    .Where(bs => bs.Booking.MovieShowTimeId == movieShowTimeId &&
+                                bs.Booking.Status != BookingStatus.Cancelled &&
+                                bs.Booking.Status != BookingStatus.Expired &&
+                                (bs.Booking.Status == BookingStatus.Confirmed ||
+                                 (bs.Booking.Status == BookingStatus.Pending &&
+                                  bs.Booking.ExpiresAt.HasValue &&
+                                  bs.Booking.ExpiresAt.Value > DateTime.UtcNow)))
+                    .Select(bs => bs.SeatId)
+                    .Distinct()
+                    .ToListAsync();
+
+                _logger.LogInformation("Found {Count} reserved seats for MovieShowTimeId {MovieShowTimeId}",
+                    reservedSeatIds.Count, movieShowTimeId);
+
+                return reservedSeatIds;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting reserved seat IDs for MovieShowTimeId {MovieShowTimeId}", movieShowTimeId);
+                throw;
+            }
+        }
     }
 }

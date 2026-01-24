@@ -24,6 +24,11 @@ namespace CinemaVerse.Services.Implementations
             throw new NotImplementedException();
         }
 
+        public Task<BookingDetailsDto> ConfirmBookingAsync(string userId, int bookingId)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<BookingDetailsDto> CreateBookingAsync(string userId, CreateBookingRequestDto request)
         {
             await _unitOfWork.BeginTransactionAsync();

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +10,7 @@ namespace CinemaVerse.Data.Enums
     {
         Pending = 1,
         Cancelled = 2,
-        Completed = 3
+        Confirmed = 3,
+        Expired = 4
     }
 }

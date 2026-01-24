@@ -1,4 +1,4 @@
-using CinemaVerse.Data.Enums;
+﻿using CinemaVerse.Data.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +15,7 @@ namespace CinemaVerse.Data.Models
         public BookingStatus Status { get; set; }
         public decimal TotalAmount { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime? ExpiresAt { get; set; }
 
         // Navigation Properties
         public ApplicationUser User { get; set; } = null!;

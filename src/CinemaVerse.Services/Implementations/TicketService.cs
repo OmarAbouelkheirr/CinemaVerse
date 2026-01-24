@@ -1,4 +1,4 @@
-﻿using CinemaVerse.Data.Enums;
+using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
 using CinemaVerse.Services.DTOs.Ticket.Response;
@@ -44,10 +44,10 @@ namespace CinemaVerse.Services.Implementations
                     _logger.LogWarning("Booking ID: {BookingId} does not exist", BookingId);
                     throw new KeyNotFoundException("Booking not found.");
                 }
-                if (Booking.Status != BookingStatus.Completed)
+                if (Booking.Status != BookingStatus.Confirmed)
                 {
-                    _logger.LogWarning("Booking ID: {BookingId} is not completed. Current Status: {Status}", BookingId, Booking.Status);
-                    throw new InvalidOperationException("Booking is not completed.");
+                    _logger.LogWarning("Booking ID: {BookingId} is not confirmed. Current Status: {Status}", BookingId, Booking.Status);
+                    throw new InvalidOperationException("Booking is not confirmed.");
                 }
 
                 // for idempotency check - avoid re-issuing tickets for already issued seats
