@@ -1,4 +1,4 @@
-﻿using CinemaVerse.Data.Enums;
+using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
 using CinemaVerse.Services.DTOs.Payment.NewFolder;
@@ -28,7 +28,7 @@ namespace CinemaVerse.Services.Implementations
             StripeConfiguration.ApiKey = _stripeSecretKey;
             _bookingService = bookingService;
         }
-        public async Task<bool> ConfirmPaymentAsync(string userId, ConfirmPaymentRequestDto ConfrimPaymentDto)
+        public async Task<bool> ConfirmPaymentAsync(int userId, ConfirmPaymentRequestDto ConfrimPaymentDto)
         {
             try
             {
@@ -40,11 +40,11 @@ namespace CinemaVerse.Services.Implementations
                     await _unitOfWork.RollbackTransactionAsync();
                     throw new ArgumentNullException(nameof(ConfrimPaymentDto), "ConfrimPaymentDto cannot be null.");
                 }
-                if (string.IsNullOrEmpty(userId))
+                if (userId <= 0)
                 {
-                    _logger.LogWarning("UserId is null or empty while confirming payment for BookingId: {BookingId}", ConfrimPaymentDto.BookingId);
+                    _logger.LogWarning("UserId must be greater than zero while confirming payment for BookingId: {BookingId}", ConfrimPaymentDto.BookingId);
                     await _unitOfWork.RollbackTransactionAsync();
-                    throw new ArgumentException("UserId cannot be null or empty.");
+                    throw new ArgumentException("UserId must be greater than zero.");
                 }
                 if (ConfrimPaymentDto.BookingId <= 0)
                 {
@@ -137,7 +137,7 @@ namespace CinemaVerse.Services.Implementations
             }
         }
 
-        public async Task<CreatePaymentIntentResponseDto> CreatePaymentIntent(string userId, CreatePaymentIntentRequestDto CreatePaymentDto)
+        public async Task<CreatePaymentIntentResponseDto> CreatePaymentIntent(int userId, CreatePaymentIntentRequestDto CreatePaymentDto)
         {
             int? bookingIdForLog = CreatePaymentDto?.BookingId;
             try
@@ -150,10 +150,10 @@ namespace CinemaVerse.Services.Implementations
 
                 _logger.LogInformation("Creating payment intent for BookingId: {BookingId} by User: {UserId}", CreatePaymentDto.BookingId, userId);
 
-                if (string.IsNullOrEmpty(userId))
+                if (userId <= 0)
                 {
-                    _logger.LogWarning("UserId is null or empty while creating payment intent for BookingId: {BookingId}", CreatePaymentDto.BookingId);
-                    throw new ArgumentException("UserId cannot be null or empty.");
+                    _logger.LogWarning("UserId must be greater than zero while creating payment intent for BookingId: {BookingId}", CreatePaymentDto.BookingId);
+                    throw new ArgumentException("UserId must be greater than zero.");
                 }
                 
                 if (CreatePaymentDto.BookingId <= 0)

@@ -1,4 +1,4 @@
-﻿using CinemaVerse.Services.DTOs.Payment.NewFolder;
+using CinemaVerse.Services.DTOs.Payment.NewFolder;
 using CinemaVerse.Services.DTOs.Payment.Requests;
 using CinemaVerse.Services.DTOs.Payment.Response;
 using System;
@@ -11,8 +11,8 @@ namespace CinemaVerse.Services.Interfaces
 {
     public interface IPaymentService
     {
-        Task<CreatePaymentIntentResponseDto> CreatePaymentIntent(string userId,CreatePaymentIntentRequestDto CreatePaymentDto);
-        Task <bool> ConfirmPaymentAsync(string userId, ConfirmPaymentRequestDto ConfrimPaymentDto);
+        Task<CreatePaymentIntentResponseDto> CreatePaymentIntent(int userId, CreatePaymentIntentRequestDto CreatePaymentDto);
+        Task <bool> ConfirmPaymentAsync(int userId, ConfirmPaymentRequestDto ConfrimPaymentDto);
         Task<bool> RefundPaymentAsync(RefundPaymentRequestDto RefundPaymentDto);
     }
 }

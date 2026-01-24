@@ -19,28 +19,23 @@ namespace CinemaVerse.Services.Implementations
             _logger = logger;
             _unitOfWork = unitOfWork;
         }
-        public Task<bool> CancelUserBookingAsync(string userId, int bookingId)
+        public Task<bool> CancelUserBookingAsync(int userId, int bookingId)
         {
             throw new NotImplementedException();
         }
 
-        public Task<BookingDetailsDto> ConfirmBookingAsync(string userId, int bookingId)
+        public Task<BookingDetailsDto> ConfirmBookingAsync(int userId, int bookingId)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<BookingDetailsDto> CreateBookingAsync(string userId, CreateBookingRequestDto request)
+        public async Task<BookingDetailsDto> CreateBookingAsync(int userId, CreateBookingRequestDto request)
         {
             await _unitOfWork.BeginTransactionAsync();
             try
             {
                 //Input Validation
                 _logger.LogInformation("Creating booking for UserId {UserId}", userId);
-                if (string.IsNullOrWhiteSpace(userId))
-                {
-                    _logger.LogWarning("Invalid Argument UserId is null or empty");
-                    throw new ArgumentException("UserId cannot be null or empty.", nameof(userId));
-                }
 
                 if (request.MovieShowTimeId <= 0)
                 {
@@ -166,7 +161,7 @@ namespace CinemaVerse.Services.Implementations
             }
         }
 
-        public Task<BookingDetailsDto> GetUserBookingByIdAsync(string userId, int bookingId)
+        public Task<BookingDetailsDto> GetUserBookingByIdAsync(int userId, int bookingId)
         {
 
             //await _unitOfWork.BeginTransactionAsync();
@@ -174,10 +169,10 @@ namespace CinemaVerse.Services.Implementations
             //try
             //{
             //    _logger.LogInformation("Getting BookingId {BookingId} for UserId {UserId}", bookingId, userId);
-            //    if (string.IsNullOrWhiteSpace(userId))
+            //    if (userId <= 0)
             //    {
-            //        _logger.LogWarning("Invalid Argument UserId is null or empty");
-            //        throw new ArgumentException("UserId cannot be null or empty.", nameof(userId));
+            //        _logger.LogWarning("Invalid Argument UserId must be greater than zero");
+            //        throw new ArgumentException("UserId must be greater than zero.", nameof(userId));
             //    }
 
             //    //_unitOfWork.
@@ -194,7 +189,7 @@ namespace CinemaVerse.Services.Implementations
             throw new NotImplementedException();
         }
 
-        public Task<List<BookingListDto>> GetUserBookingsAsync(string userId)
+        public Task<List<BookingListDto>> GetUserBookingsAsync(int userId)
         {
             throw new NotImplementedException();
         }

@@ -1,4 +1,4 @@
-﻿using CinemaVerse.Data.Models;
+using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories.Implementations;
 using CinemaVerse.Data.Repositories.Interfaces;
 using System;
@@ -23,6 +23,7 @@ namespace CinemaVerse.Data.Repositories
         IRepository<MovieGenre> MovieGenres { get; }
         IRepository<MovieImage> MovieImages { get; }
         IRepository<BookingSeat> BookingSeat { get; }
+        IUserRepository Users { get; }
 
         Task<int> SaveChangesAsync();
         Task BeginTransactionAsync();

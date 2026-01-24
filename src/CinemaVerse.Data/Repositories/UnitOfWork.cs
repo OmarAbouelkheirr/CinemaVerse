@@ -1,5 +1,6 @@
-﻿using CinemaVerse.Data.Data;
+using CinemaVerse.Data.Data;
 using CinemaVerse.Data.Models;
+using CinemaVerse.Data.Models.Users;
 using CinemaVerse.Data.Repositories.Implementations;
 using CinemaVerse.Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -22,6 +23,7 @@ namespace CinemaVerse.Data.Repositories
         private IRepository<MovieGenre>? _movieGenres;
         private IRepository<MovieImage>? _movieImages;
         private IRepository<BookingSeat>? _bookingSeats;
+        private IUserRepository? _users;
 
         private readonly AppDbContext _context;
         private IDbContextTransaction? _transaction;
@@ -46,6 +48,7 @@ namespace CinemaVerse.Data.Repositories
         public IRepository<MovieGenre> MovieGenres => _movieGenres ??= new Repository<MovieGenre>(_context, _loggerFactory.CreateLogger<MovieGenre>());
         public IRepository<MovieImage> MovieImages => _movieImages ??= new Repository<MovieImage>(_context, _loggerFactory.CreateLogger<MovieImage>());
         public IRepository<BookingSeat> BookingSeat => _bookingSeats ??= new Repository<BookingSeat>(_context, _loggerFactory.CreateLogger<BookingSeat>());
+        public IUserRepository Users => _users ??= new UserRepository(_context, _loggerFactory.CreateLogger<User>());
 
         public async Task BeginTransactionAsync()
         {

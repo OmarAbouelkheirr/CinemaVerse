@@ -76,7 +76,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
             }
         }
 
-        public async Task<IEnumerable<Booking>> GetUserBookingsAsync(string userId)
+        public async Task<IEnumerable<Booking>> GetUserBookingsAsync(int userId)
         {
             try
             {

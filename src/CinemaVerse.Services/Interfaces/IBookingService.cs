@@ -6,10 +6,10 @@ namespace CinemaVerse.Services.Interfaces
 {
     public interface IBookingService
     {
-        Task<BookingDetailsDto> CreateBookingAsync(string userId, CreateBookingRequestDto request);
-        Task<BookingDetailsDto> ConfirmBookingAsync(string userId, int bookingId);
-        Task<List<BookingListDto>> GetUserBookingsAsync(string userId);
-        Task<BookingDetailsDto> GetUserBookingByIdAsync(string userId, int bookingId);
-        Task<bool> CancelUserBookingAsync(string userId, int bookingId);
+        Task<BookingDetailsDto> CreateBookingAsync(int userId, CreateBookingRequestDto request);
+        Task<BookingDetailsDto> ConfirmBookingAsync(int userId, int bookingId);
+        Task<List<BookingListDto>> GetUserBookingsAsync(int userId);
+        Task<BookingDetailsDto> GetUserBookingByIdAsync(int userId, int bookingId);
+        Task<bool> CancelUserBookingAsync(int userId, int bookingId);
     }
 }
