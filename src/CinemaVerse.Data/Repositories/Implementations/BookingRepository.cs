@@ -4,11 +4,6 @@ using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CinemaVerse.Data.Repositories.Implementations
 {
@@ -16,6 +11,45 @@ namespace CinemaVerse.Data.Repositories.Implementations
     {
         public BookingRepository(AppDbContext Context, ILogger<Booking> Logger) : base(Context, Logger)
         {
+        }
+
+        public async Task<bool> UpdateBookingStatusAsync(int BookingId, BookingStatus NewStatus)
+        {
+            try
+            {
+                _logger.LogInformation("Updating booking {BookingId} status to {NewStatus}", BookingId, NewStatus);
+
+                if (BookingId <= 0)
+                {
+                    _logger.LogWarning("Invalid BookingId: {BookingId}", BookingId);
+                    throw new ArgumentException("BookingId must be greater than zero.", nameof(BookingId));
+                }
+
+                var booking = await _dbSet.FirstOrDefaultAsync(b => b.Id == BookingId);
+
+                if (booking == null)
+                {
+                    _logger.LogWarning("Booking with Id {BookingId} not found", BookingId);
+                    return false;
+                }
+
+                if (booking.Status == NewStatus)
+                {
+                    _logger.LogInformation("Booking {BookingId} already has status {NewStatus}, no update needed", BookingId, NewStatus);
+                    return true;
+                }
+
+                booking.Status = NewStatus;
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Successfully updated booking {BookingId} status to {NewStatus}", BookingId, NewStatus);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error Updating booking {BookingId} status", BookingId);
+                throw;
+            }
         }
 
         public async Task<IEnumerable<Booking>> GetBookingsByStatusAsync(BookingStatus Status)
@@ -26,13 +60,13 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 var Result = await _dbSet
                     .AsNoTracking()
                     .Where(b => b.Status == Status)
-                    .Include(b=>b.User)
-                    .Include(b=>b.Tickets)
+                    .Include(b => b.User)
+                    .Include(b => b.Tickets)
                     .Include(b => b.MovieShowTime)
                         .ThenInclude(m => m.Movie)
-                    .Include(b=>b.BookingPayments)
-                    .Include(b=>b.BookingSeats)
-                    .OrderByDescending(b=>b.CreatedAt)
+                    .Include(b => b.BookingPayments)
+                    .Include(b => b.BookingSeats)
+                    .OrderByDescending(b => b.CreatedAt)
                     .ToListAsync();
 
                 _logger.LogDebug("Retrieved {Count} bookings with status {Status}", Result.Count, Status);
@@ -53,9 +87,16 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 var Result = await _dbSet
                     .Include(b => b.User)
                     .Include(b => b.Tickets)
+                        .ThenInclude(t => t.Seat)
                     .Include(b => b.MovieShowTime)
-                        .ThenInclude(m => m.Movie)
+                        .ThenInclude(mst => mst.Movie)
+                            .ThenInclude(m => m.MovieImages)
+                    .Include(b => b.MovieShowTime)
+                        .ThenInclude(mst => mst.Hall)
+                            .ThenInclude(h => h.Branch)
                     .Include(b => b.BookingPayments)
+                    .Include(b => b.BookingSeats)
+                        .ThenInclude(bs => bs.Seat)
                     .FirstOrDefaultAsync(b => b.Id == BookingId);
 
                 if (Result == null)
@@ -103,6 +144,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 throw;
             }
         }
+
 
     }
 }
