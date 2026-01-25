@@ -1,7 +1,7 @@
 using CinemaVerse.Data.Data;
 using CinemaVerse.Data.Repositories;
-using CinemaVerse.Services.Implementations;
-using CinemaVerse.Services.Interfaces;
+using CinemaVerse.Services.Implementations.User;
+using CinemaVerse.Services.Interfaces.User;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);

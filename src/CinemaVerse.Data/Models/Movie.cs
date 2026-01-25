@@ -1,4 +1,6 @@
-﻿namespace CinemaVerse.Data.Models
+﻿using CinemaVerse.Data.Enums;
+
+namespace CinemaVerse.Data.Models
 {
     public class Movie
     {
@@ -8,9 +10,10 @@
         public TimeSpan MovieDuration {  get; set; }
         public List<string> MovieCast{ get; set; } = new List<string>();
         public decimal MovieRating { get; set; } 
-        public string MovieAgeRating { get; set; } = string.Empty;
+        public MovieAgeRating MovieAgeRating { get; set; }
         public DateOnly ReleaseDate { get; set; }
         public string TrailerUrl { get; set; } = string.Empty;
+        public MovieStatus Status { get; set; } = MovieStatus.Active; // ✅ Add this
 
         // Navigation Properties
         public ICollection<MovieImage> MovieImages { get; set; } = new List<MovieImage>();
