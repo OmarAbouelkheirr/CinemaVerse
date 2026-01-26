@@ -7,6 +7,6 @@ namespace CinemaVerse.Services.Interfaces.Admin
     public interface IAdminTicketService
     {
         Task<PagedResultDto<AdminTicketDetailsDto>> GetAllTicketsAsync(AdminTicketFilterDto filter);
-
+        Task<AdminTicketDetailsDto?> GetTicketByIdAsync(int ticketId);
     }
 }
