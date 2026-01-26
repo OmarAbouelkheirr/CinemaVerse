@@ -301,9 +301,159 @@ namespace CinemaVerse.Services.Implementations.User
             }
         }
 
+        // ... AI Code, Omar ...
+
         public async Task<bool> RefundPaymentAsync(RefundPaymentRequestDto RefundPaymentDto)
         {
-            throw new NotImplementedException();
+            // Note: This method does NOT manage its own transaction
+            // It should be called within an existing transaction context
+            // The calling method (e.g., CancelUserBookingAsync) is responsible for transaction management
+            
+            try
+            {
+                _logger.LogInformation("Processing refund for BookingId: {BookingId}, PaymentIntentId: {PaymentIntentId}",
+                    RefundPaymentDto.BookingId, RefundPaymentDto.PaymentIntentId);
+
+                // 1. Validate input
+                if (RefundPaymentDto == null)
+                {
+                    _logger.LogWarning("RefundPaymentDto is null");
+                    throw new ArgumentNullException(nameof(RefundPaymentDto), "RefundPaymentDto cannot be null.");
+                }
+
+                if (RefundPaymentDto.BookingId <= 0)
+                {
+                    _logger.LogWarning("Invalid BookingId: {BookingId}", RefundPaymentDto.BookingId);
+                    throw new ArgumentException("BookingId must be greater than zero.", nameof(RefundPaymentDto.BookingId));
+                }
+
+                if (string.IsNullOrEmpty(RefundPaymentDto.PaymentIntentId))
+                {
+                    _logger.LogWarning("PaymentIntentId is null or empty for BookingId: {BookingId}", RefundPaymentDto.BookingId);
+                    throw new ArgumentException("PaymentIntentId cannot be null or empty.", nameof(RefundPaymentDto.PaymentIntentId));
+                }
+
+                if (RefundPaymentDto.RefundAmount <= 0)
+                {
+                    _logger.LogWarning("Invalid RefundAmount: {RefundAmount} for BookingId: {BookingId}",
+                        RefundPaymentDto.RefundAmount, RefundPaymentDto.BookingId);
+                    throw new ArgumentException("RefundAmount must be greater than zero.", nameof(RefundPaymentDto.RefundAmount));
+                }
+
+                // 2. Get booking payment from database
+                var bookingPayment = await _unitOfWork.BookingPayments.FirstOrDefaultAsync(bp =>
+                    bp.BookingId == RefundPaymentDto.BookingId &&
+                    bp.PaymentIntentId == RefundPaymentDto.PaymentIntentId);
+
+                if (bookingPayment == null)
+                {
+                    _logger.LogWarning("No payment record found for BookingId: {BookingId} with PaymentIntentId: {PaymentIntentId}",
+                        RefundPaymentDto.BookingId, RefundPaymentDto.PaymentIntentId);
+                    throw new KeyNotFoundException("Payment record not found for the provided BookingId and PaymentIntentId.");
+                }
+
+                // 3. Check if payment is already refunded
+                if (bookingPayment.Status == PaymentStatus.Cancelled)
+                {
+                    _logger.LogInformation("Payment already refunded for BookingId: {BookingId}, PaymentIntentId: {PaymentIntentId}",
+                        RefundPaymentDto.BookingId, RefundPaymentDto.PaymentIntentId);
+                    return true; // Already refunded - idempotency
+                }
+
+                // 4. Check if payment is completed (can only refund completed payments)
+                if (bookingPayment.Status != PaymentStatus.Completed)
+                {
+                    _logger.LogWarning("Cannot refund payment with status {Status} for BookingId: {BookingId}, PaymentIntentId: {PaymentIntentId}",
+                        bookingPayment.Status, RefundPaymentDto.BookingId, RefundPaymentDto.PaymentIntentId);
+                    throw new InvalidOperationException($"Cannot refund payment. Only completed payments can be refunded. Current status: {bookingPayment.Status}.");
+                }
+
+                // 5. Validate refund amount matches payment amount
+                if (bookingPayment.Amount != RefundPaymentDto.RefundAmount)
+                {
+                    _logger.LogWarning("Refund amount mismatch for BookingId: {BookingId}. Expected: {ExpectedAmount}, Provided: {ProvidedAmount}",
+                        RefundPaymentDto.BookingId, bookingPayment.Amount, RefundPaymentDto.RefundAmount);
+                    throw new InvalidOperationException($"Refund amount does not match the payment amount. Expected: {bookingPayment.Amount}, Provided: {RefundPaymentDto.RefundAmount}.");
+                }
+
+                // 6. Get PaymentIntent from Stripe to verify it exists and is succeeded
+                var paymentIntentService = new PaymentIntentService();
+                PaymentIntent paymentIntent;
+                try
+                {
+                    paymentIntent = await paymentIntentService.GetAsync(RefundPaymentDto.PaymentIntentId);
+                }
+                catch (StripeException ex)
+                {
+                    _logger.LogError(ex, "Failed to retrieve PaymentIntent {PaymentIntentId} from Stripe for BookingId: {BookingId}",
+                        RefundPaymentDto.PaymentIntentId, RefundPaymentDto.BookingId);
+                    throw new InvalidOperationException($"Failed to retrieve payment information from payment processor. Please contact support.");
+                }
+
+                if (paymentIntent.Status != "succeeded")
+                {
+                    _logger.LogWarning("PaymentIntent status is not succeeded for BookingId: {BookingId}. Current Status: {Status}",
+                        RefundPaymentDto.BookingId, paymentIntent.Status);
+                    throw new InvalidOperationException($"Cannot refund payment. Payment status is not succeeded. Current status: {paymentIntent.Status}.");
+                }
+
+                // 7. Validate amount and currency match
+                var paymentAmountInCents = (long)(bookingPayment.Amount * 100);
+                if (paymentIntent.Amount != paymentAmountInCents)
+                {
+                    _logger.LogWarning("Amount mismatch for BookingId: {BookingId}. Expected: {ExpectedAmount}, PaymentIntent Amount: {PaymentIntentAmount}",
+                        RefundPaymentDto.BookingId, paymentAmountInCents, paymentIntent.Amount);
+                    throw new InvalidOperationException("Payment amount does not match the booking payment amount.");
+                }
+
+                if (!string.Equals(paymentIntent.Currency, bookingPayment.Currency, StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning("Currency mismatch for BookingId: {BookingId}. Expected: {ExpectedCurrency}, PaymentIntent Currency: {PaymentIntentCurrency}",
+                        RefundPaymentDto.BookingId, bookingPayment.Currency, paymentIntent.Currency);
+                    throw new InvalidOperationException("Payment currency does not match the booking payment currency.");
+                }
+
+                // 8. Create refund in Stripe (CRITICAL: This happens BEFORE database update)
+                // If Stripe refund succeeds but database update fails, the refund is already processed
+                // This is acceptable because the refund is the desired outcome
+                var refundService = new RefundService();
+                var refundOptions = new RefundCreateOptions
+                {
+                    PaymentIntent = RefundPaymentDto.PaymentIntentId,
+                    Amount = paymentAmountInCents, // Convert to smallest currency unit (cents)
+                    Reason = RefundReasons.RequestedByCustomer
+                };
+
+                Refund refund;
+                try
+                {
+                    refund = await refundService.CreateAsync(refundOptions);
+                    _logger.LogInformation("Refund created in Stripe. RefundId: {RefundId}, Amount: {Amount} {Currency} for BookingId: {BookingId}",
+                        refund.Id, RefundPaymentDto.RefundAmount, bookingPayment.Currency, RefundPaymentDto.BookingId);
+                }
+                catch (StripeException ex)
+                {
+                    _logger.LogError(ex, "Failed to create refund in Stripe for BookingId: {BookingId}, PaymentIntentId: {PaymentIntentId}",
+                        RefundPaymentDto.BookingId, RefundPaymentDto.PaymentIntentId);
+                    throw new InvalidOperationException($"Failed to process refund. Please contact support. Error: {ex.Message}");
+                }
+
+                // 9. Update payment status in database (within existing transaction)
+                bookingPayment.Status = PaymentStatus.Cancelled;
+                await _unitOfWork.BookingPayments.UpdateAsync(bookingPayment);
+                await _unitOfWork.SaveChangesAsync();
+
+                _logger.LogInformation("Successfully processed refund for BookingId: {BookingId}, PaymentIntentId: {PaymentIntentId}, RefundId: {RefundId}",
+                    RefundPaymentDto.BookingId, RefundPaymentDto.PaymentIntentId, refund.Id);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while processing refund for BookingId: {BookingId}, PaymentIntentId: {PaymentIntentId}",
+                    RefundPaymentDto?.BookingId, RefundPaymentDto?.PaymentIntentId);
+                throw;
+            }
         }
     }
 }
