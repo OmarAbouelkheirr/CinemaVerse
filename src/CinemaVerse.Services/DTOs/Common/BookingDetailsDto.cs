@@ -3,7 +3,7 @@ using CinemaVerse.Services.DTOs.Booking.Helpers;
 using CinemaVerse.Services.DTOs.HallSeat.Responses;
 using CinemaVerse.Services.DTOs.Ticket.Response;
 
-namespace CinemaVerse.Services.DTOs.Booking.Responses
+namespace CinemaVerse.Services.DTOs.Common
 {
     public class BookingDetailsDto
     {

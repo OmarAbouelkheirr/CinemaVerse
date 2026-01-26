@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CinemaVerse.Data.Enums;
 
-namespace CinemaVerse.Services.DTOs.Booking.Responses
+namespace CinemaVerse.Services.DTOs.Common
 {
     public class BookingListDto
     {
