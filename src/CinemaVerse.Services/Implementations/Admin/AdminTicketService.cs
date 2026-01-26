@@ -24,6 +24,11 @@ namespace CinemaVerse.Services.Implementations.Admin
             _ticketService = ticketService;
         }
 
+        public Task<bool> CancelTicketAsync(int ticketId, string cancellationReason)
+        {
+            throw new NotImplementedException();
+        }
+
         //AI
         public async Task<PagedResultDto<AdminTicketDetailsDto>> GetAllTicketsAsync(AdminTicketFilterDto filter)
         {
@@ -147,36 +152,6 @@ namespace CinemaVerse.Services.Implementations.Admin
         }
 
 
-
-        //                    try
-        //            {
-        //                _logger.LogInformation("Getting Branch with branch Id {branchId}", branchId);
-        //                if (branchId <= 0)
-        //                {
-        //                    _logger.LogWarning("Invalid branch Id {branchId}", branchId);
-        //                    throw new ArgumentException("Invalid branch Id.");
-        //                }
-        //                var branch = await _unitOfWork.Branchs.GetByIdAsync(branchId);
-        //                if (branch == null)
-        //                {
-        //                    _logger.LogWarning("Branch with Id {branchId} not found", branchId);
-        //                    return null;
-        //                }
-        //var response = new BranchDetailsResponseDto
-        //{
-        //    BranchName = branch.BranchName,
-        //    BranchLocation = branch.BranchLocation
-        //};
-        //_logger.LogInformation("Branch with Id {branchId} retrieved successfully", branchId);
-        //return response;
-        //            }
-        //            catch (Exception ex)
-        //            {
-        //                _logger.LogError(ex, "Error getting branch with branch Id {branchId}", branchId);
-        //throw;
-        //            }
-
-
         public async Task<AdminTicketDetailsDto?> GetTicketByIdAsync(int ticketId)
         {
             try
@@ -234,6 +209,36 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogError(ex, "Error getting ticket with ID {TicketId}", ticketId);
                 throw;
             }
+        }
+
+        public Task<AdminTicketDetailsDto?> GetTicketByNumberAsync(string ticketNumber)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<AdminTicketDetailsDto?> GetTicketByQrTokenAsync(string qrToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<List<AdminTicketDetailsDto>> GetTicketsByBookingIdAsync(int bookingId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<List<AdminTicketDetailsDto>> GetTicketsByShowtimeIdAsync(int showtimeId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> MarkTicketAsUsedAsync(int ticketId, string? adminNote = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> MarkTicketAsUsedByQrTokenAsync(string qrToken, string? adminNote = null)
+        {
+            throw new NotImplementedException();
         }
     }
 }
