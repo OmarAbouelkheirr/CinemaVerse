@@ -4,10 +4,14 @@ using CinemaVerse.Data.Repositories;
 using CinemaVerse.Services.DTOs.Booking.Helpers;
 using CinemaVerse.Services.DTOs.Booking.Requests;
 using CinemaVerse.Services.DTOs.Booking.Responses;
+using CinemaVerse.Services.DTOs.Email.Requests;
 using CinemaVerse.Services.DTOs.HallSeat.Responses;
+using CinemaVerse.Services.DTOs.Payment.Requests;
 using CinemaVerse.Services.DTOs.Ticket.Response;
 using CinemaVerse.Services.Interfaces.User;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace CinemaVerse.Services.Implementations.User
 {
@@ -16,16 +20,157 @@ namespace CinemaVerse.Services.Implementations.User
         private readonly ILogger<BookingService> _logger;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ITicketService _ticketService;
-        
-        public BookingService(ILogger<BookingService> logger, IUnitOfWork unitOfWork, ITicketService ticketService)
+        private readonly IPaymentService _paymentService;
+        private readonly IEmailService _emailService;
+
+        public BookingService(ILogger<BookingService> logger, IUnitOfWork unitOfWork, ITicketService ticketService, IPaymentService paymentService, IEmailService emailService)
         {
             _logger = logger;
             _unitOfWork = unitOfWork;
             _ticketService = ticketService;
+            _paymentService = paymentService;
+            _emailService = emailService;
         }
-        public Task<bool> CancelUserBookingAsync(int userId, int bookingId)
+        public async Task<bool> CancelUserBookingAsync(int userId, int bookingId)
         {
-            throw new NotImplementedException();
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                _logger.LogInformation("Cancelling booking {BookingId} for UserId {UserId}", bookingId, userId);
+
+                if (bookingId <= 0)
+                {
+                    _logger.LogWarning("Invalid Argument BookingId must be greater than zero, UserId {UserId}", userId);
+                    throw new ArgumentException("BookingId must be greater than zero.", nameof(bookingId));
+                }
+
+                if (userId <= 0)
+                {
+                    _logger.LogWarning("Invalid Argument UserId must be greater than zero");
+                    throw new ArgumentException("UserId must be greater than zero.", nameof(userId));
+                }
+
+                var booking = await _unitOfWork.Bookings.GetBookingWithDetailsAsync(bookingId);
+
+                if (booking == null)
+                {
+                    _logger.LogWarning("BookingId {BookingId} not found", bookingId);
+                    throw new KeyNotFoundException($"Booking with ID {bookingId} not found.");
+                }
+
+                if (booking.UserId != userId)
+                {
+                    _logger.LogWarning("Unauthorized: BookingId {BookingId} does not belong to UserId {UserId}", bookingId, userId);
+                    throw new UnauthorizedAccessException($"You are not authorized to confirm booking {bookingId}.");
+                }
+
+                if (booking.Status == BookingStatus.Cancelled)
+                {
+                    _logger.LogWarning("BookingId {BookingId} is already cancelled for UserId {UserId}", bookingId, userId);
+                    throw new InvalidOperationException($"Booking {bookingId} is already cancelled.");
+                }
+
+                if (booking.Status == BookingStatus.Confirmed)
+                {
+                    // Check if showtime has already started
+                    if (booking.MovieShowTime?.ShowStartTime <= DateTime.UtcNow)
+                    {
+                        _logger.LogWarning("Cannot cancel BookingId {BookingId} - showtime has already started for UserId {UserId}", bookingId, userId);
+                        throw new InvalidOperationException($"Cannot cancel booking {bookingId} as the showtime has already started.");
+                    }
+                }
+
+                if (booking.Status != BookingStatus.Pending && booking.Status != BookingStatus.Confirmed)
+                {
+                    _logger.LogWarning("Cannot cancel BookingId {BookingId} with status {Status} for UserId {UserId}", bookingId, booking.Status, userId);
+                    throw new InvalidOperationException($"Cannot cancel booking {bookingId}. Only Pending or Confirmed bookings can be cancelled. Current status: {booking.Status}.");
+                }
+
+
+                // step number one - update status
+                await _unitOfWork.Bookings.UpdateBookingStatusAsync(bookingId, BookingStatus.Cancelled);
+                await _unitOfWork.SaveChangesAsync();
+
+                _logger.LogInformation("Successfully cancelled booking {BookingId} for UserId {UserId} (step number one - update status)", bookingId, userId);
+
+                var completedPayment = booking.BookingPayments?.FirstOrDefault(bp =>
+                    bp.Status == PaymentStatus.Completed &&
+                    !string.IsNullOrEmpty(bp.PaymentIntentId));
+
+                if (completedPayment != null)
+                {
+                    var refundRequest = new RefundPaymentRequestDto
+                    {
+                        PaymentIntentId = completedPayment.PaymentIntentId,
+                        BookingId = bookingId,
+                        RefundAmount = completedPayment.Amount
+                    };
+
+                    // step number two - refund payment
+                    // Note: RefundPaymentAsync does NOT manage its own transaction
+                    // It uses the existing transaction from CancelUserBookingAsync
+                    // If refund fails, the entire transaction will rollback
+                    try
+                    {
+                        var refundResult = await _paymentService.RefundPaymentAsync(refundRequest);
+
+                        if (!refundResult)
+                        {
+                            _logger.LogError("Failed to process refund for BookingId {BookingId} after cancellation for UserId {UserId}", bookingId, userId);
+                            throw new InvalidOperationException($"Failed to process refund for booking {bookingId}.");
+                        }
+
+                        _logger.LogInformation("Successfully processed refund for booking {BookingId} for UserId {UserId} (step number two - refund payment)", bookingId, userId);
+                    }
+                    catch (Exception refundEx)
+                    {
+                        // If refund fails, rollback the booking cancellation
+                        _logger.LogError(refundEx, "Refund failed for BookingId {BookingId}, rolling back booking cancellation", bookingId);
+                        throw; // This will trigger the catch block below to rollback
+                    }
+                }
+
+                await _unitOfWork.CommitTransactionAsync();
+
+
+                // step number three - send email (after refund succeeds)
+                // Email should be sent outside transaction or in a try-catch that doesn't rollback
+
+                if (booking.User.IsEmailConfirmed)
+                {
+                    try
+                    {
+                        var emailRequest = new BookingCancellationEmailDto
+                        {
+                            To = booking.User.Email,
+
+                            BookingId = booking.Id,
+                            FullName = booking.User.FullName,
+                            MovieName = booking.MovieShowTime?.Movie?.MovieName ?? string.Empty,
+                            ShowStartTime = booking.MovieShowTime?.ShowStartTime ?? DateTime.MinValue,
+                            RefundAmount = completedPayment?.Amount ?? 0,
+                            Currency = "EGP",
+                            CancellationReason = "User Requested Cancellation"
+                        };
+
+                        await _emailService.SendBookingCancellationEmailAsync(emailRequest);
+                        _logger.LogInformation("Cancellation email sent for BookingId {BookingId} (step number three - send email)", bookingId);
+                    }
+                    catch (Exception emailEx)
+                    {
+                        _logger.LogError(emailEx, "Failed to send cancellation email for BookingId {BookingId}, but cancellation was successful", bookingId);
+                    }
+                }
+
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                _logger.LogError(ex, "Error cancelling booking {BookingId} for UserId {UserId}", bookingId, userId);
+                throw;
+            }
         }
 
         public async Task<BookingDetailsDto> ConfirmBookingAsync(int userId, int bookingId)
