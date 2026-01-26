@@ -9,9 +9,7 @@ using CinemaVerse.Services.DTOs.HallSeat.Responses;
 using CinemaVerse.Services.DTOs.Payment.Requests;
 using CinemaVerse.Services.DTOs.Ticket.Response;
 using CinemaVerse.Services.Interfaces.User;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace CinemaVerse.Services.Implementations.User
 {
@@ -212,13 +210,13 @@ namespace CinemaVerse.Services.Implementations.User
                     if (booking.Status == BookingStatus.Confirmed)
                     {
                         _logger.LogInformation("Booking {BookingId} already confirmed, issuing tickets if needed", bookingId);
-                        
+
                         // Issue tickets if needed (idempotent operation)
                         var confirmedTickets = await _ticketService.IssueTicketsAsync(bookingId);
-                        
+
                         // Refresh booking to get latest data
                         booking = await _unitOfWork.Bookings.GetBookingWithDetailsAsync(bookingId);
-                        
+
                         return BuildBookingDetailsDto(booking, confirmedTickets);
                     }
                     else
@@ -273,7 +271,7 @@ namespace CinemaVerse.Services.Implementations.User
                     throw new ArgumentException("SeatIds cannot be null or empty.", nameof(request.SeatIds));
                 }
 
-                
+
                 var movieShowTime = await _unitOfWork.MovieShowTimes.GetMovieShowTimeWithDetailsAsync(request.MovieShowTimeId);
                 if (movieShowTime == null)
                 {
@@ -281,21 +279,21 @@ namespace CinemaVerse.Services.Implementations.User
                     throw new KeyNotFoundException($"MovieShowTime with ID {request.MovieShowTimeId} not found.");
                 }
 
-                
+
                 if (movieShowTime.Hall == null)
                 {
                     _logger.LogError("Hall not loaded for MovieShowTimeId {MovieShowTimeId}", request.MovieShowTimeId);
                     throw new InvalidOperationException($"Hall information is missing for MovieShowTime {request.MovieShowTimeId}.");
                 }
 
-                if (movieShowTime.Hall.HallStatus == HallStatus.Maintenance || 
+                if (movieShowTime.Hall.HallStatus == HallStatus.Maintenance ||
                     movieShowTime.Hall.HallStatus == HallStatus.Closed)
                 {
                     _logger.LogWarning("Hall {HallId} is not available at the moment", movieShowTime.Hall.Id);
                     throw new InvalidOperationException("The hall is not available for booking at the moment.");
                 }
 
-               
+
                 if (movieShowTime.ShowStartTime <= DateTime.UtcNow)
                 {
                     _logger.LogWarning("MovieShowTimeId {MovieShowTimeId} has already started, UserId {UserId}", request.MovieShowTimeId, userId);
@@ -306,7 +304,7 @@ namespace CinemaVerse.Services.Implementations.User
                 var invalidSeats = request.SeatIds.Where(seatId => !hallSeatIds.Contains(seatId)).ToList();
                 if (invalidSeats.Any())
                 {
-                    _logger.LogWarning("Invalid SeatIds {SeatIds} do not exist in Hall {HallId}, UserId {UserId}", 
+                    _logger.LogWarning("Invalid SeatIds {SeatIds} do not exist in Hall {HallId}, UserId {UserId}",
                         string.Join(", ", invalidSeats), movieShowTime.Hall.Id, userId);
                     throw new ArgumentException($"SeatIds {string.Join(", ", invalidSeats)} do not exist in this hall.");
                 }
@@ -314,7 +312,7 @@ namespace CinemaVerse.Services.Implementations.User
                 var duplicateSeats = request.SeatIds.GroupBy(s => s).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
                 if (duplicateSeats.Any())
                 {
-                    _logger.LogWarning("Duplicate SeatIds {SeatIds} in request, UserId {UserId}", 
+                    _logger.LogWarning("Duplicate SeatIds {SeatIds} in request, UserId {UserId}",
                         string.Join(", ", duplicateSeats), userId);
                     throw new ArgumentException($"Duplicate SeatIds found: {string.Join(", ", duplicateSeats)}");
                 }
@@ -325,7 +323,7 @@ namespace CinemaVerse.Services.Implementations.User
                     bool seatReserved = await _unitOfWork.MovieShowTimes.IsSeatReservedAsync(request.MovieShowTimeId, seatId);
                     if (seatReserved)
                     {
-                        _logger.LogWarning("SeatId {SeatId} is already reserved for MovieShowTimeId {MovieShowTimeId}, UserId {UserId}", 
+                        _logger.LogWarning("SeatId {SeatId} is already reserved for MovieShowTimeId {MovieShowTimeId}, UserId {UserId}",
                             seatId, request.MovieShowTimeId, userId);
                         throw new InvalidOperationException($"SeatId {seatId} is already reserved for the selected showtime.");
                     }
@@ -358,12 +356,12 @@ namespace CinemaVerse.Services.Implementations.User
                 await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.CommitTransactionAsync();
 
-                _logger.LogInformation("Successfully created booking {BookingId} for UserId {UserId} with {SeatCount} seats", 
+                _logger.LogInformation("Successfully created booking {BookingId} for UserId {UserId} with {SeatCount} seats",
                     booking.Id, userId, request.SeatIds.Count);
 
                 // Reload booking with all details for mapping
                 var bookingWithDetails = await _unitOfWork.Bookings.GetBookingWithDetailsAsync(booking.Id);
-                
+
                 // Build BookingDetailsDto (Tickets empty until payment confirmed)
                 return BuildBookingDetailsDto(bookingWithDetails ?? booking, new List<TicketDetailsDto>());
             }
@@ -417,17 +415,15 @@ namespace CinemaVerse.Services.Implementations.User
                     throw new UnauthorizedAccessException($"You are not authorized to access booking {bookingId}.");
                 }
 
-                // 5. Map tickets using the same pattern as IssueTicketsAsync
                 var ticketDtos = new List<TicketDetailsDto>();
                 if (booking.Tickets != null && booking.Tickets.Any())
                 {
                     foreach (var ticket in booking.Tickets)
                     {
-                        ticketDtos.Add(_ticketService.MapToDto(ticket));  
+                        ticketDtos.Add(_ticketService.MapToDto(ticket));
                     }
                 }
 
-                // 6. Use BuildBookingDetailsDto method
                 var bookingDetails = BuildBookingDetailsDto(booking, ticketDtos);
 
                 _logger.LogInformation("Successfully retrieved booking {BookingId} for UserId {UserId}", bookingId, userId);
