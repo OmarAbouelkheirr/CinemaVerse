@@ -5,7 +5,7 @@ namespace CinemaVerse.Services.DTOs.Email.Requests
     public class BookingCancellationEmailDto : BaseEmailDto
     {
         public int BookingId { get; set; }
-        public string UserName { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
         public string MovieName { get; set; } = string.Empty;
         public DateTime ShowStartTime { get; set; }
         public decimal RefundAmount { get; set; }
