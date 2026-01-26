@@ -375,33 +375,69 @@ namespace CinemaVerse.Services.Implementations.User
             }
         }
 
-        public Task<BookingDetailsDto> GetUserBookingByIdAsync(int userId, int bookingId)
+        public async Task<BookingDetailsDto> GetUserBookingByIdAsync(int userId, int bookingId)
         {
+            try
+            {
+                _logger.LogInformation("Getting BookingId {BookingId} for UserId {UserId}", bookingId, userId);
 
-            //await _unitOfWork.BeginTransactionAsync();
+                // 1. Validate inputs
+                if (userId <= 0)
+                {
+                    _logger.LogWarning("Invalid Argument UserId must be greater than zero");
+                    throw new ArgumentException("UserId must be greater than zero.", nameof(userId));
+                }
 
-            //try
-            //{
-            //    _logger.LogInformation("Getting BookingId {BookingId} for UserId {UserId}", bookingId, userId);
-            //    if (userId <= 0)
-            //    {
-            //        _logger.LogWarning("Invalid Argument UserId must be greater than zero");
-            //        throw new ArgumentException("UserId must be greater than zero.", nameof(userId));
-            //    }
+                if (bookingId <= 0)
+                {
+                    _logger.LogWarning("Invalid Argument BookingId must be greater than zero");
+                    throw new ArgumentException("BookingId must be greater than zero.", nameof(bookingId));
+                }
 
-            //    var user =  await _unitOfWork.Users.GetByIdAsync(userId);
+                // 2. Get user
+                var user = await _unitOfWork.Users.GetByIdAsync(userId);
+                if (user == null)
+                {
+                    _logger.LogWarning("User with ID {UserId} not found.", userId);
+                    throw new KeyNotFoundException($"User with ID {userId} not found.");
+                }
 
+                // 3. Get booking with details
+                var booking = await _unitOfWork.Bookings.GetBookingWithDetailsAsync(bookingId);
+                if (booking == null)
+                {
+                    _logger.LogWarning("BookingId {BookingId} not found", bookingId);
+                    throw new KeyNotFoundException($"Booking with ID {bookingId} not found.");
+                }
 
-            //    //throw new NotImplementedException();
+                // 4. Authorization check
+                if (booking.UserId != userId)
+                {
+                    _logger.LogWarning("Unauthorized: BookingId {BookingId} does not belong to UserId {UserId}", bookingId, userId);
+                    throw new UnauthorizedAccessException($"You are not authorized to access booking {bookingId}.");
+                }
 
-            //}
-            //catch (Exception ex)
-            //{
-            //    await _unitOfWork.RollbackTransactionAsync();
-            //    _logger.LogError(ex, "Error getting BookingId {BookingId} for UserId {UserId}", bookingId, userId);
-            //    throw;
-            //}
-            throw new NotImplementedException();
+                // 5. Map tickets using the same pattern as IssueTicketsAsync
+                var ticketDtos = new List<TicketDetailsDto>();
+                if (booking.Tickets != null && booking.Tickets.Any())
+                {
+                    foreach (var ticket in booking.Tickets)
+                    {
+                        ticketDtos.Add(_ticketService.MapToDto(ticket));  
+                    }
+                }
+
+                // 6. Use BuildBookingDetailsDto method
+                var bookingDetails = BuildBookingDetailsDto(booking, ticketDtos);
+
+                _logger.LogInformation("Successfully retrieved booking {BookingId} for UserId {UserId}", bookingId, userId);
+                return bookingDetails;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting BookingId {BookingId} for UserId {UserId}", bookingId, userId);
+                throw;
+            }
         }
 
         public async Task<List<BookingListDto>> GetUserBookingsAsync(int userId)
