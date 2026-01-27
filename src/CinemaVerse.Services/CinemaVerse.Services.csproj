@@ -28,8 +28,8 @@
 
   <ItemGroup>
     <Folder Include="DTOs\AdminFlow\AdminBooking\Response\" />
-    <Folder Include="DTOs\User Flow\Booking\Requests\" />
-    <Folder Include="DTOs\User Flow\Booking\Responses\" />
+    <Folder Include="DTOs\UserFlow\Booking\Requests\" />
+    <Folder Include="DTOs\UserFlow\Booking\Responses\" />
   </ItemGroup>
 
 </Project>
