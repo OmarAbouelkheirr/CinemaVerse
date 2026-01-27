@@ -29,6 +29,7 @@ builder.Services.AddScoped<IAdminHallService, AdminHallService>();
 builder.Services.AddScoped<IAdminMovieService, AdminMovieService>();
 builder.Services.AddScoped<IAdminPaymentService, AdminPaymentService>();
 builder.Services.AddScoped<IAdminSeatService, AdminSeatService>();
+builder.Services.AddScoped<IAdminShowtimeService, AdminShowtimeService>();
 builder.Services.AddScoped<IAdminTicketService, AdminTicketService>();
 
 

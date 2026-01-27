@@ -135,6 +135,39 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 throw;
             }
         }
-        
+
+        public async Task<Ticket?> GetTicketByQrTokenAsync(string QrToken)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(QrToken))
+                {
+                    _logger.LogWarning("Invalid QrToken provided: {QrToken}", QrToken);
+                    throw new ArgumentException("QrToken cannot be null or empty", nameof(QrToken));
+                }
+                
+                _logger.LogInformation("Getting ticket by QrToken {QrToken}", QrToken);
+
+                var Result = await _dbSet
+                .Include(t => t.Seat)
+                .Include(t => t.Booking)
+                .FirstOrDefaultAsync((t => t.QrToken == QrToken));
+
+                if (Result == null)
+                {
+                    _logger.LogWarning("Ticket with QrToken {QrToken} not found", QrToken);
+                }
+                else
+                {
+                    _logger.LogInformation("Ticket with QrToken {QrToken} retrieved successfully", QrToken);
+                }
+                return Result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting ticket by QrToken {QrToken}", QrToken);
+                throw;
+            }
+        }
     }
 }
