@@ -23,12 +23,66 @@ namespace CinemaVerse.Services.Implementations.Admin
             _ticketService = ticketService;
         }
 
-        public Task<bool> CancelTicketAsync(int ticketId, string cancellationReason)
+
+        public Task<bool> CancelTicketAsync(int ticketId)
         {
             throw new NotImplementedException();
         }
 
-        //AI
+        public async Task<TicketCheckResultDto> CheckTicketByQrTokenAsync(string qrToken)
+        {
+            try
+            {
+                _logger.LogInformation("Checking ticket by QR token {QrToken}", qrToken);
+
+                if (string.IsNullOrWhiteSpace(qrToken))
+                {
+                    _logger.LogWarning("QR token is null or empty");
+                    throw new ArgumentException("QR token cannot be null or empty.", nameof(qrToken));
+                }
+
+                var ticket = await _unitOfWork.Tickets.GetTicketByQrTokenAsync(qrToken);
+
+                if (ticket == null)
+                {
+                    _logger.LogWarning("Ticket with QR token {QrToken} not found", qrToken);
+
+                    return new TicketCheckResultDto
+                    {
+                        IsFound = false,
+                        Message = "Ticket not found."
+                    };
+                }
+
+                var baseDto = _ticketService.MapToDto(ticket);
+
+                var result = new TicketCheckResultDto
+                {
+                    TicketNumber = baseDto.TicketNumber,
+                    Status = baseDto.Status,
+                    MovieName = baseDto.MovieName,
+                    ShowStartTime = baseDto.ShowStartTime,
+                    MovieDuration = baseDto.MovieDuration,
+                    HallNumber = baseDto.HallNumber,
+                    HallType = baseDto.HallType,
+                    SeatLabel = baseDto.SeatLabel,
+                    Price = baseDto.Price,
+                    BranchName = baseDto.BranchName,
+                    IsFound = true,
+                    Message = "Ticket found."
+                };
+
+                _logger.LogInformation("Successfully checked ticket by QR token {QrToken}", qrToken);
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking ticket by QR token {QrToken}", qrToken);
+                throw;
+            }
+        }
+
         public async Task<PagedResultDto<AdminTicketListItemDto>> GetAllTicketsAsync(AdminTicketFilterDto filter)
         {
             try
@@ -113,6 +167,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                         Price = baseDto.Price,
                         BranchName = baseDto.BranchName,
                         UserEmail = ticket.Booking?.User?.Email ?? string.Empty,
+                        UserFullName = ticket.Booking?.User?.FullName ?? string.Empty,
                         BookingStatus = ticket.Booking?.Status ?? BookingStatus.Pending
                     };
 
@@ -136,7 +191,6 @@ namespace CinemaVerse.Services.Implementations.Admin
                 throw;
             }
         }
-
 
         public async Task<AdminTicketDetailsDto?> GetTicketByIdAsync(int ticketId)
         {
@@ -197,34 +251,258 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
-        public Task<AdminTicketDetailsDto?> GetTicketByNumberAsync(string ticketNumber)
+        public async Task<List<AdminTicketDetailsDto>> GetTicketsByBookingIdAsync(int bookingId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                _logger.LogInformation("Getting tickets for booking ID {BookingId}", bookingId);
+
+                if (bookingId <= 0)
+                {
+                    _logger.LogWarning("Invalid bookingId: {BookingId}", bookingId);
+                    throw new ArgumentException("Booking ID must be greater than zero.", nameof(bookingId));
+                }
+
+                var query = _unitOfWork.Tickets.GetQueryable()
+                    .Where(t => t.BookingId == bookingId);
+
+                var tickets = await _unitOfWork.Tickets.GetPagedAsync(
+                    query: query,
+                    orderBy: q => q.OrderBy(t => t.CreatedAt),
+                    skip: 0,
+                    take: int.MaxValue, // Get all tickets for this booking
+                    includeProperties: "Booking.User,Booking.MovieShowTime.Movie.MovieImages,Booking.MovieShowTime.Hall.Branch,Seat"
+                );
+
+                if (tickets == null || !tickets.Any())
+                {
+                    _logger.LogWarning("No tickets found for booking ID {BookingId}", bookingId);
+                    return new List<AdminTicketDetailsDto>();
+                }
+
+                var ticketDetails = new List<AdminTicketDetailsDto>();
+
+                foreach (var ticket in tickets)
+                {
+                    var baseDto = _ticketService.MapToDto(ticket);
+
+                    var adminDto = new AdminTicketDetailsDto
+                    {
+                        // Base properties from TicketDetailsDto
+                        TicketId = baseDto.TicketId,
+                        TicketNumber = baseDto.TicketNumber,
+                        MovieName = baseDto.MovieName,
+                        ShowStartTime = baseDto.ShowStartTime,
+                        MovieDuration = baseDto.MovieDuration,
+                        HallNumber = baseDto.HallNumber,
+                        HallType = baseDto.HallType,
+                        SeatLabel = baseDto.SeatLabel,
+                        MoviePoster = baseDto.MoviePoster,
+                        MovieAgeRating = baseDto.MovieAgeRating,
+                        QrToken = baseDto.QrToken,
+                        Status = baseDto.Status,
+                        Price = baseDto.Price,
+                        BranchName = baseDto.BranchName,
+
+                        // Admin-specific properties (with null checks)
+                        UserId = ticket.Booking?.UserId ?? 0,
+                        UserEmail = ticket.Booking?.User?.Email ?? string.Empty,
+                        FullName = ticket.Booking?.User?.FullName ?? string.Empty,
+                        BookingId = ticket.BookingId,
+                        BookingStatus = ticket.Booking?.Status ?? BookingStatus.Pending,
+                        UsedAt = ticket.Status == TicketStatus.Used ? ticket.CreatedAt : null
+                    };
+
+                    ticketDetails.Add(adminDto);
+                }
+
+                _logger.LogInformation("Successfully retrieved {Count} tickets for booking ID {BookingId}",
+                    ticketDetails.Count, bookingId);
+
+                return ticketDetails;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting tickets for booking ID {BookingId}", bookingId);
+                throw;
+            }
         }
 
-        public Task<AdminTicketDetailsDto?> GetTicketByQrTokenAsync(string qrToken)
+        public async Task<List<AdminTicketDetailsDto>> GetTicketsByShowtimeIdAsync(int showtimeId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                _logger.LogInformation("Getting tickets for showtime ID {ShowtimeId}", showtimeId);
+
+                if (showtimeId <= 0)
+                {
+                    _logger.LogWarning("Invalid showtimeId: {ShowtimeId}", showtimeId);
+                    throw new ArgumentException("Showtime ID must be greater than zero.", nameof(showtimeId));
+                }
+
+                var query = _unitOfWork.Tickets.GetQueryable()
+                    .Where(t => t.Booking.MovieShowTimeId == showtimeId);
+
+                var tickets = await _unitOfWork.Tickets.GetPagedAsync(
+                    query: query,
+                    orderBy: q => q.OrderBy(t => t.CreatedAt),
+                    skip: 0,
+                    take: int.MaxValue, // Get all tickets for this showtime
+                    includeProperties: "Booking.User,Booking.MovieShowTime.Movie.MovieImages,Booking.MovieShowTime.Hall.Branch,Seat"
+                );
+
+                if (tickets == null || !tickets.Any())
+                {
+                    _logger.LogWarning("No tickets found for showtime ID {ShowtimeId}", showtimeId);
+                    return new List<AdminTicketDetailsDto>();
+                }
+
+                var ticketDetails = new List<AdminTicketDetailsDto>();
+
+                foreach (var ticket in tickets)
+                {
+                    var baseDto = _ticketService.MapToDto(ticket);
+
+                    var adminDto = new AdminTicketDetailsDto
+                    {
+                        // Base properties from TicketDetailsDto
+                        TicketId = baseDto.TicketId,
+                        TicketNumber = baseDto.TicketNumber,
+                        MovieName = baseDto.MovieName,
+                        ShowStartTime = baseDto.ShowStartTime,
+                        MovieDuration = baseDto.MovieDuration,
+                        HallNumber = baseDto.HallNumber,
+                        HallType = baseDto.HallType,
+                        SeatLabel = baseDto.SeatLabel,
+                        MoviePoster = baseDto.MoviePoster,
+                        MovieAgeRating = baseDto.MovieAgeRating,
+                        QrToken = baseDto.QrToken,
+                        Status = baseDto.Status,
+                        Price = baseDto.Price,
+                        BranchName = baseDto.BranchName,
+
+                        // Admin-specific properties (with null checks)
+                        UserId = ticket.Booking?.UserId ?? 0,
+                        UserEmail = ticket.Booking?.User?.Email ?? string.Empty,
+                        FullName = ticket.Booking?.User?.FullName ?? string.Empty,
+                        BookingId = ticket.BookingId,
+                        BookingStatus = ticket.Booking?.Status ?? BookingStatus.Pending,
+                        UsedAt = ticket.Status == TicketStatus.Used ? ticket.CreatedAt : null
+                    };
+
+                    ticketDetails.Add(adminDto);
+                }
+
+                _logger.LogInformation("Successfully retrieved {Count} tickets for showtime ID {ShowtimeId}",
+                    ticketDetails.Count, showtimeId);
+
+                return ticketDetails;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting tickets for showtime ID {ShowtimeId}", showtimeId);
+                throw;
+            }
         }
 
-        public Task<List<AdminTicketDetailsDto>> GetTicketsByBookingIdAsync(int bookingId)
+        public async Task<TicketCheckInResultDto> MarkTicketAsUsedAsync(string qrToken)
         {
-            throw new NotImplementedException();
+            try
+            {
+                _logger.LogInformation("Marking ticket as used by QR token {QrToken}", qrToken);
+
+                if (string.IsNullOrWhiteSpace(qrToken))
+                {
+                    _logger.LogWarning("QR token is null or empty");
+                    throw new ArgumentException("QR token cannot be null or empty.", nameof(qrToken));
+                }
+
+                var ticket = await _unitOfWork.Tickets.GetTicketByQrTokenAsync(qrToken);
+
+                if (ticket == null)
+                {
+                    _logger.LogWarning("Ticket with QR token {QrToken} not found", qrToken);
+
+                    return new TicketCheckInResultDto
+                    {
+                        Success = false,
+                        Result = TicketCheckInResult.NotFound,
+                        Message = "Ticket not found."
+                    };
+                }
+
+                if (ticket.Status == TicketStatus.Used)
+                {
+                    _logger.LogWarning("Ticket with QR token {QrToken} is already used", qrToken);
+
+                    return new TicketCheckInResultDto
+                    {
+                        Success = false,
+                        Result = TicketCheckInResult.AlreadyUsed,
+                        Message = "Ticket has already been used."
+                    };
+                }
+
+                if (ticket.Status == TicketStatus.Cancelled)
+                {
+                    _logger.LogWarning("Ticket with QR token {QrToken} is cancelled", qrToken);
+
+                    return new TicketCheckInResultDto
+                    {
+                        Success = false,
+                        Result = TicketCheckInResult.Cancelled,
+                        Message = "Ticket is cancelled."
+                    };
+                }
+
+                if (ticket.Status != TicketStatus.Active)
+                {
+                    _logger.LogWarning(
+                        "Ticket with QR token {QrToken} is in invalid status {Status} for check-in",
+                        qrToken, ticket.Status);
+
+                    return new TicketCheckInResultDto
+                    {
+                        Success = false,
+                        Result = TicketCheckInResult.InvalidStatus,
+                        Message = $"Ticket is in invalid status: {ticket.Status}."
+                    };
+                }
+
+                _logger.LogInformation("Updating ticket with QR token {QrToken} status to Used", qrToken);
+
+                ticket.Status = TicketStatus.Used;
+                await _unitOfWork.Tickets.UpdateAsync(ticket);
+                var rows = await _unitOfWork.SaveChangesAsync();
+
+                if (rows > 0)
+                {
+                    _logger.LogInformation("Ticket with QR token {QrToken} marked as used successfully", qrToken);
+
+                    return new TicketCheckInResultDto
+                    {
+                        Success = true,
+                        Result = TicketCheckInResult.Success,
+                        Message = "Ticket marked as used successfully."
+                    };
+                }
+
+                _logger.LogWarning("SaveChanges affected 0 rows while marking ticket with QR token {QrToken} as used", qrToken);
+
+                return new TicketCheckInResultDto
+                {
+                    Success = false,
+                    Result = TicketCheckInResult.Error,
+                    Message = "Failed to update ticket status."
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error marking ticket as used by QR token {QrToken}", qrToken);
+
+                throw;
+            }
         }
 
-        public Task<List<AdminTicketDetailsDto>> GetTicketsByShowtimeIdAsync(int showtimeId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> MarkTicketAsUsedAsync(int ticketId, string? adminNote = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> MarkTicketAsUsedByQrTokenAsync(string qrToken, string? adminNote = null)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

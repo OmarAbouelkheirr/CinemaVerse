@@ -17,6 +17,7 @@ namespace CinemaVerse.Services.DTOs.AdminFlow.AdminTicket.Response
         public string BranchName { get; set; } = string.Empty;
 
         public string UserEmail { get; set; } = string.Empty;
+        public string UserFullName { get; set; } = string.Empty;
         public BookingStatus BookingStatus { get; set; }
     }
 }
