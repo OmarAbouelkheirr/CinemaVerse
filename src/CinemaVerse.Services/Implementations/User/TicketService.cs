@@ -1,10 +1,10 @@
+using System.Security.Cryptography;
 using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
 using CinemaVerse.Services.DTOs.Ticket.Response;
 using CinemaVerse.Services.Interfaces.User;
 using Microsoft.Extensions.Logging;
-using System.Security.Cryptography;
 
 
 namespace CinemaVerse.Services.Implementations.User

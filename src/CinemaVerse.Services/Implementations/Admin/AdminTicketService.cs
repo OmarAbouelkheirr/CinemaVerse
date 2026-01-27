@@ -1,7 +1,6 @@
-﻿using CinemaVerse.Data.Enums;
+using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
-using CinemaVerse.Services.DTOs.AdminFlow.AdminBranch.Response;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminTicket.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminTicket.Response;
 using CinemaVerse.Services.DTOs.Common;
@@ -30,7 +29,7 @@ namespace CinemaVerse.Services.Implementations.Admin
         }
 
         //AI
-        public async Task<PagedResultDto<AdminTicketDetailsDto>> GetAllTicketsAsync(AdminTicketFilterDto filter)
+        public async Task<PagedResultDto<AdminTicketListItemDto>> GetAllTicketsAsync(AdminTicketFilterDto filter)
         {
             try
             {
@@ -99,35 +98,22 @@ namespace CinemaVerse.Services.Implementations.Admin
                     includeProperties: "Booking.User,Booking.MovieShowTime.Movie.MovieImages,Booking.MovieShowTime.Hall.Branch,Seat"
                 );
 
-                var ticketDtos = new List<AdminTicketDetailsDto>();
+                var ticketDtos = new List<AdminTicketListItemDto>();
                 foreach (var ticket in tickets)
                 {
                     var baseDto = _ticketService.MapToDto(ticket);
 
-                    var adminDto = new AdminTicketDetailsDto
+                    var adminDto = new AdminTicketListItemDto
                     {
-                        // Base properties from TicketDetailsDto
                         TicketId = baseDto.TicketId,
                         TicketNumber = baseDto.TicketNumber,
                         MovieName = baseDto.MovieName,
                         ShowStartTime = baseDto.ShowStartTime,
-                        MovieDuration = baseDto.MovieDuration,
-                        HallNumber = baseDto.HallNumber,
-                        HallType = baseDto.HallType,
-                        SeatLabel = baseDto.SeatLabel,
-                        MoviePoster = baseDto.MoviePoster,
-                        MovieAgeRating = baseDto.MovieAgeRating,
-                        QrToken = baseDto.QrToken,
                         Status = baseDto.Status,
                         Price = baseDto.Price,
                         BranchName = baseDto.BranchName,
-
-                        // Admin-specific properties
-                        UserId = ticket.Booking?.UserId ?? 0,
                         UserEmail = ticket.Booking?.User?.Email ?? string.Empty,
-                        BookingId = ticket.BookingId,
-                        BookingStatus = ticket.Booking?.Status ?? BookingStatus.Pending,
-                        UsedAt = ticket.Status == TicketStatus.Used ? ticket.CreatedAt : null,
+                        BookingStatus = ticket.Booking?.Status ?? BookingStatus.Pending
                     };
 
                     ticketDtos.Add(adminDto);
@@ -136,7 +122,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogInformation("Retrieved {Count} tickets out of {Total} total",
                     ticketDtos.Count, totalCount);
 
-                return new PagedResultDto<AdminTicketDetailsDto>
+                return new PagedResultDto<AdminTicketListItemDto>
                 {
                     Items = ticketDtos,
                     Page = filter.PageNumber,
