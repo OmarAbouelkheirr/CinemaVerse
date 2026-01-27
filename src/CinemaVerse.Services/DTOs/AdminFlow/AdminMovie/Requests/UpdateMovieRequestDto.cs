@@ -1,7 +1,7 @@
 using CinemaVerse.Data.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace CinemaVerse.Services.DTOs.Admin_Flow.AdminMovie.Requests
+namespace CinemaVerse.Services.DTOs.AdminFlow.AdminMovie.Requests
 {
     public class UpdateMovieRequestDto
     {

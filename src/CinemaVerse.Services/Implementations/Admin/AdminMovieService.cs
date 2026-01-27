@@ -1,6 +1,5 @@
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
-using CinemaVerse.Services.DTOs.Admin_Flow.AdminMovie.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminMovie.Requests;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.DTOs.Movie.Flow;
@@ -320,32 +319,26 @@ namespace CinemaVerse.Services.Implementations.Admin
                 // Get total count before pagination
                 var totalCount = await _unitOfWork.Movies.CountAsync(query);
 
-                // ✅ طريقة مبسطة جداً للترتيب
+                // ✅ Build orderBy function
                 string sortBy = filter.SortBy?.ToLower() ?? "releasedate";
                 string sortOrder = filter.SortOrder?.ToLower() ?? "desc";
 
-                if (sortBy == "moviename")
+                Func<IQueryable<Movie>, IOrderedQueryable<Movie>> orderByFunc = sortBy switch
                 {
-                    query = sortOrder == "asc"
-                        ? query.OrderBy(m => m.MovieName)
-                        : query.OrderByDescending(m => m.MovieName);
-                }
-                else if (sortBy == "rating")
-                {
-                    query = sortOrder == "asc"
-                        ? query.OrderBy(m => m.MovieRating)
-                        : query.OrderByDescending(m => m.MovieRating);
-                }
-                else // releasedate هو الترتيب الافتراضي
-                {
-                    query = sortOrder == "asc"
-                        ? query.OrderBy(m => m.ReleaseDate)
-                        : query.OrderByDescending(m => m.ReleaseDate);
-                }
+                    "moviename" => sortOrder == "asc"
+                        ? q => q.OrderBy(m => m.MovieName)
+                        : q => q.OrderByDescending(m => m.MovieName),
+                    "rating" => sortOrder == "asc"
+                        ? q => q.OrderBy(m => m.MovieRating)
+                        : q => q.OrderByDescending(m => m.MovieRating),
+                    _ => sortOrder == "asc"
+                        ? q => q.OrderBy(m => m.ReleaseDate)
+                        : q => q.OrderByDescending(m => m.ReleaseDate)
+                };
 
                 var movies = await _unitOfWork.Movies.GetPagedAsync(
                     query: query,
-                    orderBy: null,  
+                    orderBy: orderByFunc,
                     skip: (filter.Page - 1) * filter.PageSize,
                     take: filter.PageSize,
                     includeProperties: "MovieImages,MovieGenres.Genre,MovieShowTimes.Hall.Branch"

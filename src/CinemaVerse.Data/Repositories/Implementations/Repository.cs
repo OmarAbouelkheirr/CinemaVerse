@@ -247,7 +247,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
 
         public async Task<List<T>> GetPagedAsync(
             IQueryable<T> query,
-            Func<IQueryable<T>, IOrderedQueryable<T>> orderBy,
+            Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy,
             int skip,
             int take,
             string? includeProperties = null)
@@ -265,8 +265,8 @@ namespace CinemaVerse.Data.Repositories.Implementations
                     }
                 }
 
-                // Apply ordering
-                var orderedQuery = orderBy(query);
+                // Apply ordering if orderBy is provided
+                IQueryable<T> orderedQuery = orderBy != null ? orderBy(query) : query;
 
                 // Apply pagination
                 var results = await orderedQuery

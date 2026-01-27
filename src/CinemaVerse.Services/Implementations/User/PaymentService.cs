@@ -6,6 +6,7 @@ using CinemaVerse.Services.DTOs.Payment.Requests;
 using CinemaVerse.Services.DTOs.Payment.Response;
 using CinemaVerse.Services.Interfaces.User;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stripe;
 
@@ -17,16 +18,16 @@ namespace CinemaVerse.Services.Implementations.User
         private readonly IConfiguration _configuration;
         private readonly IUnitOfWork _unitOfWork;
         private readonly string _stripeSecretKey;
-        private readonly IBookingService _bookingService;
+        private readonly IServiceProvider _serviceProvider;
 
-        public PaymentService(ILogger<PaymentService> logger, IConfiguration configuration, IUnitOfWork unitOfWork ,IBookingService bookingService)
+        public PaymentService(ILogger<PaymentService> logger, IConfiguration configuration, IUnitOfWork unitOfWork, IServiceProvider serviceProvider)
         {
             _logger = logger;
             _configuration = configuration;
             _unitOfWork = unitOfWork;
             _stripeSecretKey = _configuration["Stripe:SecretKey"] ?? throw new InvalidOperationException("Stripe API key is not configured in appsettings.json");
             StripeConfiguration.ApiKey = _stripeSecretKey;
-            _bookingService = bookingService;
+            _serviceProvider = serviceProvider;
         }
         public async Task<bool> ConfirmPaymentAsync(int userId, ConfirmPaymentRequestDto ConfrimPaymentDto)
         {
@@ -125,7 +126,10 @@ namespace CinemaVerse.Services.Implementations.User
                 await _unitOfWork.BookingPayments.UpdateAsync(existingPayment);
                 await _unitOfWork.CommitTransactionAsync();
                 _logger.LogInformation("Payment confirmed and booking updated. BookingId: {BookingId} by User: {UserId}", ConfrimPaymentDto.BookingId, userId);
-                await _bookingService.ConfirmBookingAsync(userId,booking.Id);
+                
+                // ✅ Resolve BookingService from ServiceProvider to avoid circular dependency
+                var bookingService = _serviceProvider.GetRequiredService<IBookingService>();
+                await bookingService.ConfirmBookingAsync(userId, booking.Id);
 
                 return true;
             }

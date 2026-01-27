@@ -18,7 +18,7 @@ namespace CinemaVerse.Data.Repositories.Interfaces
         Task<int> CountAsync(IQueryable<T> query);
         Task<List<T>> GetPagedAsync(
             IQueryable<T> query,
-            Func<IQueryable<T>, IOrderedQueryable<T>> orderBy,
+            Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy,
             int skip,
             int take,
             string? includeProperties = null

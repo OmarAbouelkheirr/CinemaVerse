@@ -169,9 +169,8 @@ namespace CinemaVerse.Services.Implementations.Admin
                     query: query,
                     orderBy: null,
                     skip: (filter.Page - 1) * filter.PageSize,
-                    take: filter.PageSize,
-                    includeProperties: "Halls"
-                );
+                    take: filter.PageSize
+                    );
                 var branchDtos = branchs.Select(b => new BranchDetailsResponseDto
                 {
                     BranchName = b.BranchName,
