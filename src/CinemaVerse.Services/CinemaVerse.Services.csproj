@@ -26,6 +26,12 @@
     <ProjectReference Include="..\CinemaVerse.Data\CinemaVerse.Data.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DTOs\AdminFlow\AdminBooking\Response\" />
+    <Folder Include="DTOs\User Flow\Booking\Requests\" />
+    <Folder Include="DTOs\User Flow\Booking\Responses\" />
+  </ItemGroup>
+
 </Project>
 
 
