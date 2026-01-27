@@ -165,9 +165,10 @@ namespace CinemaVerse.Services.Implementations.Admin
                 }
 
                 // Validate Movie if being changed
+                Movie? movie = null;
                 if (request.MovieId.HasValue && request.MovieId.Value != showtime.MovieId)
                 {
-                    var movie = await _unitOfWork.Movies.GetByIdAsync(request.MovieId.Value);
+                    movie = await _unitOfWork.Movies.GetByIdAsync(request.MovieId.Value);
                     if (movie == null)
                     {
                         _logger.LogWarning("Movie with ID {MovieId} not found", request.MovieId.Value);
@@ -217,11 +218,15 @@ namespace CinemaVerse.Services.Implementations.Admin
                 }
 
                 // Calculate ShowEndTime based on MovieDuration
-                var movie = await _unitOfWork.Movies.GetByIdAsync(showtime.MovieId);
+                // Use movie from validation if available, otherwise load it
                 if (movie == null)
                 {
-                    _logger.LogWarning("Movie with ID {MovieId} not found for showtime {ShowtimeId}", showtime.MovieId, showtimeId);
-                    throw new KeyNotFoundException($"Movie with ID {showtime.MovieId} not found.");
+                    movie = await _unitOfWork.Movies.GetByIdAsync(showtime.MovieId);
+                    if (movie == null)
+                    {
+                        _logger.LogWarning("Movie with ID {MovieId} not found for showtime {ShowtimeId}", showtime.MovieId, showtimeId);
+                        throw new KeyNotFoundException($"Movie with ID {showtime.MovieId} not found.");
+                    }
                 }
 
                 var newShowEndTime = newShowStartTime.Add(movie.MovieDuration);
