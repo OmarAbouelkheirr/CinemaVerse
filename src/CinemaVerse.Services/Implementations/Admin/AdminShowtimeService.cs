@@ -167,17 +167,17 @@ namespace CinemaVerse.Services.Implementations.Admin
                 // Validate Movie if being changed
                 if (request.MovieId.HasValue && request.MovieId.Value != showtime.MovieId)
                 {
-                    var movie = await _unitOfWork.Movies.GetByIdAsync(request.MovieId.Value);
-                    if (movie == null)
+                    var newMovie = await _unitOfWork.Movies.GetByIdAsync(request.MovieId.Value);
+                    if (newMovie == null)
                     {
                         _logger.LogWarning("Movie with ID {MovieId} not found", request.MovieId.Value);
                         throw new KeyNotFoundException($"Movie with ID {request.MovieId.Value} not found.");
                     }
 
-                    if (movie.Status != MovieStatus.Active)
+                    if (newMovie.Status != MovieStatus.Active)
                     {
-                        _logger.LogWarning("Movie with ID {MovieId} is not Active (Status: {Status})", request.MovieId.Value, movie.Status);
-                        throw new InvalidOperationException($"Cannot update showtime to movie with status {movie.Status}. Movie must be Active.");
+                        _logger.LogWarning("Movie with ID {MovieId} is not Active (Status: {Status})", request.MovieId.Value, newMovie.Status);
+                        throw new InvalidOperationException($"Cannot update showtime to movie with status {newMovie.Status}. Movie must be Active.");
                     }
 
                     showtime.MovieId = request.MovieId.Value;
