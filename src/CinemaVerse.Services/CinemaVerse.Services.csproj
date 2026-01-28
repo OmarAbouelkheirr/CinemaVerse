@@ -28,6 +28,8 @@
 
   <ItemGroup>
     <Folder Include="DTOs\AdminFlow\AdminBooking\Response\" />
+    <Folder Include="DTOs\AdminFlow\AdminShowtime\Response\" />
+    <Folder Include="DTOs\AdminFlow\AdminShowtime\Requests\" />
     <Folder Include="DTOs\User Flow\Booking\Requests\" />
     <Folder Include="DTOs\User Flow\Booking\Responses\" />
   </ItemGroup>
