@@ -273,7 +273,7 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
-        public async Task DeleteShowtimeAsync(int showtimeId)
+        public async Task<bool> DeleteShowtimeAsync(int showtimeId)
         {
             try
             {
@@ -301,9 +301,16 @@ namespace CinemaVerse.Services.Implementations.Admin
                 }
 
                 await _unitOfWork.MovieShowTimes.DeleteAsync(showtime);
-                await _unitOfWork.SaveChangesAsync();
+                var rowsAffected = await _unitOfWork.SaveChangesAsync();
 
-                _logger.LogInformation("Successfully deleted showtime with ID: {ShowtimeId}", showtimeId);
+                if (rowsAffected > 0)
+                {
+                    _logger.LogInformation("Successfully deleted showtime with ID: {ShowtimeId}", showtimeId);
+                    return true;
+                }
+
+                _logger.LogWarning("Delete operation affected 0 rows for showtime ID: {ShowtimeId}", showtimeId);
+                return false;
             }
             catch (Exception ex)
             {
