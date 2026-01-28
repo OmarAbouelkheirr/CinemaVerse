@@ -5,6 +5,7 @@ using CinemaVerse.Services.DTOs.Movie.Requests;
 using CinemaVerse.Services.DTOs.Movie.Response;
 using CinemaVerse.Services.Interfaces.User;
 using Microsoft.Extensions.Logging;
+using CinemaVerse.Data.Enums;
 
 namespace CinemaVerse.Services.Implementations.User
 {
@@ -19,25 +20,24 @@ namespace CinemaVerse.Services.Implementations.User
             _logger = logger;
         }
 
-        public async Task<BrowseMoviesResponseDto> BrowseMoviesAsync(BrowseMoviesRequestDto browseDto)
+        public async  Task<BrowseMoviesResponseDto> BrowseMoviesAsync(BrowseMoviesFilterDto browseDto)
         {
             try
             {
                 _logger.LogInformation("Browsing movies with parameters: {@BrowseDto}", browseDto);
 
-                // Validate pagination
-                if (browseDto.Page <= 0 || browseDto.PageSize <= 0)
+                if (browseDto == null)
                 {
-                    _logger.LogWarning("Invalid pagination parameters: Page={Page}, PageSize={PageSize}", browseDto.Page, browseDto.PageSize);
-                    throw new ArgumentException("Page and PageSize must be greater than zero.");
+                    _logger.LogWarning("BrowseMoviesRequestDto is null");
+                    throw new ArgumentNullException(nameof(browseDto));
                 }
 
-                // Validate rating
-                if (browseDto.Rating.HasValue && (browseDto.Rating < 0 || browseDto.Rating > 10))
-                {
-                    _logger.LogWarning("Invalid rating filter: Rating={Rating}", browseDto.Rating);
-                    throw new ArgumentOutOfRangeException(nameof(browseDto.Rating), "Rating must be between 0 and 10.");
-                }
+                // Validate pagination (consistent with Admin services)
+                if (browseDto.Page <= 0)
+                    browseDto.Page = 1;
+
+                if (browseDto.PageSize <= 0 || browseDto.PageSize > 100)
+                    browseDto.PageSize = 20;
 
                 // Validate genre existence (optional optimization: remove if genre filter is common)
                 if (browseDto.GenreId.HasValue)
@@ -51,13 +51,15 @@ namespace CinemaVerse.Services.Implementations.User
                 }
 
                 // Build query at database level (do NOT materialize yet)
-                var query = _unitOfWork.Movies.GetQueryable(); // You need to add this method to IRepository
+                var query = _unitOfWork.Movies.GetQueryable();
 
                 // Apply filters before materialization
-                if (!string.IsNullOrWhiteSpace(browseDto.Query))
+                if (!string.IsNullOrWhiteSpace(browseDto.SearchTerm))
                 {
-                    query = query.Where(m => m.MovieName.Contains(browseDto.Query));
-
+                    var searchLower = browseDto.SearchTerm.ToLower();
+                    query = query.Where(m =>
+                        m.MovieName.ToLower().Contains(searchLower) ||
+                        m.MovieDescription.ToLower().Contains(searchLower));
                 }
 
                 if (browseDto.GenreId.HasValue)
@@ -65,14 +67,25 @@ namespace CinemaVerse.Services.Implementations.User
                     query = query.Where(m => m.MovieGenres.Any(g => g.GenreID == browseDto.GenreId.Value));
                 }
 
-                if (browseDto.Rating.HasValue)
+                if (browseDto.AgeRating.HasValue)
                 {
-                    query = query.Where(m => m.MovieRating >= (decimal)browseDto.Rating.Value);
+                    query = query.Where(m => m.MovieAgeRating == browseDto.AgeRating.Value);
                 }
 
-                if (browseDto.Date.HasValue)
+                if (browseDto.ReleaseDateFrom.HasValue)
                 {
-                    query = query.Where(m => m.ReleaseDate <= browseDto.Date.Value);
+                    query = query.Where(m => m.ReleaseDate >= browseDto.ReleaseDateFrom.Value);
+                }
+
+                if (browseDto.ReleaseDateTo.HasValue)
+                {
+                    query = query.Where(m => m.ReleaseDate <= browseDto.ReleaseDateTo.Value);
+                }
+
+                // Status filter (optional) - if not provided, return all statuses
+                if (browseDto.Status.HasValue)
+                {
+                    query = query.Where(m => m.Status == browseDto.Status.Value);
                 }
 
                 // Get total count before pagination
@@ -91,9 +104,25 @@ namespace CinemaVerse.Services.Implementations.User
                 }
 
                 // Apply ordering and pagination at database level
+                string sortBy = browseDto.SortBy?.ToLower() ?? "releasedate";
+                string sortOrder = browseDto.SortOrder?.ToLower() ?? "desc";
+
+                Func<IQueryable<Movie>, IOrderedQueryable<Movie>> orderByFunc = sortBy switch
+                {
+                    "moviename" => sortOrder == "asc"
+                        ? q => q.OrderBy(m => m.MovieName)
+                        : q => q.OrderByDescending(m => m.MovieName),
+                    "rating" => sortOrder == "asc"
+                        ? q => q.OrderBy(m => m.MovieRating)
+                        : q => q.OrderByDescending(m => m.MovieRating),
+                    _ => sortOrder == "asc"
+                        ? q => q.OrderBy(m => m.ReleaseDate)
+                        : q => q.OrderByDescending(m => m.ReleaseDate),
+                };
+
                 var pagedMovies = await _unitOfWork.Movies.GetPagedAsync(
                     query: query,
-                    orderBy: q => q.OrderByDescending(m => m.ReleaseDate),
+                    orderBy: orderByFunc,
                     skip: (browseDto.Page - 1) * browseDto.PageSize,
                     take: browseDto.PageSize,
                     includeProperties: "MovieImages,MovieGenres.Genre" // Eager load navigation properties
@@ -169,11 +198,12 @@ namespace CinemaVerse.Services.Implementations.User
                         {
                             MovieShowTimeId = ms.Id,
                             ShowStartTime = ms.ShowStartTime,
-                            ShowEndTime = ms.ShowEndTime,
                             HallId = ms.HallId,
                             HallNumber = ms.Hall.HallNumber,
+                            HallType = ms.Hall.HallType,
                             BranchId = ms.Hall.BranchId,
                             BranchName = ms.Hall.Branch.BranchName,
+                            BranchLocation = ms.Hall.Branch.BranchLocation,
                             TicketPrice = ms.Price
                         }).ToList()
                 };
@@ -199,6 +229,7 @@ namespace CinemaVerse.Services.Implementations.User
                 MovieId = movie.Id,
                 MovieName = movie.MovieName,
                 MoviePosterImageUrl = movie.MovieImages.FirstOrDefault()?.ImageUrl,
+                MovieDuration = movie.MovieDuration.ToString(@"hh\:mm"),
                 Genres = movie.MovieGenres.Select(mg => mg.Genre.GenreName).ToList(),
                 MovieRating = movie.MovieRating
             };

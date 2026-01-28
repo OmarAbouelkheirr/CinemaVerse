@@ -375,11 +375,12 @@ namespace CinemaVerse.Services.Implementations.Admin
                         {
                             MovieShowTimeId = ms.Id,
                             ShowStartTime = ms.ShowStartTime,
-                            ShowEndTime = ms.ShowEndTime,
                             HallId = ms.HallId,
                             HallNumber = ms.Hall.HallNumber,
+                            HallType = ms.Hall.HallType,
                             BranchId = ms.Hall.BranchId,
                             BranchName = ms.Hall.Branch.BranchName,
+                            BranchLocation = ms.Hall.Branch.BranchLocation,
                             TicketPrice = ms.Price
                         }).ToList()
                 }).ToList();
@@ -449,11 +450,12 @@ namespace CinemaVerse.Services.Implementations.Admin
                         {
                             MovieShowTimeId = ms.Id,
                             ShowStartTime = ms.ShowStartTime,
-                            ShowEndTime = ms.ShowEndTime,
                             HallId = ms.HallId,
                             HallNumber = ms.Hall.HallNumber,
+                            HallType = ms.Hall.HallType,
                             BranchId = ms.Hall.BranchId,
                             BranchName = ms.Hall.Branch.BranchName,
+                            BranchLocation = ms.Hall.Branch.BranchLocation,
                             TicketPrice = ms.Price
                         }).ToList()
                 };

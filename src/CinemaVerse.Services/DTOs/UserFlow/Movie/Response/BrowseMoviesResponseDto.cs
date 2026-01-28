@@ -1,10 +1,4 @@
-﻿using CinemaVerse.Data.Models;
-using CinemaVerse.Services.DTOs.Movie.Flow;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using CinemaVerse.Services.DTOs.Movie.Flow;
 
 namespace CinemaVerse.Services.DTOs.Movie.Response
 {

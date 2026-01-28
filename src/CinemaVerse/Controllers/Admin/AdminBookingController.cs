@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaVerse.API.Controllers.Admin
 {
-    [Route("api/admin/booking")]
+    [Route("api/admin/bookings")]
     [ApiController]
     public class AdminBookingController : ControllerBase
     {

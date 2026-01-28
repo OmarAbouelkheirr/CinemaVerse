@@ -20,10 +20,6 @@
     <ProjectReference Include="..\CinemaVerse.Services\CinemaVerse.Services.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\User\" />
-  </ItemGroup>
-
 </Project>
 
 
