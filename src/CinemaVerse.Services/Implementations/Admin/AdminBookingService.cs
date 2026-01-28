@@ -1,4 +1,4 @@
-﻿using CinemaVerse.Data.Enums;
+using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminBooking.Requests;

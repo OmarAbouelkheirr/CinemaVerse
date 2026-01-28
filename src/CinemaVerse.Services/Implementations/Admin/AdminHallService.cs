@@ -1,7 +1,9 @@
-﻿using CinemaVerse.Data.Models;
+using CinemaVerse.Data.Enums;
+using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminHall.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminHall.Response;
+using CinemaVerse.Services.DTOs.AdminFlow.AdminSeat.Response;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.Interfaces.Admin;
 using Microsoft.Extensions.Logging;
@@ -19,21 +21,28 @@ namespace CinemaVerse.Services.Implementations.Admin
         }
         public async Task<int> CreateHallAsync(CreateHallRequestDto Request)
         {
+            await _unitOfWork.BeginTransactionAsync();
             try
             {
-                _logger.LogInformation("Creating a new hall with name: {HallNumber}", Request.HallNumber);
+                _logger.LogInformation("Creating a new hall with number: {HallNumber} and type: {HallType}", 
+                    Request?.HallNumber, Request?.HallType);
+
                 if (Request == null)
                 {
                     _logger.LogWarning("CreateHallRequestDto is null.");
                     throw new ArgumentNullException(nameof(Request), "CreateHallRequestDto cannot be null.");
                 }
+
                 var branch = await _unitOfWork.Branchs.GetByIdAsync(Request.BranchId);
                 if (branch == null)
                 {
                     _logger.LogWarning("Branch with ID {BranchId} not found.", Request.BranchId);
                     throw new KeyNotFoundException($"Branch with ID {Request.BranchId} not found.");
                 }
-                var existingHall = await _unitOfWork.Halls.FirstOrDefaultAsync(h => h.HallNumber == Request.HallNumber && h.BranchId == Request.BranchId);
+
+                var existingHall = await _unitOfWork.Halls
+                    .FirstOrDefaultAsync(h => h.HallNumber == Request.HallNumber && h.BranchId == Request.BranchId);
+
                 if (existingHall != null)
                 {
                     _logger.LogWarning("A hall with number {HallNumber} already exists in branch {BranchId}.",
@@ -41,6 +50,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                     throw new InvalidOperationException(
                         $"A hall with number {Request.HallNumber} already exists in this branch.");
                 }
+
                 var newHall = new Hall
                 {
                     BranchId = Request.BranchId,
@@ -49,15 +59,168 @@ namespace CinemaVerse.Services.Implementations.Admin
                     HallStatus = Request.HallStatus,
                     HallType = Request.HallType
                 };
+
+                // 1) Create hall
                 await _unitOfWork.Halls.AddAsync(newHall);
+                await _unitOfWork.SaveChangesAsync(); // Needed to get Hall.Id
+
+                // 2) Generate seats for this hall based on HallType
+                var seats = GenerateSeatsForHall(newHall.Id, newHall.HallType, newHall.Capacity);
+
+                foreach (var seat in seats)
+                {
+                    await _unitOfWork.Seats.AddAsync(seat);
+                }
+
                 await _unitOfWork.SaveChangesAsync();
-                _logger.LogInformation("Successfully created a new hall with ID: {HallId}", newHall.Id);
+                await _unitOfWork.CommitTransactionAsync();
+
+                _logger.LogInformation(
+                    "Successfully created a new hall with ID: {HallId} and generated {SeatCount} seats (HallType: {HallType})",
+                    newHall.Id, seats.Count, newHall.HallType);
+
                 return newHall.Id;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while creating a new hall.");
+                await _unitOfWork.RollbackTransactionAsync();
+                _logger.LogError(ex, "Error occurred while creating a new hall with automatic seats.");
                 throw;
+            }
+        }
+
+        private List<Seat> GenerateSeatsForHall(int hallId, HallType hallType, int capacity)
+        {
+            // Decide layout configuration per hall type
+            SeatLayoutConfig layout = hallType switch
+            {
+                HallType.VIP => GetVipHallLayout(capacity),
+                HallType.IMAX => GetImaxHallLayout(capacity),
+                HallType.ScreenX => GetScreenXHallLayout(capacity),
+                HallType.ThreeD => GetThreeDHallLayout(capacity),
+                _ => GetStandardHallLayout(capacity) // TwoD & default
+            };
+
+            return GenerateSeatsFromLayout(hallId, layout, capacity);
+        }
+
+        private SeatLayoutConfig GetStandardHallLayout(int capacity)
+        {
+            return new SeatLayoutConfig
+            {
+                SeatsPerRow = 10,
+                SeatColumns = Enumerable.Range(1, 10).Where(c => c is <= 4 or >= 7).ToList()
+                // 8 seats per row, small gap (5-6) in middle
+            }.WithRowCountFromCapacity(capacity);
+        }
+
+        private SeatLayoutConfig GetThreeDHallLayout(int capacity)
+        {
+            return new SeatLayoutConfig
+            {
+                SeatsPerRow = 12,
+                SeatColumns = Enumerable.Range(1, 12).Where(c => c is <= 4 or >= 9).ToList()
+                // 8 seats per row, wider gap (5-8) in middle for more privacy
+            }.WithRowCountFromCapacity(capacity);
+        }
+
+        private SeatLayoutConfig GetImaxHallLayout(int capacity)
+        {
+            return new SeatLayoutConfig
+            {
+                SeatsPerRow = 14,
+                SeatColumns = Enumerable.Range(1, 14).Where(c => c is <= 5 or >= 11).ToList()
+                // 9 seats per row, very wide gap (6-10) in middle for premium experience
+            }.WithRowCountFromCapacity(capacity);
+        }
+
+        private SeatLayoutConfig GetScreenXHallLayout(int capacity)
+        {
+            return new SeatLayoutConfig
+            {
+                SeatsPerRow = 14,
+                SeatColumns = Enumerable.Range(1, 14).Where(c => (c >= 2 && c <= 5) || (c >= 10 && c <= 13)).ToList()
+                // 8 seats per row, large gaps on sides (1, 14) and middle (6-9) for curved screen experience
+            }.WithRowCountFromCapacity(capacity);
+        }
+
+        private SeatLayoutConfig GetVipHallLayout(int capacity)
+        {
+            return new SeatLayoutConfig
+            {
+                SeatsPerRow = 10,
+                SeatColumns = Enumerable.Range(1, 10).Where(c => c is <= 2 or >= 9).ToList()
+                // Only 4 seats per row! Huge gap (3-8) in middle for maximum privacy and luxury
+            }.WithRowCountFromCapacity(capacity);
+        }
+
+        private List<Seat> GenerateSeatsFromLayout(int hallId, SeatLayoutConfig layout, int capacity)
+        {
+            var seats = new List<Seat>();
+
+            // Maximum seats per row (physical seats, excluding gaps)
+            int seatsPerPhysicalRow = layout.SeatColumns.Count;
+
+            if (seatsPerPhysicalRow == 0 || capacity <= 0)
+            {
+                return seats;
+            }
+
+            // Calculate how many rows we need to reach (or slightly exceed) the requested capacity
+            int neededRows = (int)Math.Ceiling(capacity / (double)seatsPerPhysicalRow);
+            int rowsToGenerate = Math.Max(layout.NumberOfRows, neededRows);
+
+            char rowLetter = 'A';
+            int createdSeats = 0;
+
+            for (int row = 0; row < rowsToGenerate && createdSeats < capacity; row++)
+            {
+                foreach (var col in layout.SeatColumns)
+                {
+                    if (createdSeats >= capacity)
+                    {
+                        break;
+                    }
+
+                    string seatLabel = $"{rowLetter}{col}";
+
+                    seats.Add(new Seat
+                    {
+                        HallId = hallId,
+                        SeatLabel = seatLabel
+                    });
+
+                    createdSeats++;
+                }
+
+                rowLetter++;
+            }
+
+            return seats;
+        }
+
+        private sealed class SeatLayoutConfig
+        {
+            public int SeatsPerRow { get; set; }
+
+            public List<int> SeatColumns { get; set; } = new();
+
+            public int NumberOfRows { get; set; } = 5;
+
+            public SeatLayoutConfig WithRowCountFromCapacity(int capacity)
+            {
+                int seatsPerRow = SeatColumns.Count;
+                if (seatsPerRow <= 0 || capacity <= 0)
+                {
+                    NumberOfRows = 0;
+                }
+                else
+                {
+                    NumberOfRows = Math.Max(NumberOfRows,
+                        (int)Math.Ceiling(capacity / (double)seatsPerRow));
+                }
+
+                return this;
             }
         }
 
@@ -145,7 +308,7 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
-        public async Task<PagedResultDto<HallDetailsResponseDto>> GetAllHallesAsync(AdminHallFilterDto filter)
+        public async Task<PagedResultDto<HallDetailsResponseDto>> GetAllHallsAsync(AdminHallFilterDto filter)
         {
             try
             {
@@ -237,7 +400,7 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
-        public async Task<HallDetailsResponseDto?> GetHallByIdAsync(int hallId)
+        public async Task<HallDetailsResponseDto?> GetHallWithSeatsByIdAsync(int hallId)
         {
             try
             {
@@ -254,13 +417,27 @@ namespace CinemaVerse.Services.Implementations.Admin
                     _logger.LogWarning("Hall with id {hallId} not found.", hallId);
                     return null;
                 }
+                var seats = await _unitOfWork.Seats.GetAllAsync();
+                hall.Seats = seats.Where(s => s.HallId == hall.Id).ToList();
+                if (hall.Seats == null || !hall.Seats.Any())
+                {
+                    _logger.LogWarning("No seats found for hall with id {hallId}.", hallId);
+                }
                 var hallDetails = new HallDetailsResponseDto
                 {
                     BranchId = hall.BranchId,
                     Capacity = hall.Capacity,
                     HallNumber = hall.HallNumber,
                     HallStatus = hall.HallStatus.ToString(),
-                    HallType = hall.HallType.ToString()
+                    HallType = hall.HallType.ToString(),
+                    Seats = hall.Seats!.Select(seat => new SeatDetailsDto
+                    {
+                        SeatId = seat.Id,
+                        SeatLabel = seat.SeatLabel,
+                        HallId = hall.Id,
+                        HallNumber = hall.HallNumber,
+                        BranchName = (hall.Branch != null) ? hall.Branch.BranchName : string.Empty
+                    }).ToList()
                 };
                 _logger.LogInformation("Successfully retrieved hall with id: {hallId}", hallId);
                 return hallDetails;

@@ -1,8 +1,9 @@
-﻿namespace CinemaVerse.Services.DTOs.AdminFlow.AdminBooking.Requests
+﻿using CinemaVerse.Data.Enums;
+
+namespace CinemaVerse.Services.DTOs.AdminFlow.AdminBooking.Requests
 {
     public class UpdateBookingRequestDto
     {
-        public int BookingId { get; set; }
-        public string NewStatus { get; set; } = string.Empty;
+        public BookingStatus NewStatus { get; set; } 
     }
 }
