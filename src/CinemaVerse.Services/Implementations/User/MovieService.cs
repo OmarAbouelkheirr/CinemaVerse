@@ -178,6 +178,7 @@ namespace CinemaVerse.Services.Implementations.User
                     MovieAgeRating = movie.MovieAgeRating,
                     MovieRating = movie.MovieRating,
                     TrailerUrl = movie.TrailerUrl,
+                    MoviePoster = movie.MoviePoster ?? string.Empty,
                     Status = movie.Status,
                     Cast = movie.MovieCast,
                     Genres = movie.MovieGenres
@@ -228,7 +229,7 @@ namespace CinemaVerse.Services.Implementations.User
             {
                 MovieId = movie.Id,
                 MovieName = movie.MovieName,
-                MoviePosterImageUrl = movie.MovieImages.FirstOrDefault()?.ImageUrl,
+                MoviePosterImageUrl = movie.MoviePoster ?? string.Empty,
                 MovieDuration = movie.MovieDuration.ToString(@"hh\:mm"),
                 Genres = movie.MovieGenres.Select(mg => mg.Genre.GenreName).ToList(),
                 MovieRating = movie.MovieRating

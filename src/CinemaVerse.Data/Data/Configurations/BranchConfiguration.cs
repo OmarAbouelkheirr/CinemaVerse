@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,7 +14,7 @@ namespace CinemaVerse.Data.Data.Configurations
         public void Configure(EntityTypeBuilder<Branch> builder)
         {
 
-            builder.ToTable("Branchs");
+            builder.ToTable("Branches");
 
             builder.HasKey(b => b.Id);
 

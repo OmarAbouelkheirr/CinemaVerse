@@ -64,7 +64,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 // Validate BranchId if provided - check that Hall belongs to this Branch
                 if (request.BranchId.HasValue)
                 {
-                    var branch = await _unitOfWork.Branchs.GetByIdAsync(request.BranchId.Value);
+                    var branch = await _unitOfWork.Branches.GetByIdAsync(request.BranchId.Value);
                     if (branch == null)
                     {
                         _logger.LogWarning("Branch with ID {BranchId} not found", request.BranchId.Value);

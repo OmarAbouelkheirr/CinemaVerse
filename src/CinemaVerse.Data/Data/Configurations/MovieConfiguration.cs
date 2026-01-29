@@ -29,9 +29,11 @@ namespace CinemaVerse.Data.Data.Configurations
 
             builder.Property(m => m.TrailerUrl).HasMaxLength(500);
 
+            builder.Property(m => m.MoviePoster).HasMaxLength(500);
+
             builder.Property(m => m.MovieDuration).IsRequired();
 
-            builder.Property(m => m.MovieRating).HasPrecision(2, 1); 
+            builder.Property(m => m.MovieRating).HasPrecision(3, 2); 
             
             builder.Property(m => m.MovieAgeRating)
                 .IsRequired()

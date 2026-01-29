@@ -60,8 +60,9 @@ namespace CinemaVerse.Services.Implementations.Admin
                     ReleaseDate = Request.ReleaseDate,
                     MovieCast = Request.MovieCast,
                     MovieAgeRating = Request.MovieAgeRating,
-                    MovieRating = Request.MovieRating,
+                    MovieRating = 0,
                     TrailerUrl = Request.TrailerUrl!,
+                    MoviePoster = Request.MoviePoster ?? string.Empty,
                     Status = Request.Status
                 };
                 await _unitOfWork.Movies.AddAsync(movie);
@@ -189,8 +190,10 @@ namespace CinemaVerse.Services.Implementations.Admin
                 if (Request.TrailerUrl != null)
                     movie.TrailerUrl = Request.TrailerUrl;
 
-                if (Request.MovieRating.HasValue)
-                    movie.MovieRating = Request.MovieRating.Value;
+                if (Request.MoviePoster != null)
+                    movie.MoviePoster = Request.MoviePoster;
+
+                // MovieRating is driven by user reviews only - do not update from Admin
 
                 if (Request.Status.HasValue)
                     movie.Status = Request.Status.Value;
@@ -354,6 +357,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                     MovieAgeRating = movie.MovieAgeRating,
                     MovieRating = movie.MovieRating,
                     TrailerUrl = movie.TrailerUrl,
+                    MoviePoster = movie.MoviePoster ?? string.Empty,
                     Status = movie.Status, 
                     Cast = movie.MovieCast,
                     Genres = movie.MovieGenres
@@ -429,6 +433,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                     MovieAgeRating = movie.MovieAgeRating,
                     MovieRating = movie.MovieRating,
                     TrailerUrl = movie.TrailerUrl,
+                    MoviePoster = movie.MoviePoster ?? string.Empty,
                     Status = movie.Status,
                     Cast = movie.MovieCast,
                     Genres = movie.MovieGenres

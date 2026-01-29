@@ -13,6 +13,7 @@ namespace CinemaVerse.Services.DTOs.AdminFlow.AdminMovie.Requests
         public TimeSpan? MovieDuration { get; set; }
         public DateOnly? ReleaseDate { get; set; }
         public List<string>? MovieCast { get; set; }
+        [Range(0, 10, ErrorMessage = "Movie rating must be between 0 and 10")]
         public decimal? MovieRating { get; set; }
 
         [EnumDataType(typeof(MovieAgeRating))]
@@ -20,6 +21,11 @@ namespace CinemaVerse.Services.DTOs.AdminFlow.AdminMovie.Requests
 
         [Url(ErrorMessage = "Trailer URL must be a valid URL")]
         public string? TrailerUrl { get; set; }
+
+        [Url(ErrorMessage = "Movie poster URL must be a valid URL")]
+        [StringLength(500, ErrorMessage = "Movie poster URL must not exceed 500 characters")]
+        public string? MoviePoster { get; set; }
+
         public List<int>? GenreIds { get; set; }
         public List<string>? ImageUrls { get; set; }
 

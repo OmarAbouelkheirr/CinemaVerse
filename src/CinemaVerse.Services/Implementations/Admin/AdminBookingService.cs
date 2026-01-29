@@ -360,8 +360,7 @@ namespace CinemaVerse.Services.Implementations.Admin
         }
         private BookingDetailsDto BuildBookingDetailsDto(Booking booking, IEnumerable<TicketDetailsDto> tickets)
         {
-            // Get poster URL (safely handle null)
-            var posterUrl = booking.MovieShowTime?.Movie?.MovieImages?.FirstOrDefault()?.ImageUrl ?? string.Empty;
+            var posterUrl = booking.MovieShowTime?.Movie?.MoviePoster ?? string.Empty;
 
             // Build BookedSeats from BookingSeats
             var bookedSeats = booking.BookingSeats?

@@ -33,7 +33,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                     throw new ArgumentNullException(nameof(Request), "CreateHallRequestDto cannot be null.");
                 }
 
-                var branch = await _unitOfWork.Branchs.GetByIdAsync(Request.BranchId);
+                var branch = await _unitOfWork.Branches.GetByIdAsync(Request.BranchId);
                 if (branch == null)
                 {
                     _logger.LogWarning("Branch with ID {BranchId} not found.", Request.BranchId);
@@ -274,7 +274,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 }
                 if (Request.BranchId.HasValue && Request.BranchId.Value != hall.BranchId)
                 {
-                    var branch = await _unitOfWork.Branchs.GetByIdAsync(Request.BranchId.Value);
+                    var branch = await _unitOfWork.Branches.GetByIdAsync(Request.BranchId.Value);
                     if (branch == null)
                     {
                         _logger.LogWarning("Branch with ID {BranchId} not found.", Request.BranchId.Value);

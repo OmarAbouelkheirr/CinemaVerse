@@ -42,7 +42,7 @@ namespace CinemaVerse.Services.Implementations.Admin
 
                 // Load Hall and Branch details
                 var hall = await _unitOfWork.Halls.GetByIdAsync(seat.HallId);
-                var branch = hall != null ? await _unitOfWork.Branchs.GetByIdAsync(hall.BranchId) : null;
+                var branch = hall != null ? await _unitOfWork.Branches.GetByIdAsync(hall.BranchId) : null;
 
                 var dto = new SeatDetailsDto
                 {

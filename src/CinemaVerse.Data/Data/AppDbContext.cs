@@ -1,4 +1,4 @@
-﻿using CinemaVerse.Data.Models;
+using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Models.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,6 +23,7 @@ namespace CinemaVerse.Data.Data
         public DbSet<MovieImage> MovieImages { get; set; } = null!;
         public DbSet<Ticket> Tickets { get; set; } = null!;
         public DbSet<BookingSeat> BookingSeat { get; set; } = null!;
+        public DbSet<Review> Reviews { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

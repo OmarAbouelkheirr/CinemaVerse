@@ -713,7 +713,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                             MovieShowTimeId = showtime?.Id ?? 0,
                             MovieTitle = movie?.MovieName ?? string.Empty,
                             StartTime = showtime?.ShowStartTime ?? DateTime.MinValue,
-                            PosterUrl = movie?.MovieImages?.FirstOrDefault()?.ImageUrl ?? string.Empty
+                            PosterUrl = movie?.MoviePoster ?? string.Empty
                         },
                         BookedSeats = booking.BookingSeats?.Select(bs => new DTOs.HallSeat.Responses.SeatDto
                         {
@@ -849,7 +849,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                         HallNumber = hall?.HallNumber ?? string.Empty,
                         HallType = hall?.HallType ?? HallType.TwoD,
                         SeatLabel = ticket.Seat?.SeatLabel ?? string.Empty,
-                        MoviePoster = movie?.MovieImages?.FirstOrDefault()?.ImageUrl ?? string.Empty,
+                        MoviePoster = movie?.MoviePoster ?? string.Empty,
                         MovieAgeRating = movie?.MovieAgeRating ?? MovieAgeRating.G,
                         QrToken = ticket.QrToken,
                         Status = ticket.Status,

@@ -1,3 +1,4 @@
+using System.Data;
 using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
@@ -8,7 +9,9 @@ using CinemaVerse.Services.DTOs.HallSeat.Responses;
 using CinemaVerse.Services.DTOs.Payment.Requests;
 using CinemaVerse.Services.DTOs.Ticket.Response;
 using CinemaVerse.Services.Interfaces.User;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Data.SqlClient;
 
 namespace CinemaVerse.Services.Implementations.User
 {
@@ -262,7 +265,7 @@ namespace CinemaVerse.Services.Implementations.User
 
         public async Task<BookingDetailsDto> CreateBookingAsync( CreateBookingRequestDto request)
         {
-            await _unitOfWork.BeginTransactionAsync();
+            await _unitOfWork.BeginTransactionAsync(IsolationLevel.Serializable);
             try
             {
                 //Input Validation
@@ -345,7 +348,8 @@ namespace CinemaVerse.Services.Implementations.User
                     MovieShowTimeId = request.MovieShowTimeId,
                     Status = BookingStatus.Pending,
                     TotalAmount = totalAmount,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(15)
                 };
 
                 await _unitOfWork.Bookings.AddAsync(booking);
@@ -376,9 +380,26 @@ namespace CinemaVerse.Services.Implementations.User
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync();
+
+                if (IsConcurrencyOrDeadlockException(ex))
+                {
+                    _logger.LogWarning(ex, "Concurrency conflict creating booking for UserId {UserId} - seat(s) may have been taken", request.UserId);
+                    throw new InvalidOperationException("One or more selected seats were just booked by another user. Please refresh and try again.");
+                }
+
                 _logger.LogError(ex, "Error creating booking for UserId {UserId}", request.UserId);
                 throw;
             }
+        }
+
+        private static bool IsConcurrencyOrDeadlockException(Exception ex)
+        {
+            var sqlEx = ex as SqlException ?? (ex as DbUpdateException)?.InnerException as SqlException;
+            if (sqlEx == null && ex.InnerException != null)
+                sqlEx = ex.InnerException as SqlException ?? (ex.InnerException as DbUpdateException)?.InnerException as SqlException;
+            if (sqlEx == null)
+                return false;
+            return sqlEx.Number == 1205 || sqlEx.Number == 3960 || sqlEx.Number == 3961;
         }
 
         public async Task<BookingDetailsDto> GetUserBookingByIdAsync(int userId, int bookingId)
@@ -497,8 +518,7 @@ namespace CinemaVerse.Services.Implementations.User
         //Ai
         private BookingDetailsDto BuildBookingDetailsDto(Booking booking, IEnumerable<TicketDetailsDto> tickets)
         {
-            // Get poster URL (safely handle null)
-            var posterUrl = booking.MovieShowTime?.Movie?.MovieImages?.FirstOrDefault()?.ImageUrl ?? string.Empty;
+            var posterUrl = booking.MovieShowTime?.Movie?.MoviePoster ?? string.Empty;
 
             // Build BookedSeats from BookingSeats
             var bookedSeats = booking.BookingSeats?

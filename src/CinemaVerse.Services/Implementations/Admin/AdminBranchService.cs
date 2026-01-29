@@ -1,4 +1,4 @@
-﻿using CinemaVerse.Data.Models;
+using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminBranch.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminBranch.Response;
@@ -32,7 +32,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                     _logger.LogWarning("Invalid branch data {@Request}", Request);
                     throw new ArgumentException("Branch name and location cannot be empty.");
                 }
-                var existingBranch = await _unitOfWork.Branchs
+                var existingBranch = await _unitOfWork.Branches
                     .FirstOrDefaultAsync(b => b.BranchName.ToLower() == Request.BranchName.ToLower());
                 if (existingBranch != null)
                 {
@@ -44,7 +44,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                     BranchName = Request.BranchName,
                     BranchLocation = Request.BranchLocation
                 };
-                await _unitOfWork.Branchs.AddAsync(branch);
+                await _unitOfWork.Branches.AddAsync(branch);
                 await _unitOfWork.SaveChangesAsync();
                 _logger.LogInformation("Branch created successfully with Id {BranchId}", branch.Id);
                 return branch.Id;
@@ -61,13 +61,13 @@ namespace CinemaVerse.Services.Implementations.Admin
             try
             {
                 _logger.LogInformation("Deleting Branch with branch Id {branchId}", branchId);
-                var branch = await _unitOfWork.Branchs.GetByIdAsync(branchId);
+                var branch = await _unitOfWork.Branches.GetByIdAsync(branchId);
                 if (branch == null)
                 {
                     _logger.LogWarning("Branch with Id {branchId} not found", branchId);
                     throw new KeyNotFoundException($"Branch with Id {branchId} not found.");
                 }
-                await _unitOfWork.Branchs.DeleteAsync(branch);
+                await _unitOfWork.Branches.DeleteAsync(branch);
                 await _unitOfWork.SaveChangesAsync();
                 _logger.LogInformation("Branch with Id {branchId} deleted successfully", branchId);
             }
@@ -88,7 +88,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                     _logger.LogWarning("Invalid branch Id {branchId}", branchId);
                     throw new ArgumentException("Invalid branch Id.");
                 }
-                var branch = await _unitOfWork.Branchs.GetByIdAsync(branchId);
+                var branch = await _unitOfWork.Branches.GetByIdAsync(branchId);
                 if (branch == null)
                 {
                     _logger.LogWarning("Branch with Id {branchId} not found", branchId);
@@ -102,7 +102,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 {
                     branch.BranchLocation = Request.BranchLocation;
                 }
-                await _unitOfWork.Branchs.UpdateAsync(branch);
+                await _unitOfWork.Branches.UpdateAsync(branch);
 
                 _logger.LogInformation("Branch with Id {branchId} updated successfully", branchId);
                 return await _unitOfWork.SaveChangesAsync();
@@ -119,7 +119,7 @@ namespace CinemaVerse.Services.Implementations.Admin
         {
             try
             {
-                _logger.LogInformation("Getting all Branchs");
+                _logger.LogInformation("Getting all Branches");
                 if (filter == null)
                 {
                     _logger.LogWarning("Filter cannot be null");
@@ -131,7 +131,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 if (filter.PageSize <= 0 || filter.PageSize > 100)
                     filter.PageSize = 20;
 
-                var query = _unitOfWork.Branchs.GetQueryable();
+                var query = _unitOfWork.Branches.GetQueryable();
 
                 // Apply filters
                 if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
@@ -141,7 +141,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                         b.BranchName.ToLower().Contains(searchLower) ||
                         b.BranchLocation.ToLower().Contains(searchLower));
                 }
-                var totalCount = await _unitOfWork.Branchs.CountAsync(query);
+                var totalCount = await _unitOfWork.Branches.CountAsync(query);
 
                 string sortBy = filter.SortBy?.ToLower() ?? "branchname";
                 string sortOrder = filter.SortOrder?.ToLower() ?? "desc";
@@ -165,13 +165,13 @@ namespace CinemaVerse.Services.Implementations.Admin
                         : query.OrderByDescending(b => b.BranchName);
                 }
 
-                var branchs = await _unitOfWork.Branchs.GetPagedAsync(
+                var branches = await _unitOfWork.Branches.GetPagedAsync(
                     query: query,
                     orderBy: null,
                     skip: (filter.Page - 1) * filter.PageSize,
                     take: filter.PageSize
                     );
-                var branchDtos = branchs.Select(b => new BranchDetailsResponseDto
+                var branchDtos = branches.Select(b => new BranchDetailsResponseDto
                 {
                     BranchName = b.BranchName,
                     BranchLocation = b.BranchLocation
@@ -203,7 +203,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                     _logger.LogWarning("Invalid branch Id {branchId}", branchId);
                     throw new ArgumentException("Invalid branch Id.");
                 }
-                var branch = await _unitOfWork.Branchs.GetByIdAsync(branchId);
+                var branch = await _unitOfWork.Branches.GetByIdAsync(branchId);
                 if (branch == null)
                 {
                     _logger.LogWarning("Branch with Id {branchId} not found", branchId);

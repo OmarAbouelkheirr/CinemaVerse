@@ -109,7 +109,7 @@ namespace CinemaVerse.Services.Implementations.User
         public TicketDetailsDto MapToDto(Ticket Ticket)
         {
             var Booking = Ticket.Booking;
-            var MoviePoster = Booking.MovieShowTime.Movie.MovieImages.FirstOrDefault();
+            var moviePosterUrl = Booking.MovieShowTime.Movie.MoviePoster ?? string.Empty;
             return new TicketDetailsDto
             {
                 TicketId = Ticket.Id,
@@ -120,7 +120,7 @@ namespace CinemaVerse.Services.Implementations.User
                 HallNumber = Booking.MovieShowTime.Hall.HallNumber,
                 HallType = Booking.MovieShowTime.Hall.HallType,
                 SeatLabel = Ticket.Seat.SeatLabel,
-                MoviePoster = MoviePoster?.ImageUrl ?? string.Empty,
+                MoviePoster = moviePosterUrl,
                 MovieAgeRating = Booking.MovieShowTime.Movie.MovieAgeRating,
                 QrToken = Ticket.QrToken,
                 Status = Ticket.Status,
@@ -147,7 +147,6 @@ namespace CinemaVerse.Services.Implementations.User
                     var booking = ticket.Booking;
                     var movieShowTime = booking?.MovieShowTime;
                     var movie = movieShowTime?.Movie;
-                    var moviePoster = movie?.MovieImages?.FirstOrDefault();
 
                     return new TicketListItemDto
                     {
@@ -156,7 +155,7 @@ namespace CinemaVerse.Services.Implementations.User
                         MovieName = movie?.MovieName ?? string.Empty,
                         ShowStartTime = movieShowTime?.ShowStartTime ?? DateTime.MinValue,
                         SeatLabel = ticket.Seat?.SeatLabel ?? string.Empty,
-                        MoviePoster = moviePoster?.ImageUrl ?? string.Empty,
+                        MoviePoster = movie?.MoviePoster ?? string.Empty,
                         Status = ticket.Status,
                         Price = ticket.Price
                     };

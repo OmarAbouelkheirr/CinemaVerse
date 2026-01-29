@@ -1,4 +1,5 @@
-﻿using CinemaVerse.Data.Enums;
+using CinemaVerse.Data.Enums;
+using CinemaVerse.Data.Models;
 
 namespace CinemaVerse.Data.Models.Users
 {
@@ -22,5 +23,6 @@ namespace CinemaVerse.Data.Models.Users
 
         // Navigation Properties
         public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
     }
 }

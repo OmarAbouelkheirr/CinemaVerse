@@ -21,6 +21,7 @@ builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<IHallSeatService, HallSeatService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAdminBookingService, AdminBookingService>();
 builder.Services.AddScoped<IAdminBranchService, AdminBranchService>();

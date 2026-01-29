@@ -1,8 +1,10 @@
+using System.Data;
 using CinemaVerse.Data.Data;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Models.Users;
 using CinemaVerse.Data.Repositories.Implementations;
 using CinemaVerse.Data.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 
@@ -13,7 +15,7 @@ namespace CinemaVerse.Data.Repositories
     {
         private IBookingRepository? _bookings;
         private IRepository<BookingPayment>? _bookingPayments;
-        private IRepository<Branch>? _branchs;
+        private IRepository<Branch>? _branches;
         private IRepository<Genre>? _genres;
         private IMovieRepository? _movies;
         private IMovieShowTimeRepository? _movieShowTimes;
@@ -24,6 +26,7 @@ namespace CinemaVerse.Data.Repositories
         private IRepository<MovieImage>? _movieImages;
         private IRepository<BookingSeat>? _bookingSeats;
         private IUserRepository? _users;
+        private IRepository<Review>? _reviews;
 
         private readonly AppDbContext _context;
         private IDbContextTransaction? _transaction;
@@ -38,7 +41,7 @@ namespace CinemaVerse.Data.Repositories
 
         public IBookingRepository Bookings => _bookings ??= new BookingRepository(_context, _loggerFactory.CreateLogger<Booking>());
         public IRepository<BookingPayment> BookingPayments => _bookingPayments ??= new Repository<BookingPayment>(_context, _loggerFactory.CreateLogger<BookingPayment>());
-        public IRepository<Branch> Branchs => _branchs ??= new Repository<Branch>(_context, _loggerFactory.CreateLogger<Branch>());
+        public IRepository<Branch> Branches => _branches ??= new Repository<Branch>(_context, _loggerFactory.CreateLogger<Branch>());
         public IRepository<Genre> Genres => _genres ??= new Repository<Genre>(_context, _loggerFactory.CreateLogger<Genre>());
         public IMovieRepository Movies => _movies ??= new MovieRepository(_context, _loggerFactory.CreateLogger<Movie>());
         public IMovieShowTimeRepository MovieShowTimes => _movieShowTimes ??= new MovieShowTimeRepository(_context, _loggerFactory.CreateLogger<MovieShowTime>());
@@ -49,10 +52,16 @@ namespace CinemaVerse.Data.Repositories
         public IRepository<MovieImage> MovieImages => _movieImages ??= new Repository<MovieImage>(_context, _loggerFactory.CreateLogger<MovieImage>());
         public IRepository<BookingSeat> BookingSeat => _bookingSeats ??= new Repository<BookingSeat>(_context, _loggerFactory.CreateLogger<BookingSeat>());
         public IUserRepository Users => _users ??= new UserRepository(_context, _loggerFactory.CreateLogger<User>());
+        public IRepository<Review> Reviews => _reviews ??= new Repository<Review>(_context, _loggerFactory.CreateLogger<Review>());
 
         public async Task BeginTransactionAsync()
         {
             _transaction = await _context.Database.BeginTransactionAsync();
+        }
+
+        public async Task BeginTransactionAsync(IsolationLevel isolationLevel)
+        {
+            _transaction = await _context.Database.BeginTransactionAsync(isolationLevel);
         }
 
         public async Task CommitTransactionAsync()

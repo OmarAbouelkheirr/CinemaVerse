@@ -139,7 +139,7 @@ namespace CinemaVerse.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Branchs", (string)null);
+                    b.ToTable("Branches", (string)null);
                 });
 
             modelBuilder.Entity("CinemaVerse.Data.Models.Genre", b =>
@@ -220,9 +220,14 @@ namespace CinemaVerse.Data.Migrations
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
 
+                    b.Property<string>("MoviePoster")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<decimal>("MovieRating")
-                        .HasPrecision(2, 1)
-                        .HasColumnType("decimal(2,1)");
+                        .HasPrecision(3, 2)
+                        .HasColumnType("decimal(3,2)");
 
                     b.Property<DateOnly>("ReleaseDate")
                         .HasColumnType("date");
@@ -314,6 +319,46 @@ namespace CinemaVerse.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("MovieShowTimes", (string)null);
+                });
+
+            modelBuilder.Entity("CinemaVerse.Data.Models.Review", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<int>("MovieId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Rating")
+                        .HasPrecision(3, 2)
+                        .HasColumnType("decimal(3,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MovieId");
+
+                    b.HasIndex("UserId", "MovieId")
+                        .IsUnique();
+
+                    b.ToTable("Reviews", (string)null);
                 });
 
             modelBuilder.Entity("CinemaVerse.Data.Models.Seat", b =>
@@ -573,6 +618,25 @@ namespace CinemaVerse.Data.Migrations
                     b.Navigation("Movie");
                 });
 
+            modelBuilder.Entity("CinemaVerse.Data.Models.Review", b =>
+                {
+                    b.HasOne("CinemaVerse.Data.Models.Movie", "Movie")
+                        .WithMany("Reviews")
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CinemaVerse.Data.Models.Users.User", "User")
+                        .WithMany("Reviews")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Movie");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("CinemaVerse.Data.Models.Seat", b =>
                 {
                     b.HasOne("CinemaVerse.Data.Models.Hall", "Hall")
@@ -636,6 +700,8 @@ namespace CinemaVerse.Data.Migrations
                     b.Navigation("MovieImages");
 
                     b.Navigation("MovieShowTimes");
+
+                    b.Navigation("Reviews");
                 });
 
             modelBuilder.Entity("CinemaVerse.Data.Models.MovieShowTime", b =>
@@ -653,6 +719,8 @@ namespace CinemaVerse.Data.Migrations
             modelBuilder.Entity("CinemaVerse.Data.Models.Users.User", b =>
                 {
                     b.Navigation("Bookings");
+
+                    b.Navigation("Reviews");
                 });
 #pragma warning restore 612, 618
         }

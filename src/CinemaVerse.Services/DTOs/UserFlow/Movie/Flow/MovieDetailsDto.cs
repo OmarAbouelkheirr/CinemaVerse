@@ -12,6 +12,7 @@ namespace CinemaVerse.Services.DTOs.Movie.Flow
         public MovieAgeRating MovieAgeRating { get; set; }
         public decimal MovieRating { get; set; }
         public string TrailerUrl { get; set; } = string.Empty;
+        public string MoviePoster { get; set; } = string.Empty;
         public MovieStatus Status { get; set; }
 
         public List<string> Cast { get; set; } = new();

@@ -47,11 +47,12 @@ namespace CinemaVerse.Data.Migrations
                     MovieName = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: false),
                     MovieDescription = table.Column<string>(type: "nvarchar(1500)", maxLength: 1500, nullable: false),
                     MovieDuration = table.Column<TimeSpan>(type: "time", nullable: false),
-                    MovieCast = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    MovieCast = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     MovieRating = table.Column<decimal>(type: "decimal(2,1)", precision: 2, scale: 1, nullable: false),
                     MovieAgeRating = table.Column<int>(type: "int", nullable: false),
                     ReleaseDate = table.Column<DateOnly>(type: "date", nullable: false),
                     TrailerUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    MoviePoster = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false, defaultValue: 1)
                 },
                 constraints: table =>
@@ -147,6 +148,36 @@ namespace CinemaVerse.Data.Migrations
                         name: "FK_MovieImages_Movies_MovieId",
                         column: x => x.MovieId,
                         principalTable: "Movies",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Reviews",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    MovieId = table.Column<int>(type: "int", nullable: false),
+                    Rating = table.Column<decimal>(type: "decimal(3,2)", precision: 3, scale: 2, nullable: false),
+                    Comment = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Reviews", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Reviews_Movies_MovieId",
+                        column: x => x.MovieId,
+                        principalTable: "Movies",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Reviews_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -357,6 +388,17 @@ namespace CinemaVerse.Data.Migrations
                 column: "MovieId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Reviews_MovieId",
+                table: "Reviews",
+                column: "MovieId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reviews_UserId_MovieId",
+                table: "Reviews",
+                columns: new[] { "UserId", "MovieId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Seats_HallId",
                 table: "Seats",
                 column: "HallId");
@@ -411,6 +453,9 @@ namespace CinemaVerse.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "MovieImages");
+
+            migrationBuilder.DropTable(
+                name: "Reviews");
 
             migrationBuilder.DropTable(
                 name: "Tickets");

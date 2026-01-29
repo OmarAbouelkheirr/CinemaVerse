@@ -28,10 +28,15 @@ namespace CinemaVerse.Services.DTOs.AdminFlow.AdminMovie.Requests
         [EnumDataType(typeof(MovieAgeRating), ErrorMessage = "Invalid age rating")]
         public MovieAgeRating MovieAgeRating { get; set; }
 
+        [Range(0, 10, ErrorMessage = "Movie rating must be between 0 and 10")]
         public decimal MovieRating { get; set; }
 
         [Url(ErrorMessage = "Trailer URL must be a valid URL")]
         public string? TrailerUrl { get; set; }
+
+        [Url(ErrorMessage = "Movie poster URL must be a valid URL")]
+        [StringLength(500, ErrorMessage = "Movie poster URL must not exceed 500 characters")]
+        public string? MoviePoster { get; set; }
 
         [Required(ErrorMessage = "At least one genre is required")]
         [MinLength(1, ErrorMessage = "At least one genre is required")]
