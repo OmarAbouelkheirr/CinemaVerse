@@ -9,5 +9,6 @@ namespace CinemaVerse.Services.Interfaces.User
         Task<CreatePaymentIntentResponseDto> CreatePaymentIntent(int userId, CreatePaymentIntentRequestDto CreatePaymentDto);
         Task<bool> ConfirmPaymentAsync(int userId, ConfirmPaymentRequestDto ConfrimPaymentDto);
         Task<bool> RefundPaymentAsync(RefundPaymentRequestDto RefundPaymentDto);
+        Task<bool> RefundPaymentForUserAsync(int userId, RefundPaymentRequestDto refundPaymentDto);
     }
 }
