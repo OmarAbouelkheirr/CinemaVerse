@@ -86,12 +86,14 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 var Result = await _dbSet
                     .AsNoTracking()
                     .Include(t => t.Seat)
-                        .ThenInclude(s=>s.Hall)
+                        .ThenInclude(s => s.Hall)
+                            .ThenInclude(h => h.Branch)
                     .Include(t => t.Booking)
                         .ThenInclude(b => b.User)
                     .Include(t => t.Booking)
                         .ThenInclude(b => b.MovieShowTime)
                             .ThenInclude(ms => ms.Movie)
+                                .ThenInclude(m => m.MovieImages)
                     .FirstOrDefaultAsync(t => t.Id == TicketId);
 
                 if (Result == null)
