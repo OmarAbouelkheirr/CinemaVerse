@@ -128,5 +128,92 @@ namespace CinemaVerse.Services.Implementations.User
                 BranchName = Booking.MovieShowTime.Hall.Branch.BranchName
             };
         }
+
+        public async Task<List<TicketListItemDto>> GetUserTicketsAsync(int userId)
+        {
+            try
+            {
+                _logger.LogInformation("Getting tickets list for UserId: {UserId}", userId);
+
+                if (userId <= 0)
+                {
+                    _logger.LogWarning("Invalid UserId: {UserId}", userId);
+                    throw new ArgumentException("UserId must be greater than zero.", nameof(userId));
+                }
+
+                var tickets = await _unitOfWork.Tickets.GetUserTicketsAsync(userId);
+                var ticketList = tickets.Select(ticket =>
+                {
+                    var booking = ticket.Booking;
+                    var movieShowTime = booking?.MovieShowTime;
+                    var movie = movieShowTime?.Movie;
+                    var moviePoster = movie?.MovieImages?.FirstOrDefault();
+
+                    return new TicketListItemDto
+                    {
+                        TicketId = ticket.Id,
+                        TicketNumber = ticket.TicketNumber,
+                        MovieName = movie?.MovieName ?? string.Empty,
+                        ShowStartTime = movieShowTime?.ShowStartTime ?? DateTime.MinValue,
+                        SeatLabel = ticket.Seat?.SeatLabel ?? string.Empty,
+                        MoviePoster = moviePoster?.ImageUrl ?? string.Empty,
+                        Status = ticket.Status,
+                        Price = ticket.Price
+                    };
+                }).ToList();
+
+                _logger.LogInformation("Successfully retrieved {Count} tickets for UserId: {UserId}", ticketList.Count, userId);
+                return ticketList;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting tickets list for UserId: {UserId}", userId);
+                throw;
+            }
+        }
+
+        public async Task<TicketDetailsDto?> GetUserTicketByIdAsync(int userId, int ticketId)
+        {
+            try
+            {
+                _logger.LogInformation("Getting ticket details for TicketId: {TicketId}, UserId: {UserId}", ticketId, userId);
+
+                if (userId <= 0)
+                {
+                    _logger.LogWarning("Invalid UserId: {UserId}", userId);
+                    throw new ArgumentException("UserId must be greater than zero.", nameof(userId));
+                }
+
+                if (ticketId <= 0)
+                {
+                    _logger.LogWarning("Invalid TicketId: {TicketId}", ticketId);
+                    throw new ArgumentException("TicketId must be greater than zero.", nameof(ticketId));
+                }
+
+                var ticket = await _unitOfWork.Tickets.GetTicketWithDetailsAsync(ticketId);
+                if (ticket == null)
+                {
+                    _logger.LogWarning("Ticket with ID {TicketId} not found", ticketId);
+                    return null;
+                }
+
+                // Verify that the ticket belongs to the user
+                if (ticket.Booking?.UserId != userId)
+                {
+                    _logger.LogWarning("Unauthorized ticket access. RequestUserId: {RequestUserId}, TicketUserId: {TicketUserId}, TicketId: {TicketId}",
+                        userId, ticket.Booking?.UserId, ticketId);
+                    throw new UnauthorizedAccessException("You are not authorized to access this ticket.");
+                }
+
+                var ticketDto = MapToDto(ticket);
+                _logger.LogInformation("Successfully retrieved ticket details for TicketId: {TicketId}, UserId: {UserId}", ticketId, userId);
+                return ticketDto;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting ticket details for TicketId: {TicketId}, UserId: {UserId}", ticketId, userId);
+                throw;
+            }
+        }
     }
 }
