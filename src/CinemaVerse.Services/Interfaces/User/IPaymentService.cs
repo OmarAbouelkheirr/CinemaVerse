@@ -1,4 +1,4 @@
-using CinemaVerse.Services.DTOs.Payment.NewFolder;
+using CinemaVerse.Services.DTOs.UserFlow.Payment.Requests;
 using CinemaVerse.Services.DTOs.Payment.Requests;
 using CinemaVerse.Services.DTOs.Payment.Response;
 

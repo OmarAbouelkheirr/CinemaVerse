@@ -21,6 +21,7 @@ DELETE FROM Halls;
 DELETE FROM Reviews;
 DELETE FROM MovieGenres;
 DELETE FROM MovieImages;
+DELETE FROM MovieCastMembers;
 DELETE FROM Movies;
 DELETE FROM Genres;
 DELETE FROM Users;

@@ -1,4 +1,4 @@
-﻿using CinemaVerse.Data.Data;
+using CinemaVerse.Data.Data;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories.Implementations;
 using CinemaVerse.Data.Repositories.Interfaces;
@@ -9,7 +9,7 @@ namespace CinemaVerse.Data.Repositories
 {
     public class MovieRepository : Repository<Movie>, IMovieRepository
     {
-        private readonly AppDbContext _context;
+        private new readonly AppDbContext _context;
 
         public MovieRepository(AppDbContext context, ILogger<Movie> logger)
             : base(context, logger)
@@ -48,6 +48,7 @@ namespace CinemaVerse.Data.Repositories
                 _logger.LogInformation("Getting movie with details. MovieId: {MovieId}", id);
 
                 var movie = await _context.Movies
+                    .Include(m => m.CastMembers)
                     .Include(m => m.MovieImages)
                     .Include(m => m.MovieShowTimes)
                         .ThenInclude(ms => ms.Hall)

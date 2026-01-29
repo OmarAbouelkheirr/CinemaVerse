@@ -1,6 +1,7 @@
 using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
+using CinemaVerse.Services.Constants;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminHall.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminHall.Response;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminSeat.Response;
@@ -40,10 +41,9 @@ namespace CinemaVerse.Services.Implementations.Admin
                     throw new KeyNotFoundException($"Branch with ID {Request.BranchId} not found.");
                 }
 
-                var existingHall = await _unitOfWork.Halls
-                    .FirstOrDefaultAsync(h => h.HallNumber == Request.HallNumber && h.BranchId == Request.BranchId);
+                var hallNumberExists = await _unitOfWork.Halls.IsHallNumberExistsAsync(Request.BranchId, Request.HallNumber);
 
-                if (existingHall != null)
+                if (hallNumberExists)
                 {
                     _logger.LogWarning("A hall with number {HallNumber} already exists in branch {BranchId}.",
                         Request.HallNumber, Request.BranchId);
@@ -321,8 +321,8 @@ namespace CinemaVerse.Services.Implementations.Admin
                 if (filter.Page <= 0)
                     filter.Page = 1;
 
-                if (filter.PageSize <= 0 || filter.PageSize > 100)
-                    filter.PageSize = 20;
+                if (filter.PageSize <= 0 || filter.PageSize > PaginationConstants.MaxPageSize)
+                    filter.PageSize = PaginationConstants.DefaultPageSize;
 
                 var query = _unitOfWork.Halls.GetQueryable();
 
@@ -367,15 +367,15 @@ namespace CinemaVerse.Services.Implementations.Admin
 
                 }
 
-                var branchs = await _unitOfWork.Halls.GetPagedAsync(
+                var halls = await _unitOfWork.Halls.GetPagedAsync(
                     query: query,
                     orderBy: null,
                     skip: (filter.Page - 1) * filter.PageSize,
                     take: filter.PageSize,
                     includeProperties: "Branch"
                 );
-               
-                var hallDtos = branchs.Select(hall => new HallDetailsResponseDto
+
+                var hallDtos = halls.Select(hall => new HallDetailsResponseDto
                 {
                     BranchId = hall.BranchId,
                     Capacity = hall.Capacity,
@@ -411,14 +411,12 @@ namespace CinemaVerse.Services.Implementations.Admin
                     throw new ArgumentException("hallId must be greater than zero.", nameof(hallId));
                 }
 
-                var hall = await _unitOfWork.Halls.GetByIdAsync(hallId);
+                var hall = await _unitOfWork.Halls.GetByIdWithDetailsAsync(hallId);
                 if (hall == null)
                 {
                     _logger.LogWarning("Hall with id {hallId} not found.", hallId);
                     return null;
                 }
-                var seats = await _unitOfWork.Seats.GetAllAsync();
-                hall.Seats = seats.Where(s => s.HallId == hall.Id).ToList();
                 if (hall.Seats == null || !hall.Seats.Any())
                 {
                     _logger.LogWarning("No seats found for hall with id {hallId}.", hallId);

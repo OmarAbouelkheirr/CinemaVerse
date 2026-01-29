@@ -1,4 +1,4 @@
-﻿using CinemaVerse.Data.Data;
+using CinemaVerse.Data.Data;
 using CinemaVerse.Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -23,9 +23,9 @@ namespace CinemaVerse.Data.Repositories.Implementations
         {
             try
             {
-                _logger.LogInformation("Adding entity of type {EntityType}", typeof(T).Name);
+                _logger.LogDebug("Adding entity of type {EntityType}", typeof(T).Name);
                 await _dbSet.AddAsync(entity);
-                _logger.LogInformation("Entity of type {EntityType} added successfully", typeof(T).Name);
+                _logger.LogDebug("Entity of type {EntityType} added successfully", typeof(T).Name);
 
             }
             catch (Exception ex)
@@ -39,15 +39,15 @@ namespace CinemaVerse.Data.Repositories.Implementations
         {
             try
             {
-                _logger.LogInformation("Checking if any {EntityType} exists with predicate", typeof(T).Name);
+                _logger.LogDebug("Checking if any {EntityType} exists with predicate", typeof(T).Name);
 
                 var Result = await _dbSet.AnyAsync(Predicate);
-                _logger.LogInformation("{EntityType} exists check result: {Result}", typeof(T).Name, Result);
+                _logger.LogDebug("{EntityType} exists check result: {Result}", typeof(T).Name, Result);
                 return Result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Eror checking if any {EntityType} exists with predicate", typeof(T).Name);
+                _logger.LogError(ex, "Error checking if any {EntityType} exists with predicate", typeof(T).Name);
                 throw;
             }
         }
@@ -56,17 +56,17 @@ namespace CinemaVerse.Data.Repositories.Implementations
         {
             try
             {
-                _logger.LogInformation("Counting entities of type {EntityType}", typeof(T).Name);
+                _logger.LogDebug("Counting entities of type {EntityType}", typeof(T).Name);
                 if (Predicate != null)
                 {
                     var Count = await _dbSet.CountAsync(Predicate);
-                    _logger.LogInformation("Counted {Count} entities of type {EntityType} matching predicate", Count, typeof(T).Name);
+                    _logger.LogDebug("Counted {Count} entities of type {EntityType} matching predicate", Count, typeof(T).Name);
                     return Count;
                 }
                 else
                 {
                     var Count = await _dbSet.CountAsync();
-                    _logger.LogInformation("Counted {Count} entities of type {EntityType}", Count, typeof(T).Name);
+                    _logger.LogDebug("Counted {Count} entities of type {EntityType}", Count, typeof(T).Name);
                     return Count;
                 }
 
@@ -82,9 +82,9 @@ namespace CinemaVerse.Data.Repositories.Implementations
         {
             try
             {
-                _logger.LogInformation("Deleting entity of type {EntityType}", typeof(T).Name);
+                _logger.LogDebug("Deleting entity of type {EntityType}", typeof(T).Name);
                 _dbSet.Remove(entity);
-                _logger.LogInformation("Entity of type {EntityType} deleted successfully", typeof(T).Name);
+                _logger.LogDebug("Entity of type {EntityType} deleted successfully", typeof(T).Name);
             }
             catch (Exception ex)
             {
@@ -97,24 +97,24 @@ namespace CinemaVerse.Data.Repositories.Implementations
         {
             try
             {
-                _logger.LogInformation("Checking if any {EntityType} exists with predicate", typeof(T).Name);
+                _logger.LogDebug("FindAllAsync {EntityType} with predicate", typeof(T).Name);
                 if (Predicate != null)
                 {
                     var Result = await _dbSet.Where(Predicate).ToListAsync();
-                    _logger.LogInformation("{EntityType} exists check result: {Result}", typeof(T).Name, Result);
+                    _logger.LogDebug("{EntityType} FindAllAsync result count: {Count}", typeof(T).Name, Result.Count);
                     return Result;
                 }
                 else
                 {
                     var Result = await _dbSet.ToListAsync();
-                    _logger.LogInformation("{EntityType} exists check result: {Result}", typeof(T).Name, Result);
+                    _logger.LogDebug("{EntityType} FindAllAsync result count: {Count}", typeof(T).Name, Result.Count);
                     return Result;
                 }
 
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Eror checking if any {EntityType} exists with predicate", typeof(T).Name);
+                _logger.LogError(ex, "Error checking if any {EntityType} exists with predicate", typeof(T).Name);
                 throw;
             }
         }
@@ -123,7 +123,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
         {
             try
             {
-                _logger.LogInformation("getting first or default {EntityType} with predicate", typeof(T).Name);
+                _logger.LogDebug("Getting first or default {EntityType} with predicate", typeof(T).Name);
                 var Result = await _dbSet.FirstOrDefaultAsync(Predicate);
                 if (Result == null)
                     _logger.LogDebug("No {EntityType} found matching predicate", typeof(T).Name);
@@ -142,9 +142,9 @@ namespace CinemaVerse.Data.Repositories.Implementations
         {
             try
             {
-                _logger.LogInformation("Getting all entities of type {EntityType}", typeof(T).Name);
+                _logger.LogDebug("Getting all entities of type {EntityType}", typeof(T).Name);
                 var Results = await _dbSet.ToListAsync();
-                _logger.LogInformation("Retrieved {Count} entities of type {EntityType}", Results.Count, typeof(T).Name);
+                _logger.LogDebug("Retrieved {Count} entities of type {EntityType}", Results.Count, typeof(T).Name);
                 return Results;
             }
             catch (Exception ex)
@@ -158,7 +158,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
         {
             try
             {
-                _logger.LogInformation("Getting {EntityType} by ID: {Id}", typeof(T).Name, Id);
+                _logger.LogDebug("Getting {EntityType} by ID: {Id}", typeof(T).Name, Id);
                 var Result = await _dbSet.FindAsync(Id);
                 if (Result == null)
                 {
@@ -166,7 +166,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 }
                 else
                 {
-                    _logger.LogInformation("{EntityType} with ID: {Id} retrieved successfully", typeof(T).Name, Id);
+                    _logger.LogDebug("{EntityType} with ID: {Id} retrieved successfully", typeof(T).Name, Id);
                 }
                 return Result;
             }
@@ -181,7 +181,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
         {
             try
             {
-                _logger.LogInformation("Getting {EntityType} by ID: {Id}", typeof(T).Name, Id);
+                _logger.LogDebug("Getting {EntityType} by ID: {Id}", typeof(T).Name, Id);
                 var Result = await _dbSet.FindAsync(Id);
                 if (Result == null)
                 {
@@ -189,7 +189,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 }
                 else
                 {
-                    _logger.LogInformation("{EntityType} with ID: {Id} retrieved successfully", typeof(T).Name, Id);
+                    _logger.LogDebug("{EntityType} with ID: {Id} retrieved successfully", typeof(T).Name, Id);
                 }
                 return Result;
             }
@@ -204,9 +204,9 @@ namespace CinemaVerse.Data.Repositories.Implementations
         {
             try
             {
-                _logger.LogInformation("Updating entity of type {EntityType}", typeof(T).Name);
+                _logger.LogDebug("Updating entity of type {EntityType}", typeof(T).Name);
                 _dbSet.Update(entity);
-                _logger.LogInformation("Entity of type {EntityType} updated successfully", typeof(T).Name);
+                _logger.LogDebug("Entity of type {EntityType} updated successfully", typeof(T).Name);
             }
             catch (Exception ex)
             {
@@ -233,9 +233,9 @@ namespace CinemaVerse.Data.Repositories.Implementations
         {
             try
             {
-                _logger.LogInformation("Counting entities from custom query for type {EntityType}", typeof(T).Name);
+                _logger.LogDebug("Counting entities from custom query for type {EntityType}", typeof(T).Name);
                 var count = await query.CountAsync();
-                _logger.LogInformation("Counted {Count} entities of type {EntityType} from custom query", count, typeof(T).Name);
+                _logger.LogDebug("Counted {Count} entities of type {EntityType} from custom query", count, typeof(T).Name);
                 return count;
             }
             catch (Exception ex)
@@ -254,7 +254,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
         {
             try
             {
-                _logger.LogInformation("Getting paged entities of type {EntityType} (Skip: {Skip}, Take: {Take})", typeof(T).Name, skip, take);
+                _logger.LogDebug("Getting paged entities of type {EntityType} (Skip: {Skip}, Take: {Take})", typeof(T).Name, skip, take);
 
                 // Apply eager loading if specified
                 if (!string.IsNullOrWhiteSpace(includeProperties))
@@ -274,7 +274,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
                     .Take(take)
                     .ToListAsync();
 
-                _logger.LogInformation("Retrieved {Count} paged entities of type {EntityType}", results.Count, typeof(T).Name);
+                _logger.LogDebug("Retrieved {Count} paged entities of type {EntityType}", results.Count, typeof(T).Name);
                 return results;
             }
             catch (Exception ex)

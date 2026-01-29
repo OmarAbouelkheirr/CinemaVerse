@@ -1,5 +1,6 @@
 using CinemaVerse.Data.Data;
 using CinemaVerse.Data.Repositories;
+using CinemaVerse.Middleware;
 using CinemaVerse.Services.Implementations.Admin;
 using CinemaVerse.Services.Implementations.User;
 using CinemaVerse.Services.Interfaces.Admin;
@@ -53,6 +54,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 app.UseAuthorization();
 

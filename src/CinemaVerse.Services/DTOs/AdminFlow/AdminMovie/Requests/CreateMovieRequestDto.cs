@@ -22,7 +22,7 @@ namespace CinemaVerse.Services.DTOs.AdminFlow.AdminMovie.Requests
 
         [Required(ErrorMessage = "At least one cast member is required")]
         [MinLength(1, ErrorMessage = "At least one cast member is required")]
-        public List<string> MovieCast { get; set; } = new();
+        public List<CastMemberRequestDto> CastMembers { get; set; } = new();
 
         [Required(ErrorMessage = "Age rating is required")]
         [EnumDataType(typeof(MovieAgeRating), ErrorMessage = "Invalid age rating")]

@@ -21,6 +21,7 @@ namespace CinemaVerse.Data.Data
         public DbSet<Hall> Halls { get; set; } = null!;
         public DbSet<MovieGenre> MovieGenres { get; set; } = null!;
         public DbSet<MovieImage> MovieImages { get; set; } = null!;
+        public DbSet<MovieCastMember> MovieCastMembers { get; set; } = null!;
         public DbSet<Ticket> Tickets { get; set; } = null!;
         public DbSet<BookingSeat> BookingSeat { get; set; } = null!;
         public DbSet<Review> Reviews { get; set; } = null!;

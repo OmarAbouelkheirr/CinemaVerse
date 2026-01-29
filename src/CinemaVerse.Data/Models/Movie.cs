@@ -8,7 +8,6 @@ namespace CinemaVerse.Data.Models
         public string MovieName { get; set; } = string.Empty;
         public string MovieDescription { get; set;} = string.Empty;
         public TimeSpan MovieDuration {  get; set; }
-        public List<string> MovieCast{ get; set; } = new List<string>();
         public decimal MovieRating { get; set; } 
         public MovieAgeRating MovieAgeRating { get; set; }
         public DateOnly ReleaseDate { get; set; }
@@ -17,6 +16,7 @@ namespace CinemaVerse.Data.Models
         public MovieStatus Status { get; set; } = MovieStatus.Active;
 
         // Navigation Properties
+        public ICollection<MovieCastMember> CastMembers { get; set; } = new List<MovieCastMember>();
         public ICollection<MovieImage> MovieImages { get; set; } = new List<MovieImage>();
         public ICollection<MovieShowTime> MovieShowTimes { get; set; } = new List<MovieShowTime>();
         public ICollection<MovieGenre> MovieGenres { get; set; } = new List<MovieGenre>();

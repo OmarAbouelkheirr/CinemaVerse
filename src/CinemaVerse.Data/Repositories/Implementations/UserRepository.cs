@@ -8,7 +8,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
 {
     public class UserRepository : Repository<User>, IUserRepository
     {
-        private readonly AppDbContext _context;
+        private new readonly AppDbContext _context;
 
         public UserRepository(AppDbContext context, ILogger<User> logger)
             : base(context, logger)

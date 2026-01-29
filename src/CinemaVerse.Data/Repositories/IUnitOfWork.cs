@@ -1,12 +1,6 @@
 using CinemaVerse.Data.Models;
-using CinemaVerse.Data.Repositories.Implementations;
 using CinemaVerse.Data.Repositories.Interfaces;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CinemaVerse.Data.Repositories
 {
@@ -20,9 +14,10 @@ namespace CinemaVerse.Data.Repositories
         IMovieShowTimeRepository MovieShowTimes { get; }
         IRepository<Seat> Seats { get; }
         ITicketsRepository Tickets { get; }
-        IRepository<Hall> Halls { get; }
+        IHallRepository Halls { get; }
         IRepository<MovieGenre> MovieGenres { get; }
         IRepository<MovieImage> MovieImages { get; }
+        IRepository<MovieCastMember> MovieCastMembers { get; }
         IRepository<BookingSeat> BookingSeat { get; }
         IUserRepository Users { get; }
         IRepository<Review> Reviews { get; }

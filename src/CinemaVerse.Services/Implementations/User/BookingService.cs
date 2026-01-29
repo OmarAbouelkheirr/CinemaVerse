@@ -2,8 +2,10 @@ using System.Data;
 using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
-using CinemaVerse.Services.DTOs.Booking.Helpers;
+using CinemaVerse.Services.Constants;
+using CinemaVerse.Services.DTOs.UserFlow.Booking.Helpers;
 using CinemaVerse.Services.DTOs.Common;
+using CinemaVerse.Services.DTOs.Email.Flow;
 using CinemaVerse.Services.DTOs.Email.Requests;
 using CinemaVerse.Services.DTOs.HallSeat.Responses;
 using CinemaVerse.Services.DTOs.Payment.Requests;
@@ -253,6 +255,38 @@ namespace CinemaVerse.Services.Implementations.User
                 _logger.LogInformation("Successfully confirmed booking {BookingId} and issued {TicketCount} tickets for UserId {UserId}",
                     bookingId, tickets.Count(), userId);
 
+                if (booking.User?.IsEmailConfirmed == true)
+                {
+                    try
+                    {
+                        var emailRequest = new BookingConfirmationEmailDto
+                        {
+                            To = booking.User.Email,
+                            BookingId = booking.Id,
+                            FullName = booking.User.FullName,
+                            MovieName = booking.MovieShowTime?.Movie?.MovieName ?? string.Empty,
+                            ShowStartTime = booking.MovieShowTime?.ShowStartTime ?? DateTime.MinValue,
+                            ShowEndTime = booking.MovieShowTime?.ShowEndTime ?? DateTime.MinValue,
+                            HallNumber = booking.MovieShowTime?.Hall?.HallNumber ?? string.Empty,
+                            BranchName = booking.MovieShowTime?.Hall?.Branch?.BranchName ?? string.Empty,
+                            TotalAmount = booking.TotalAmount,
+                            Currency = "EGP",
+                            Tickets = booking.Tickets?.Select(t => new TicketInfoDto
+                            {
+                                TicketNumber = t.TicketNumber,
+                                SeatNumber = t.Seat?.SeatLabel ?? string.Empty,
+                                Price = t.Price
+                            }).ToList() ?? new List<TicketInfoDto>()
+                        };
+                        await _emailService.SendBookingConfirmationEmailAsync(emailRequest);
+                        _logger.LogInformation("Booking confirmation email sent for BookingId {BookingId}", bookingId);
+                    }
+                    catch (Exception emailEx)
+                    {
+                        _logger.LogError(emailEx, "Failed to send booking confirmation email for BookingId {BookingId}, but booking was confirmed", bookingId);
+                    }
+                }
+
                 return bookingDetails;
             }
             catch (Exception ex)
@@ -349,7 +383,7 @@ namespace CinemaVerse.Services.Implementations.User
                     Status = BookingStatus.Pending,
                     TotalAmount = totalAmount,
                     CreatedAt = DateTime.UtcNow,
-                    ExpiresAt = DateTime.UtcNow.AddMinutes(15)
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(BookingConstants.PendingBookingExpiryMinutes)
                 };
 
                 await _unitOfWork.Bookings.AddAsync(booking);

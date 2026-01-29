@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace CinemaVerse.Services.DTOs.Payment.NewFolder
+namespace CinemaVerse.Services.DTOs.UserFlow.Payment.Requests
 {
     public class CreatePaymentIntentRequestDto
     {

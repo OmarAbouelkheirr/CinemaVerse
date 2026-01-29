@@ -1,8 +1,9 @@
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
+using CinemaVerse.Services.Constants;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminMovie.Requests;
 using CinemaVerse.Services.DTOs.Common;
-using CinemaVerse.Services.DTOs.Movie.Flow;
+using CinemaVerse.Services.DTOs.UserFlow.Movie.Flow;
 using CinemaVerse.Services.Interfaces.Admin;
 using Microsoft.Extensions.Logging;
 
@@ -58,7 +59,6 @@ namespace CinemaVerse.Services.Implementations.Admin
                     MovieDescription = Request.MovieDescription,
                     MovieDuration = Request.MovieDuration,
                     ReleaseDate = Request.ReleaseDate,
-                    MovieCast = Request.MovieCast,
                     MovieAgeRating = Request.MovieAgeRating,
                     MovieRating = 0,
                     TrailerUrl = Request.TrailerUrl!,
@@ -68,6 +68,21 @@ namespace CinemaVerse.Services.Implementations.Admin
                 await _unitOfWork.Movies.AddAsync(movie);
 
                 await _unitOfWork.SaveChangesAsync();
+
+                // Add cast members after movie is saved
+                foreach (var cast in Request.CastMembers)
+                {
+                    await _unitOfWork.MovieCastMembers.AddAsync(new MovieCastMember
+                    {
+                        MovieId = movie.Id,
+                        PersonName = cast.PersonName,
+                        ImageUrl = cast.ImageUrl,
+                        RoleType = cast.RoleType,
+                        CharacterName = cast.CharacterName,
+                        DisplayOrder = cast.DisplayOrder,
+                        IsLead = cast.IsLead
+                    });
+                }
 
                 // Add genres and images after movie is saved
                 foreach (var genreId in Request.GenreIds)
@@ -181,8 +196,29 @@ namespace CinemaVerse.Services.Implementations.Admin
                 if (Request.ReleaseDate.HasValue)
                     movie.ReleaseDate = Request.ReleaseDate.Value;
 
-                if (Request.MovieCast != null)
-                    movie.MovieCast = Request.MovieCast;
+                // ===== UPDATE CAST MEMBERS (if provided) =====
+                if (Request.CastMembers != null)
+                {
+                    var existingCast = await _unitOfWork.MovieCastMembers
+                        .FindAllAsync(c => c.MovieId == movieId);
+                    foreach (var c in existingCast)
+                    {
+                        await _unitOfWork.MovieCastMembers.DeleteAsync(c);
+                    }
+                    foreach (var cast in Request.CastMembers)
+                    {
+                        await _unitOfWork.MovieCastMembers.AddAsync(new MovieCastMember
+                        {
+                            MovieId = movieId,
+                            PersonName = cast.PersonName,
+                            ImageUrl = cast.ImageUrl,
+                            RoleType = cast.RoleType,
+                            CharacterName = cast.CharacterName,
+                            DisplayOrder = cast.DisplayOrder,
+                            IsLead = cast.IsLead
+                        });
+                    }
+                }
 
                 if (Request.MovieAgeRating.HasValue)
                     movie.MovieAgeRating = Request.MovieAgeRating.Value;
@@ -278,8 +314,8 @@ namespace CinemaVerse.Services.Implementations.Admin
                 if (filter.Page <= 0)
                     filter.Page = 1;
 
-                if (filter.PageSize <= 0 || filter.PageSize > 100)
-                    filter.PageSize = 20;
+                if (filter.PageSize <= 0 || filter.PageSize > PaginationConstants.MaxPageSize)
+                    filter.PageSize = PaginationConstants.DefaultPageSize;
 
                 // ✅ Build query
                 var query = _unitOfWork.Movies.GetQueryable();
@@ -344,7 +380,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                     orderBy: orderByFunc,
                     skip: (filter.Page - 1) * filter.PageSize,
                     take: filter.PageSize,
-                    includeProperties: "MovieImages,MovieGenres.Genre,MovieShowTimes.Hall.Branch"
+                    includeProperties: "CastMembers,MovieImages,MovieGenres.Genre,MovieShowTimes.Hall.Branch"
                 );
 
                 var movieDtos = movies.Select(movie => new MovieDetailsDto
@@ -358,8 +394,19 @@ namespace CinemaVerse.Services.Implementations.Admin
                     MovieRating = movie.MovieRating,
                     TrailerUrl = movie.TrailerUrl,
                     MoviePoster = movie.MoviePoster ?? string.Empty,
-                    Status = movie.Status, 
-                    Cast = movie.MovieCast,
+                    Status = movie.Status,
+                    CastMembers = movie.CastMembers?
+                        .OrderBy(c => c.DisplayOrder)
+                        .Select(c => new CastMemberDto
+                        {
+                            Id = c.Id,
+                            PersonName = c.PersonName,
+                            ImageUrl = c.ImageUrl,
+                            RoleType = c.RoleType,
+                            CharacterName = c.CharacterName,
+                            DisplayOrder = c.DisplayOrder,
+                            IsLead = c.IsLead
+                        }).ToList() ?? new List<CastMemberDto>(),
                     Genres = movie.MovieGenres
                         .Where(mg => mg.Genre != null)
                         .Select(mg => new GenreDto
@@ -435,7 +482,18 @@ namespace CinemaVerse.Services.Implementations.Admin
                     TrailerUrl = movie.TrailerUrl,
                     MoviePoster = movie.MoviePoster ?? string.Empty,
                     Status = movie.Status,
-                    Cast = movie.MovieCast,
+                    CastMembers = movie.CastMembers?
+                        .OrderBy(c => c.DisplayOrder)
+                        .Select(c => new CastMemberDto
+                        {
+                            Id = c.Id,
+                            PersonName = c.PersonName,
+                            ImageUrl = c.ImageUrl,
+                            RoleType = c.RoleType,
+                            CharacterName = c.CharacterName,
+                            DisplayOrder = c.DisplayOrder,
+                            IsLead = c.IsLead
+                        }).ToList() ?? new List<CastMemberDto>(),
                     Genres = movie.MovieGenres
                         .Where(mg => mg.Genre != null)
                         .Select(mg => new GenreDto

@@ -1,4 +1,4 @@
-﻿namespace CinemaVerse.Services.DTOs.Movie.Flow
+namespace CinemaVerse.Services.DTOs.UserFlow.Movie.Flow
 {
     public class MovieCardDto
     {

@@ -1,7 +1,8 @@
 using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
-using CinemaVerse.Services.DTOs.Payment.NewFolder;
+using CinemaVerse.Services.DTOs.Email.Requests;
+using CinemaVerse.Services.DTOs.UserFlow.Payment.Requests;
 using CinemaVerse.Services.DTOs.Payment.Requests;
 using CinemaVerse.Services.DTOs.Payment.Response;
 using CinemaVerse.Services.Interfaces.User;
@@ -19,8 +20,9 @@ namespace CinemaVerse.Services.Implementations.User
         private readonly IUnitOfWork _unitOfWork;
         private readonly string _stripeSecretKey;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IEmailService _emailService;
 
-        public PaymentService(ILogger<PaymentService> logger, IConfiguration configuration, IUnitOfWork unitOfWork, IServiceProvider serviceProvider)
+        public PaymentService(ILogger<PaymentService> logger, IConfiguration configuration, IUnitOfWork unitOfWork, IServiceProvider serviceProvider, IEmailService emailService)
         {
             _logger = logger;
             _configuration = configuration;
@@ -28,6 +30,7 @@ namespace CinemaVerse.Services.Implementations.User
             _stripeSecretKey = _configuration["Stripe:SecretKey"] ?? throw new InvalidOperationException("Stripe API key is not configured in appsettings.json");
             StripeConfiguration.ApiKey = _stripeSecretKey;
             _serviceProvider = serviceProvider;
+            _emailService = emailService;
         }
         public async Task<bool> ConfirmPaymentAsync(int userId, ConfirmPaymentRequestDto ConfrimPaymentDto)
         {
@@ -130,6 +133,32 @@ namespace CinemaVerse.Services.Implementations.User
                 // ✅ Resolve BookingService from ServiceProvider to avoid circular dependency
                 var bookingService = _serviceProvider.GetRequiredService<IBookingService>();
                 await bookingService.ConfirmBookingAsync(userId, booking.Id);
+
+                // Send payment confirmation email (failure must not affect the operation)
+                var bookingWithDetails = await _unitOfWork.Bookings.GetBookingWithDetailsAsync(booking.Id);
+                if (bookingWithDetails?.User?.IsEmailConfirmed == true)
+                {
+                    try
+                    {
+                        var emailRequest = new PaymentConfirmationEmailDto
+                        {
+                            To = bookingWithDetails.User.Email,
+                            BookingId = booking.Id,
+                            PaymentIntentId = ConfrimPaymentDto.PaymentIntentId,
+                            Amount = existingPayment.Amount,
+                            Currency = existingPayment.Currency ?? "EGP",
+                            TransactionDate = DateTime.UtcNow,
+                            MovieName = bookingWithDetails.MovieShowTime?.Movie?.MovieName ?? string.Empty,
+                            ShowStartTime = bookingWithDetails.MovieShowTime?.ShowStartTime ?? DateTime.MinValue
+                        };
+                        await _emailService.SendPaymentConfirmationEmailAsync(emailRequest);
+                        _logger.LogInformation("Payment confirmation email sent for BookingId {BookingId}", booking.Id);
+                    }
+                    catch (Exception emailEx)
+                    {
+                        _logger.LogError(emailEx, "Failed to send payment confirmation email for BookingId {BookingId}, but payment was confirmed", booking.Id);
+                    }
+                }
 
                 return true;
             }

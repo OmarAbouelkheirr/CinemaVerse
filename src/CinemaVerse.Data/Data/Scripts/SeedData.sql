@@ -31,14 +31,28 @@ SET IDENTITY_INSERT Genres OFF;
 
 -- -----------------------------------------------
 -- 3. Movies
--- MovieCast stored as JSON, Status: 1=Active, MovieAgeRating: 0=G, 1=PG, 2=PG13
+-- Status: 1=Active, MovieAgeRating: 0=G, 1=PG, 2=PG13
 -- -----------------------------------------------
 SET IDENTITY_INSERT Movies ON;
-INSERT INTO Movies (Id, MovieName, MovieDescription, MovieDuration, MovieCast, MovieRating, MovieAgeRating, ReleaseDate, TrailerUrl, MoviePoster, Status) VALUES
-(1, 'Mission Impossible', 'Action thriller from the Mission Impossible series starring Tom Cruise.', '02:30:00', N'["Tom Cruise","Hayley Atwell"]', 8.5, 2, '2024-07-12', 'https://youtube.com/watch?v=xxx', '/posters/mission.jpg', 1),
-(2, 'Night Comedy', 'Egyptian comedy starring Mohamed Henedy.', '01:45:00', N'["Mohamed Henedy","Ahmed Helmy"]', 7.0, 1, '2024-08-01', 'https://youtube.com/watch?v=yyy', '/posters/comedy.jpg', 1),
-(3, 'The Haunted House', 'Egyptian horror film.', '01:55:00', N'["Ahmed Mekky","Dina El Sherbiny"]', 6.5, 3, '2024-09-15', 'https://youtube.com/watch?v=zzz', '/posters/horror.jpg', 1);
+INSERT INTO Movies (Id, MovieName, MovieDescription, MovieDuration, MovieRating, MovieAgeRating, ReleaseDate, TrailerUrl, MoviePoster, Status) VALUES
+(1, 'Mission Impossible', 'Action thriller from the Mission Impossible series starring Tom Cruise.', '02:30:00', 8.5, 2, '2024-07-12', 'https://youtube.com/watch?v=xxx', '/posters/mission.jpg', 1),
+(2, 'Night Comedy', 'Egyptian comedy starring Mohamed Henedy.', '01:45:00', 7.0, 1, '2024-08-01', 'https://youtube.com/watch?v=yyy', '/posters/comedy.jpg', 1),
+(3, 'The Haunted House', 'Egyptian horror film.', '01:55:00', 6.5, 3, '2024-09-15', 'https://youtube.com/watch?v=zzz', '/posters/horror.jpg', 1);
 SET IDENTITY_INSERT Movies OFF;
+
+-- -----------------------------------------------
+-- 3b. MovieCastMembers
+-- RoleType: 0=Actor, 1=Director, 2=Writer, 3=Producer, etc.
+-- -----------------------------------------------
+SET IDENTITY_INSERT MovieCastMembers ON;
+INSERT INTO MovieCastMembers (Id, MovieId, PersonName, ImageUrl, RoleType, CharacterName, DisplayOrder, IsLead) VALUES
+(1, 1, 'Tom Cruise', NULL, 0, 'Ethan Hunt', 0, 1),
+(2, 1, 'Hayley Atwell', NULL, 0, NULL, 1, 0),
+(3, 2, 'Mohamed Henedy', NULL, 0, NULL, 0, 1),
+(4, 2, 'Ahmed Helmy', NULL, 0, NULL, 1, 0),
+(5, 3, 'Ahmed Mekky', NULL, 0, NULL, 0, 1),
+(6, 3, 'Dina El Sherbiny', NULL, 0, NULL, 1, 0);
+SET IDENTITY_INSERT MovieCastMembers OFF;
 
 -- -----------------------------------------------
 -- 4. Users

@@ -1,6 +1,6 @@
-using CinemaVerse.Services.DTOs.Movie.Flow;
+using CinemaVerse.Services.DTOs.UserFlow.Movie.Flow;
 using CinemaVerse.Services.DTOs.Movie.Requests;
-using CinemaVerse.Services.DTOs.Movie.Response;
+using CinemaVerse.Services.DTOs.UserFlow.Movie.Response;
 
 namespace CinemaVerse.Services.Interfaces.User
 {

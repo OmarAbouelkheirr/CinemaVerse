@@ -7,12 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="DTOs\MovieShowTime\**" />
-    <EmbeddedResource Remove="DTOs\MovieShowTime\**" />
-    <None Remove="DTOs\MovieShowTime\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.0" />
     <PackageReference Include="Stripe.net" Version="50.2.0" />
     <PackageReference Include="RazorLight" Version="2.2.0" />
@@ -25,14 +19,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CinemaVerse.Data\CinemaVerse.Data.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="DTOs\AdminFlow\AdminBooking\Response\" />
-    <Folder Include="DTOs\AdminFlow\AdminShowtime\Response\" />
-    <Folder Include="DTOs\AdminFlow\AdminShowtime\Requests\" />
-    <Folder Include="DTOs\UserFlow\Booking\Requests\" />
-    <Folder Include="DTOs\UserFlow\Booking\Responses\" />
   </ItemGroup>
 
 </Project>

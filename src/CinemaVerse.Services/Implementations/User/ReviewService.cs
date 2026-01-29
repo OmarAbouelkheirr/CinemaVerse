@@ -1,6 +1,7 @@
 using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
+using CinemaVerse.Services.Constants;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.DTOs.UserFlow.Review.Requests;
 using CinemaVerse.Services.DTOs.UserFlow.Review.Responses;
@@ -106,8 +107,8 @@ namespace CinemaVerse.Services.Implementations.User
             // Validate pagination (consistent with GetAllMoviesAsync and BrowseMoviesAsync)
             if (page <= 0)
                 page = 1;
-            if (pageSize <= 0 || pageSize > 100)
-                pageSize = 20;
+            if (pageSize <= 0 || pageSize > PaginationConstants.MaxPageSize)
+                pageSize = PaginationConstants.DefaultPageSize;
 
             var query = _unitOfWork.Reviews.GetQueryable()
                 .Where(r => r.MovieId == movieId);
@@ -144,8 +145,8 @@ namespace CinemaVerse.Services.Implementations.User
             // Validate pagination (consistent with GetReviewsByMovieIdAsync)
             if (page <= 0)
                 page = 1;
-            if (pageSize <= 0 || pageSize > 100)
-                pageSize = 20;
+            if (pageSize <= 0 || pageSize > PaginationConstants.MaxPageSize)
+                pageSize = PaginationConstants.DefaultPageSize;
 
             var query = _unitOfWork.Reviews.GetQueryable()
                 .Where(r => r.UserId == userId);

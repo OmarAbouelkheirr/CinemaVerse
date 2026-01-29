@@ -1,8 +1,9 @@
 using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
+using CinemaVerse.Services.Constants;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminBooking.Requests;
-using CinemaVerse.Services.DTOs.Booking.Helpers;
+using CinemaVerse.Services.DTOs.UserFlow.Booking.Helpers;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.DTOs.HallSeat.Responses;
 using CinemaVerse.Services.DTOs.Ticket.Response;
@@ -97,7 +98,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                     Status = BookingStatus.Pending,
                     TotalAmount = totalAmount,
                     CreatedAt = DateTime.UtcNow,
-                    ExpiresAt = DateTime.UtcNow.AddMinutes(15)
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(BookingConstants.PendingBookingExpiryMinutes)
                 };
                 await _unitOfWork.Bookings.AddAsync(booking);
                 await _unitOfWork.SaveChangesAsync();
@@ -199,8 +200,8 @@ namespace CinemaVerse.Services.Implementations.Admin
                 if (filter.Page <= 0)
                     filter.Page = 1;
 
-                if (filter.PageSize <= 0 || filter.PageSize > 100)
-                    filter.PageSize = 20;
+                if (filter.PageSize <= 0 || filter.PageSize > PaginationConstants.MaxPageSize)
+                    filter.PageSize = PaginationConstants.DefaultPageSize;
 
                 // Build query
                 var query = _unitOfWork.Bookings.GetQueryable();

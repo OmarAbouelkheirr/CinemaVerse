@@ -21,9 +21,10 @@ namespace CinemaVerse.Data.Repositories
         private IMovieShowTimeRepository? _movieShowTimes;
         private IRepository<Seat>? _seats;
         private ITicketsRepository? _tickets;
-        private IRepository<Hall>? _halls;
+        private IHallRepository? _halls;
         private IRepository<MovieGenre>? _movieGenres;
         private IRepository<MovieImage>? _movieImages;
+        private IRepository<MovieCastMember>? _movieCastMembers;
         private IRepository<BookingSeat>? _bookingSeats;
         private IUserRepository? _users;
         private IRepository<Review>? _reviews;
@@ -47,9 +48,10 @@ namespace CinemaVerse.Data.Repositories
         public IMovieShowTimeRepository MovieShowTimes => _movieShowTimes ??= new MovieShowTimeRepository(_context, _loggerFactory.CreateLogger<MovieShowTime>());
         public IRepository<Seat> Seats => _seats ??= new Repository<Seat>(_context, _loggerFactory.CreateLogger<Seat>());
         public ITicketsRepository Tickets => _tickets ??= new TicketsRepository(_context, _loggerFactory.CreateLogger<Ticket>());
-        public IRepository<Hall> Halls => _halls ??= new Repository<Hall>(_context, _loggerFactory.CreateLogger<Hall>());
+        public IHallRepository Halls => _halls ??= new HallRepository(_context, _loggerFactory.CreateLogger<Hall>());
         public IRepository<MovieGenre> MovieGenres => _movieGenres ??= new Repository<MovieGenre>(_context, _loggerFactory.CreateLogger<MovieGenre>());
         public IRepository<MovieImage> MovieImages => _movieImages ??= new Repository<MovieImage>(_context, _loggerFactory.CreateLogger<MovieImage>());
+        public IRepository<MovieCastMember> MovieCastMembers => _movieCastMembers ??= new Repository<MovieCastMember>(_context, _loggerFactory.CreateLogger<MovieCastMember>());
         public IRepository<BookingSeat> BookingSeat => _bookingSeats ??= new Repository<BookingSeat>(_context, _loggerFactory.CreateLogger<BookingSeat>());
         public IUserRepository Users => _users ??= new UserRepository(_context, _loggerFactory.CreateLogger<User>());
         public IRepository<Review> Reviews => _reviews ??= new Repository<Review>(_context, _loggerFactory.CreateLogger<Review>());
@@ -71,11 +73,11 @@ namespace CinemaVerse.Data.Repositories
             try
             {
                 await _transaction.CommitAsync();
-                await _transaction.DisposeAsync();
             }
             catch (Exception ex)
             {
                 await RollbackTransactionAsync();
+                _loggerFactory.CreateLogger<UnitOfWork>().LogError(ex, "Failed to commit transaction");
                 throw;
             }
             finally

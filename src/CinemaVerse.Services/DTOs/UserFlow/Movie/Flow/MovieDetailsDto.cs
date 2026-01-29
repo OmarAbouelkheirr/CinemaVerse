@@ -1,6 +1,6 @@
 using CinemaVerse.Data.Enums;
 
-namespace CinemaVerse.Services.DTOs.Movie.Flow
+namespace CinemaVerse.Services.DTOs.UserFlow.Movie.Flow
 {
     public class MovieDetailsDto
     {
@@ -15,7 +15,7 @@ namespace CinemaVerse.Services.DTOs.Movie.Flow
         public string MoviePoster { get; set; } = string.Empty;
         public MovieStatus Status { get; set; }
 
-        public List<string> Cast { get; set; } = new();
+        public List<CastMemberDto> CastMembers { get; set; } = new();
         public List<GenreDto> Genres { get; set; } = new();
         public List<MovieImageDto> Images { get; set; } = new();
         public List<MovieShowTimeDto> ShowTimes { get; set; } = new();

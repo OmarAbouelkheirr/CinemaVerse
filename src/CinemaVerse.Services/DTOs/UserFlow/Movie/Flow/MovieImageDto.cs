@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
-namespace CinemaVerse.Services.DTOs.Movie.Flow
+namespace CinemaVerse.Services.DTOs.UserFlow.Movie.Flow
 {
     public class MovieImageDto
     {

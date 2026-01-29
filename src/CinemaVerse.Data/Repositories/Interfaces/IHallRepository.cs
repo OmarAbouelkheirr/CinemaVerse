@@ -10,7 +10,5 @@ namespace CinemaVerse.Data.Repositories.Interfaces
         Task<bool> IsHallNumberExistsAsync(int branchId, string hallNumber);
         Task<IEnumerable<Hall>> GetAvailableHallsByBranchIdAsync(int branchId);
 
-        //Task<IEnumerable<Hall>> GetAvailableHallsAsync();
-        //Task<IEnumerable<Hall>> GetHallsWithSeatsAsync();
     }
 }

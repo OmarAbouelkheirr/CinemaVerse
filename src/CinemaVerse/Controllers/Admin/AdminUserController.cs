@@ -1,4 +1,5 @@
-﻿using CinemaVerse.Services.DTOs.AdminFlow.AdminBooking.Requests;
+using CinemaVerse.Extensions;
+using CinemaVerse.Services.DTOs.AdminFlow.AdminBooking.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminPayment.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminPayment.Responses;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminTicket.Requests;
@@ -129,7 +130,7 @@ namespace CinemaVerse.API.Controllers.Admin
 
 
         [HttpPost]
-        [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(UserDetailsDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -138,20 +139,18 @@ namespace CinemaVerse.API.Controllers.Admin
             try
             {
                 _logger.LogInformation("Admin: Creating new user: {Email}", request?.Email);
-                
+
                 if (!ModelState.IsValid)
                 {
-                    return BadRequest(ModelState);
+                    return this.BadRequestFromValidation(ModelState);
                 }
 
                 var userId = await _adminUserService.CreateUserAsync(request!);
-                
+
                 _logger.LogInformation("Admin: Successfully created user with ID: {UserId}", userId);
-                
-                return CreatedAtAction(
-                    nameof(GetUserById),
-                    new { id = userId },
-                    new { id = userId, message = "User created successfully" });
+
+                var user = await _adminUserService.GetUserByIdAsync(userId);
+                return CreatedAtAction(nameof(GetUserById), new { id = userId }, user);
             }
             catch (ArgumentNullException ex)
             {
@@ -194,7 +193,7 @@ namespace CinemaVerse.API.Controllers.Admin
 
                 if (!ModelState.IsValid)
                 {
-                    return BadRequest(ModelState);
+                    return this.BadRequestFromValidation(ModelState);
                 }
 
                 await _adminUserService.UpdateUserAsync(id, request);

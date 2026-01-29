@@ -1,6 +1,6 @@
-﻿using CinemaVerse.Services.DTOs.Movie.Flow;
+using CinemaVerse.Services.DTOs.UserFlow.Movie.Flow;
 
-namespace CinemaVerse.Services.DTOs.Movie.Response
+namespace CinemaVerse.Services.DTOs.UserFlow.Movie.Response
 {
     public class BrowseMoviesResponseDto
     {

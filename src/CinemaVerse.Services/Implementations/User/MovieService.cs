@@ -1,8 +1,9 @@
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
-using CinemaVerse.Services.DTOs.Movie.Flow;
+using CinemaVerse.Services.Constants;
+using CinemaVerse.Services.DTOs.UserFlow.Movie.Flow;
 using CinemaVerse.Services.DTOs.Movie.Requests;
-using CinemaVerse.Services.DTOs.Movie.Response;
+using CinemaVerse.Services.DTOs.UserFlow.Movie.Response;
 using CinemaVerse.Services.Interfaces.User;
 using Microsoft.Extensions.Logging;
 using CinemaVerse.Data.Enums;
@@ -36,8 +37,8 @@ namespace CinemaVerse.Services.Implementations.User
                 if (browseDto.Page <= 0)
                     browseDto.Page = 1;
 
-                if (browseDto.PageSize <= 0 || browseDto.PageSize > 100)
-                    browseDto.PageSize = 20;
+                if (browseDto.PageSize <= 0 || browseDto.PageSize > PaginationConstants.MaxPageSize)
+                    browseDto.PageSize = PaginationConstants.DefaultPageSize;
 
                 // Validate genre existence (optional optimization: remove if genre filter is common)
                 if (browseDto.GenreId.HasValue)
@@ -180,7 +181,18 @@ namespace CinemaVerse.Services.Implementations.User
                     TrailerUrl = movie.TrailerUrl,
                     MoviePoster = movie.MoviePoster ?? string.Empty,
                     Status = movie.Status,
-                    Cast = movie.MovieCast,
+                    CastMembers = movie.CastMembers?
+                        .OrderBy(c => c.DisplayOrder)
+                        .Select(c => new CastMemberDto
+                        {
+                            Id = c.Id,
+                            PersonName = c.PersonName,
+                            ImageUrl = c.ImageUrl,
+                            RoleType = c.RoleType,
+                            CharacterName = c.CharacterName,
+                            DisplayOrder = c.DisplayOrder,
+                            IsLead = c.IsLead
+                        }).ToList() ?? new List<CastMemberDto>(),
                     Genres = movie.MovieGenres
                         .Where(mg => mg.Genre != null) // Safety check
                         .Select(mg => new GenreDto

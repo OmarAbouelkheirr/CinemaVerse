@@ -1,4 +1,4 @@
-﻿
+
 using CinemaVerse.Data.Data;
 using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
@@ -10,12 +10,13 @@ namespace CinemaVerse.Data.Repositories.Implementations
 {
     public class HallRepository : Repository<Hall>, IHallRepository
     {
-        private readonly AppDbContext _context;
+        private new readonly AppDbContext _context;
 
         public HallRepository(AppDbContext context, ILogger<Hall> logger)
     : base(context, logger)
         {
-            _context = context;
+            _context = context??throw new ArgumentNullException(nameof(context));
+
         }
 
         public async Task<IEnumerable<Hall>> GetAvailableHallsByBranchIdAsync(int branchId)

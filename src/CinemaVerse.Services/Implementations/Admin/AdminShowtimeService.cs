@@ -1,6 +1,7 @@
 using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
+using CinemaVerse.Services.Constants;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminShowtime.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminShowtime.Response;
 using CinemaVerse.Services.DTOs.Common;
@@ -380,8 +381,8 @@ namespace CinemaVerse.Services.Implementations.Admin
                 if (filter.Page <= 0)
                     filter.Page = 1;
 
-                if (filter.PageSize <= 0 || filter.PageSize > 100)
-                    filter.PageSize = 20;
+                if (filter.PageSize <= 0 || filter.PageSize > PaginationConstants.MaxPageSize)
+                    filter.PageSize = PaginationConstants.DefaultPageSize;
 
                 // Build query
                 var query = _unitOfWork.MovieShowTimes.GetQueryable();

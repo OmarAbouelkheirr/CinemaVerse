@@ -2,7 +2,6 @@ using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System.Text.Json;
 
 namespace CinemaVerse.Data.Data.Configurations
 {
@@ -17,15 +16,6 @@ namespace CinemaVerse.Data.Data.Configurations
             builder.Property(m => m.MovieName).IsRequired().HasMaxLength(250);
 
             builder.Property(m => m.MovieDescription).IsRequired().HasMaxLength(1500);
-
-            // ✅ Convert List<string> to JSON string in database
-            builder.Property(m => m.MovieCast)
-                .IsRequired()
-                .HasConversion(
-                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                    v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>()
-                )
-                .HasColumnType("nvarchar(max)");
 
             builder.Property(m => m.TrailerUrl).HasMaxLength(500);
 

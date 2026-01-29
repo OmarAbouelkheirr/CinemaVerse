@@ -3,6 +3,7 @@ using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Models.Users;
 using CinemaVerse.Data.Repositories;
 using UserEntity = CinemaVerse.Data.Models.Users.User;
+using CinemaVerse.Services.Constants;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminBooking.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminPayment.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminPayment.Responses;
@@ -10,12 +11,14 @@ using CinemaVerse.Services.DTOs.AdminFlow.AdminTicket.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminUser.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminUser.Responses;
 using CinemaVerse.Services.DTOs.Common;
+using CinemaVerse.Services.DTOs.Email.Requests;
 using CinemaVerse.Services.DTOs.Ticket.Response;
 using CinemaVerse.Services.Interfaces.Admin;
+using CinemaVerse.Services.Interfaces.User;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 using System.Text;
-using CinemaVerse.Services.DTOs.Booking.Helpers;
+using CinemaVerse.Services.DTOs.UserFlow.Booking.Helpers;
 
 namespace CinemaVerse.Services.Implementations.Admin
 {
@@ -23,11 +26,13 @@ namespace CinemaVerse.Services.Implementations.Admin
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<AdminUserService> _logger;
+        private readonly IEmailService _emailService;
 
-        public AdminUserService(IUnitOfWork unitOfWork, ILogger<AdminUserService> logger)
+        public AdminUserService(IUnitOfWork unitOfWork, ILogger<AdminUserService> logger, IEmailService emailService)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
+            _emailService = emailService;
         }
 
         public async Task<int> CreateUserAsync(CreateUserRequestDto request)
@@ -88,6 +93,23 @@ namespace CinemaVerse.Services.Implementations.Admin
                 await _unitOfWork.CommitTransactionAsync();
 
                 _logger.LogInformation("Successfully created user {UserId} with email {Email}", user.Id, user.Email);
+
+                try
+                {
+                    var welcomeEmail = new WelcomeEmailDto
+                    {
+                        To = user.Email,
+                        FullName = user.FullName,
+                        Subject = "Welcome to CinemaVerse"
+                    };
+                    await _emailService.SendWelcomeEmailAsync(welcomeEmail);
+                    _logger.LogInformation("Welcome email sent to {Email} for UserId {UserId}", user.Email, user.Id);
+                }
+                catch (Exception emailEx)
+                {
+                    _logger.LogError(emailEx, "Failed to send welcome email to {Email}, but user was created", user.Email);
+                }
+
                 return user.Id;
             }
             catch (Exception ex)
@@ -303,8 +325,8 @@ namespace CinemaVerse.Services.Implementations.Admin
                 if (filter.Page <= 0)
                     filter.Page = 1;
 
-                if (filter.PageSize <= 0 || filter.PageSize > 100)
-                    filter.PageSize = 20;
+                if (filter.PageSize <= 0 || filter.PageSize > PaginationConstants.MaxPageSize)
+                    filter.PageSize = PaginationConstants.DefaultPageSize;
 
                 // Build query
                 var query = _unitOfWork.Users.GetQueryable();
@@ -617,8 +639,8 @@ namespace CinemaVerse.Services.Implementations.Admin
                 if (filter.Page <= 0)
                     filter.Page = 1;
 
-                if (filter.PageSize <= 0 || filter.PageSize > 100)
-                    filter.PageSize = 20;
+                if (filter.PageSize <= 0 || filter.PageSize > PaginationConstants.MaxPageSize)
+                    filter.PageSize = PaginationConstants.DefaultPageSize;
 
                 // Build query - filter by userId
                 var query = _unitOfWork.Bookings.GetQueryable()
@@ -779,8 +801,8 @@ namespace CinemaVerse.Services.Implementations.Admin
                 if (filter.PageNumber <= 0)
                     filter.PageNumber = 1;
 
-                if (filter.PageSize <= 0 || filter.PageSize > 100)
-                    filter.PageSize = 20;
+                if (filter.PageSize <= 0 || filter.PageSize > PaginationConstants.MaxPageSize)
+                    filter.PageSize = PaginationConstants.DefaultPageSize;
 
                 // Build query - get tickets through bookings
                 var query = _unitOfWork.Tickets.GetQueryable()
@@ -905,8 +927,8 @@ namespace CinemaVerse.Services.Implementations.Admin
                 if (filter.Page <= 0)
                     filter.Page = 1;
 
-                if (filter.PageSize <= 0 || filter.PageSize > 100)
-                    filter.PageSize = 20;
+                if (filter.PageSize <= 0 || filter.PageSize > PaginationConstants.MaxPageSize)
+                    filter.PageSize = PaginationConstants.DefaultPageSize;
 
                 // Build query - get payments through bookings
                 var query = _unitOfWork.BookingPayments.GetQueryable()

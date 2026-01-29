@@ -1,6 +1,6 @@
 using CinemaVerse.Services.DTOs.AdminFlow.AdminMovie.Requests;
 using CinemaVerse.Services.DTOs.Common;
-using CinemaVerse.Services.DTOs.Movie.Flow;
+using CinemaVerse.Services.DTOs.UserFlow.Movie.Flow;
 
 namespace CinemaVerse.Services.Interfaces.Admin
 {

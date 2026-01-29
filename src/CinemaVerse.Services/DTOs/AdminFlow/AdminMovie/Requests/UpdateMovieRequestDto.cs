@@ -12,7 +12,7 @@ namespace CinemaVerse.Services.DTOs.AdminFlow.AdminMovie.Requests
         [Range(typeof(TimeSpan), "00:30:00", "05:00:00", ErrorMessage = "Duration must be between 30 minutes and 5 hours")]
         public TimeSpan? MovieDuration { get; set; }
         public DateOnly? ReleaseDate { get; set; }
-        public List<string>? MovieCast { get; set; }
+        public List<CastMemberRequestDto>? CastMembers { get; set; }
         [Range(0, 10, ErrorMessage = "Movie rating must be between 0 and 10")]
         public decimal? MovieRating { get; set; }
 

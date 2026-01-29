@@ -1,5 +1,5 @@
-﻿using CinemaVerse.Data.Enums;
-using CinemaVerse.Services.DTOs.Booking.Helpers;
+using CinemaVerse.Data.Enums;
+using CinemaVerse.Services.DTOs.UserFlow.Booking.Helpers;
 using CinemaVerse.Services.DTOs.HallSeat.Responses;
 using CinemaVerse.Services.DTOs.Ticket.Response;
 

@@ -4,6 +4,7 @@ using CinemaVerse.Data.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CinemaVerse.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260129214325_AddMovieCastMembersTable")]
+    partial class AddMovieCastMembersTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -203,10 +206,6 @@ namespace CinemaVerse.Data.Migrations
                     b.Property<int>("MovieAgeRating")
                         .HasColumnType("int");
 
-                    b.Property<string>("MovieCast")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("MovieDescription")
                         .IsRequired()
                         .HasMaxLength(1500)
@@ -245,6 +244,50 @@ namespace CinemaVerse.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Movies", (string)null);
+                });
+
+            modelBuilder.Entity("CinemaVerse.Data.Models.MovieCastMember", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CharacterName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("DisplayOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsLead")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("MovieId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PersonName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("RoleType")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MovieId");
+
+                    b.ToTable("MovieCastMembers", (string)null);
                 });
 
             modelBuilder.Entity("CinemaVerse.Data.Models.MovieGenre", b =>
@@ -569,6 +612,17 @@ namespace CinemaVerse.Data.Migrations
                     b.Navigation("Branch");
                 });
 
+            modelBuilder.Entity("CinemaVerse.Data.Models.MovieCastMember", b =>
+                {
+                    b.HasOne("CinemaVerse.Data.Models.Movie", "Movie")
+                        .WithMany("CastMembers")
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Movie");
+                });
+
             modelBuilder.Entity("CinemaVerse.Data.Models.MovieGenre", b =>
                 {
                     b.HasOne("CinemaVerse.Data.Models.Genre", "Genre")
@@ -695,6 +749,8 @@ namespace CinemaVerse.Data.Migrations
 
             modelBuilder.Entity("CinemaVerse.Data.Models.Movie", b =>
                 {
+                    b.Navigation("CastMembers");
+
                     b.Navigation("MovieGenres");
 
                     b.Navigation("MovieImages");
