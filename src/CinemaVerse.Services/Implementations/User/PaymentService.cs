@@ -459,5 +459,67 @@ namespace CinemaVerse.Services.Implementations.User
                 throw;
             }
         }
+
+        public async Task<bool> RefundPaymentForUserAsync(int userId, RefundPaymentRequestDto refundPaymentDto)
+        {
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                _logger.LogInformation("Processing refund for UserId: {UserId}, BookingId: {BookingId}", userId, refundPaymentDto.BookingId);
+
+                // Validate userId
+                if (userId <= 0)
+                {
+                    _logger.LogWarning("Invalid UserId: {UserId}", userId);
+                    await _unitOfWork.RollbackTransactionAsync();
+                    throw new ArgumentException("UserId must be greater than zero.", nameof(userId));
+                }
+
+                // Validate refundPaymentDto
+                if (refundPaymentDto == null)
+                {
+                    _logger.LogWarning("RefundPaymentDto is null for UserId: {UserId}", userId);
+                    await _unitOfWork.RollbackTransactionAsync();
+                    throw new ArgumentNullException(nameof(refundPaymentDto), "RefundPaymentDto cannot be null.");
+                }
+
+                // Validate that the booking belongs to the user
+                var booking = await _unitOfWork.Bookings.GetByIdAsync(refundPaymentDto.BookingId);
+                if (booking == null)
+                {
+                    _logger.LogWarning("Booking not found for BookingId: {BookingId} by UserId: {UserId}", refundPaymentDto.BookingId, userId);
+                    await _unitOfWork.RollbackTransactionAsync();
+                    throw new KeyNotFoundException("Booking not found.");
+                }
+
+                if (booking.UserId != userId)
+                {
+                    _logger.LogWarning("Unauthorized refund attempt. RequestUserId: {RequestUserId}, BookingUserId: {BookingUserId}, BookingId: {BookingId}",
+                        userId, booking.UserId, refundPaymentDto.BookingId);
+                    await _unitOfWork.RollbackTransactionAsync();
+                    throw new UnauthorizedAccessException("You are not authorized to refund this payment.");
+                }
+
+                // Call the existing RefundPaymentAsync method (it doesn't manage transactions)
+                var result = await RefundPaymentAsync(refundPaymentDto);
+
+                if (!result)
+                {
+                    _logger.LogError("Failed to process refund for BookingId {BookingId} for UserId {UserId}", refundPaymentDto.BookingId, userId);
+                    await _unitOfWork.RollbackTransactionAsync();
+                    throw new InvalidOperationException("Failed to process refund.");
+                }
+
+                await _unitOfWork.CommitTransactionAsync();
+                _logger.LogInformation("Successfully processed refund for UserId: {UserId}, BookingId: {BookingId}", userId, refundPaymentDto.BookingId);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                _logger.LogError(ex, "Error processing refund for UserId: {UserId}, BookingId: {BookingId}", userId, refundPaymentDto?.BookingId);
+                throw;
+            }
+        }
     }
 }
