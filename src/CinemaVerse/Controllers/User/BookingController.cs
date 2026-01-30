@@ -1,10 +1,13 @@
 using CinemaVerse.Extensions;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.Interfaces.User;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaVerse.API.Controllers.User
 {
+    [Authorize]
+
     [Route("api/bookings")]
     [ApiController]
     public class BookingController : ControllerBase

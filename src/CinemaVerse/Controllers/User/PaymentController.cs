@@ -3,10 +3,12 @@ using CinemaVerse.Services.DTOs.UserFlow.Payment.Requests;
 using CinemaVerse.Services.DTOs.Payment.Requests;
 using CinemaVerse.Services.DTOs.Payment.Response;
 using CinemaVerse.Services.Interfaces.User;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaVerse.API.Controllers.User
 {
+    [Authorize]
     [Route("api/payments")]
     [ApiController]
     public class PaymentController : ControllerBase

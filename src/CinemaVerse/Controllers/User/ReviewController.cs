@@ -3,10 +3,12 @@ using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.DTOs.UserFlow.Review.Requests;
 using CinemaVerse.Services.DTOs.UserFlow.Review.Responses;
 using CinemaVerse.Services.Interfaces.User;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaVerse.API.Controllers.User
 {
+    [Authorize]
     [Route("api")]
     [ApiController]
     public class ReviewController : ControllerBase

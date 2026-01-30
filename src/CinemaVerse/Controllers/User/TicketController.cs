@@ -1,9 +1,11 @@
 using CinemaVerse.Services.DTOs.Ticket.Response;
 using CinemaVerse.Services.Interfaces.User;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaVerse.API.Controllers.User
 {
+    [Authorize]
     [Route("api/tickets")]
     [ApiController]
     public class TicketController : ControllerBase
