@@ -15,11 +15,13 @@ namespace CinemaVerse.Data.Models.Users
         public string Address { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public DateTime DateOfBirth { get; set; }
-        public bool IsActive { get; set; }
-        public bool IsEmailConfirmed { get; set; }
+        public bool IsActive { get; set; } = true;
+        public bool IsEmailConfirmed { get; set; } = false;
         public Genders Gender { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime LastUpdatedAt { get; set; }
+
+        public UserRole Role { get; set; }
 
         // Navigation Properties
         public ICollection<Booking> Bookings { get; set; } = new List<Booking>();

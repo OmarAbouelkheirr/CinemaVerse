@@ -1,4 +1,5 @@
-﻿using CinemaVerse.Data.Models.Users;
+using CinemaVerse.Data.Enums;
+using CinemaVerse.Data.Models.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -38,6 +39,11 @@ namespace CinemaVerse.Data.Data.Configurations
                 .IsRequired();
 
             builder.Property(u => u.Gender).HasConversion<int>();
+
+            builder.Property(u => u.Role)
+                .HasConversion<int>()
+                .HasDefaultValue(UserRole.User)
+                .IsRequired();
 
             //relationships configured here 
 
