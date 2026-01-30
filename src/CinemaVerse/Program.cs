@@ -8,11 +8,14 @@ using CinemaVerse.Services.Implementations.User;
 using CinemaVerse.Services.Interfaces;
 using CinemaVerse.Services.Interfaces.Admin;
 using CinemaVerse.Services.Interfaces.User;
+using CinemaVerse.BackgroundServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using CinemaVerse.Services.Interfaces.Background;
+using CinemaVerse.Services.Implementations.Background;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,7 +53,10 @@ builder.Services.AddScoped<IAdminShowtimeService, AdminShowtimeService>();
 builder.Services.AddScoped<IAdminTicketService, AdminTicketService>();
 builder.Services.AddScoped<IAdminUserService, AdminUserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-
+builder.Services.AddScoped<IExpirePendingBookingsService, ExpirePendingBookingsService>();
+builder.Services.AddHostedService<ExpirePendingBookingsBackgroundService>();
+builder.Services.AddScoped<IShowReminderService, ShowReminderService>();
+builder.Services.AddHostedService<ShowReminderBackgroundService>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
