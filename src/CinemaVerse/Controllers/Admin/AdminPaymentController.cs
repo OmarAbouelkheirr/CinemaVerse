@@ -2,10 +2,12 @@ using CinemaVerse.Services.DTOs.AdminFlow.AdminPayment.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminPayment.Responses;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.Interfaces.Admin;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaVerse.API.Controllers.Admin
 {
+    [Authorize(Roles = "Admin")]
     [Route("api/admin/payments")]
     [ApiController]
     public class AdminPaymentController : ControllerBase

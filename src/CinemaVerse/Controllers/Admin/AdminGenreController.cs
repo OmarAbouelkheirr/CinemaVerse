@@ -3,10 +3,12 @@ using CinemaVerse.Services.DTOs.AdminFlow.AdminGenre.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminGenre.Response;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.Interfaces.Admin;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaVerse.API.Controllers.Admin
 {
+    [Authorize(Roles = "Admin")]
     [Route("api/admin/genres")]
     [ApiController]
     public class AdminGenreController : ControllerBase

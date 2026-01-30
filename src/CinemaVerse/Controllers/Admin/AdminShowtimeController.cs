@@ -3,10 +3,12 @@ using CinemaVerse.Services.DTOs.AdminFlow.AdminShowtime.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminShowtime.Response;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.Interfaces.Admin;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaVerse.API.Controllers.Admin
 {
+    [Authorize(Roles = "Admin")]
     [Route("api/admin/showtimes")]
     [ApiController]
     public class AdminShowtimeController : ControllerBase

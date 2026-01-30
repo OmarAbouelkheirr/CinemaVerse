@@ -3,10 +3,12 @@ using CinemaVerse.Services.DTOs.AdminFlow.AdminHall.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminHall.Response;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.Interfaces.Admin;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaVerse.API.Controllers.Admin
 {
+    [Authorize(Roles = "Admin")]
     [Route("api/admin/halls")]
     [ApiController]
     public class AdminHallController : ControllerBase

@@ -8,10 +8,12 @@ using CinemaVerse.Services.DTOs.AdminFlow.AdminUser.Responses;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.DTOs.Ticket.Response;
 using CinemaVerse.Services.Interfaces.Admin;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaVerse.API.Controllers.Admin
 {
+    [Authorize(Roles = "Admin")]
     [Route("api/admin/users")]
     [ApiController]
     public class AdminUserController : ControllerBase

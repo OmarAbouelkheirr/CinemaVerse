@@ -3,10 +3,12 @@ using CinemaVerse.Services.DTOs.AdminFlow.AdminBranch.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminBranch.Response;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.Interfaces.Admin;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaVerse.API.Controllers.Admin
 {
+    [Authorize(Roles = "Admin")]
     [Route("api/admin/branches")]
     [ApiController]
     public class AdminBranchController : ControllerBase
