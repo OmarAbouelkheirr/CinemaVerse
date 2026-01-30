@@ -4,9 +4,12 @@ using CinemaVerse.Services.DTOs.Movie.Requests;
 using CinemaVerse.Services.DTOs.UserFlow.Movie.Response;
 using CinemaVerse.Services.Interfaces.User;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CinemaVerse.API.Controllers.User
 {
+    [AllowAnonymous]
+
     [Route("api/movies")]
     [ApiController]
     public class MovieController : ControllerBase

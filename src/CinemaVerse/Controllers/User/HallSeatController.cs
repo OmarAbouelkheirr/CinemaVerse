@@ -1,9 +1,12 @@
 using CinemaVerse.Services.DTOs.HallSeat.Responses;
 using CinemaVerse.Services.Interfaces.User;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaVerse.API.Controllers.User
 {
+    [AllowAnonymous]
+
     [Route("api/showtimes")]
     [ApiController]
     public class HallSeatController : ControllerBase
