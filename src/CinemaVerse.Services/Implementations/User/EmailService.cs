@@ -88,6 +88,35 @@ namespace CinemaVerse.Services.Implementations.User
             }
         }
 
+        public async Task SendBookingReminderEmailAsync(BookingReminderEmailDto emailDto)
+        {
+            if (emailDto == null)
+            {
+                _logger.LogWarning("BookingReminderEmailDto is null");
+                throw new ArgumentNullException(nameof(emailDto));
+            }
+
+            try
+            {
+                _logger.LogInformation("Sending booking reminder email to {Email} for BookingId: {BookingId}",
+                    emailDto.To, emailDto.BookingId);
+
+                string htmlBody = await _razorEngine.CompileRenderAsync($"{_assemblyName}.Helpers.Templates.BookingReminderEmail.cshtml", emailDto);
+
+                await SendEmailAsync(new SendEmailDto
+                {
+                    To = emailDto.To,
+                    Subject = $"Reminder - Your show in 2 hours - {emailDto.MovieName}",
+                    Body = htmlBody
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending booking reminder email to {Email}", emailDto.To);
+                throw;
+            }
+        }
+
         public async Task SendEmailAsync(SendEmailDto emailDto)
         {
             try

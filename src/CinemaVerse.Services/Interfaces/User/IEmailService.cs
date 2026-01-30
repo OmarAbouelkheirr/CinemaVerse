@@ -9,6 +9,7 @@ namespace CinemaVerse.Services.Interfaces.User
         Task SendWelcomeEmailAsync(WelcomeEmailDto emailDto);
         Task SendPasswordResetEmailAsync(PasswordResetEmailDto emailDto);
         Task SendBookingConfirmationEmailAsync(BookingConfirmationEmailDto emailDto);
+        Task SendBookingReminderEmailAsync(BookingReminderEmailDto emailDto);
         Task SendPaymentConfirmationEmailAsync(PaymentConfirmationEmailDto emailDto);
         Task SendBookingCancellationEmailAsync(BookingCancellationEmailDto emailDto);
     }
