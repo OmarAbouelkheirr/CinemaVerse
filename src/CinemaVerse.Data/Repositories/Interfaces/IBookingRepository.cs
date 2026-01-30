@@ -9,5 +9,6 @@ namespace CinemaVerse.Data.Repositories.Interfaces
         Task<IEnumerable<Booking>> GetBookingsByStatusAsync(BookingStatus Status);
         Task<bool> UpdateBookingStatusAsync(int BookingId, BookingStatus NewStatus);
         Task<IEnumerable<Booking>> GetUserBookingsAsync(int userId);
+        Task<IEnumerable<Booking>> GetConfirmedBookingsInShowTimeWindowAsync(DateTime windowStartUtc, DateTime windowEndUtc);
     }
 }

@@ -145,6 +145,37 @@ namespace CinemaVerse.Data.Repositories.Implementations
             }
         }
 
-
+        public async Task<IEnumerable<Booking>> GetConfirmedBookingsInShowTimeWindowAsync(DateTime windowStartUtc, DateTime windowEndUtc)
+        {
+            try
+            {
+                _logger.LogDebug("Getting confirmed bookings with show time in window {Start}–{End}", windowStartUtc, windowEndUtc);
+                var result = await _dbSet
+                    .AsNoTracking()
+                    .Where(b => b.Status == BookingStatus.Confirmed
+                        && b.MovieShowTime != null
+                        && b.MovieShowTime.ShowStartTime >= windowStartUtc
+                        && b.MovieShowTime.ShowStartTime <= windowEndUtc)
+                    .Include(b => b.User)
+                    .Include(b => b.Tickets)
+                        .ThenInclude(t => t.Seat)
+                    .Include(b => b.MovieShowTime)
+                        .ThenInclude(mst => mst.Movie)
+                    .Include(b => b.MovieShowTime)
+                        .ThenInclude(mst => mst.Hall)
+                            .ThenInclude(h => h.Branch)
+                    .Include(b => b.BookingSeats)
+                        .ThenInclude(bs => bs.Seat)
+                    .OrderBy(b => b.MovieShowTime!.ShowStartTime)
+                    .ToListAsync();
+                _logger.LogDebug("Retrieved {Count} confirmed bookings in show time window", result.Count);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting confirmed bookings in show time window");
+                throw;
+            }
+        }
     }
 }
