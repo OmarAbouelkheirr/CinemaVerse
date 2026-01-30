@@ -32,40 +32,40 @@ namespace CinemaVerse.Services.Implementations.User
             _serviceProvider = serviceProvider;
             _emailService = emailService;
         }
-        public async Task<bool> ConfirmPaymentAsync(int userId, ConfirmPaymentRequestDto ConfrimPaymentDto)
+        public async Task<bool> ConfirmPaymentAsync(int userId, ConfirmPaymentRequestDto confirmPaymentDto)
         {
             try
             {
                 await _unitOfWork.BeginTransactionAsync();
-                _logger.LogInformation("Confirming payment for BookingId: {BookingId} by User: {UserId}", ConfrimPaymentDto.BookingId, userId);
-                if (ConfrimPaymentDto == null)
+                _logger.LogInformation("Confirming payment for BookingId: {BookingId} by User: {UserId}", confirmPaymentDto.BookingId, userId);
+                if (confirmPaymentDto == null)
                 {
-                    _logger.LogWarning("ConfrimPaymentDto is null while confirming payment by User: {UserId}", userId);
+                    _logger.LogWarning("ConfirmPaymentRequestDto is null while confirming payment by User: {UserId}", userId);
                     await _unitOfWork.RollbackTransactionAsync();
-                    throw new ArgumentNullException(nameof(ConfrimPaymentDto), "ConfrimPaymentDto cannot be null.");
+                    throw new ArgumentNullException(nameof(confirmPaymentDto), "ConfirmPaymentRequestDto cannot be null.");
                 }
                 if (userId <= 0)
                 {
-                    _logger.LogWarning("UserId must be greater than zero while confirming payment for BookingId: {BookingId}", ConfrimPaymentDto.BookingId);
+                    _logger.LogWarning("UserId must be greater than zero while confirming payment for BookingId: {BookingId}", confirmPaymentDto.BookingId);
                     await _unitOfWork.RollbackTransactionAsync();
                     throw new ArgumentException("UserId must be greater than zero.");
                 }
-                if (ConfrimPaymentDto.BookingId <= 0)
+                if (confirmPaymentDto.BookingId <= 0)
                 {
-                    _logger.LogWarning("Invalid BookingId: {BookingId} by User: {UserId}", ConfrimPaymentDto.BookingId, userId);
+                    _logger.LogWarning("Invalid BookingId: {BookingId} by User: {UserId}", confirmPaymentDto.BookingId, userId);
                     await _unitOfWork.RollbackTransactionAsync();
                     throw new ArgumentException("BookingId must be greater than zero.");
                 }
-                var booking = await _unitOfWork.Bookings.GetByIdAsync(ConfrimPaymentDto.BookingId);
+                var booking = await _unitOfWork.Bookings.GetByIdAsync(confirmPaymentDto.BookingId);
                 if (booking == null)
                 {
-                    _logger.LogWarning("Booking not found for BookingId: {BookingId} by User: {UserId}", ConfrimPaymentDto.BookingId, userId);
+                    _logger.LogWarning("Booking not found for BookingId: {BookingId} by User: {UserId}", confirmPaymentDto.BookingId, userId);
                     await _unitOfWork.RollbackTransactionAsync();
                     throw new KeyNotFoundException("Booking not found.");
                 }
-                if (string.IsNullOrEmpty(ConfrimPaymentDto.PaymentIntentId))
+                if (string.IsNullOrEmpty(confirmPaymentDto.PaymentIntentId))
                 {
-                    _logger.LogWarning("PaymentIntentId is null or empty for BookingId: {BookingId} by User: {UserId}", ConfrimPaymentDto.BookingId, userId);
+                    _logger.LogWarning("PaymentIntentId is null or empty for BookingId: {BookingId} by User: {UserId}", confirmPaymentDto.BookingId, userId);
                     await _unitOfWork.RollbackTransactionAsync();
                     throw new ArgumentException("PaymentIntentId cannot be null or empty.");
                 }
@@ -79,10 +79,10 @@ namespace CinemaVerse.Services.Implementations.User
                 }
                 var existingPayment = await _unitOfWork.BookingPayments.FirstOrDefaultAsync(bp =>
                     bp.BookingId == booking.Id &&
-                    bp.PaymentIntentId == ConfrimPaymentDto.PaymentIntentId);
+                    bp.PaymentIntentId == confirmPaymentDto.PaymentIntentId);
                 if (existingPayment == null)
                 {
-                    _logger.LogWarning("No payment record found for BookingId: {BookingId} with PaymentIntentId: {PaymentIntentId} by User: {UserId}", ConfrimPaymentDto.BookingId, ConfrimPaymentDto.PaymentIntentId, userId);
+                    _logger.LogWarning("No payment record found for BookingId: {BookingId} with PaymentIntentId: {PaymentIntentId} by User: {UserId}", confirmPaymentDto.BookingId, confirmPaymentDto.PaymentIntentId, userId);
                     await _unitOfWork.RollbackTransactionAsync();
                     throw new KeyNotFoundException("Payment record not found for the provided BookingId and PaymentIntentId.");
                 }
@@ -102,10 +102,10 @@ namespace CinemaVerse.Services.Implementations.User
                 }
 
                 var service = new PaymentIntentService();
-                var paymentIntent = await service.GetAsync(ConfrimPaymentDto.PaymentIntentId);
+                var paymentIntent = await service.GetAsync(confirmPaymentDto.PaymentIntentId);
                 if (paymentIntent.Status != "succeeded")
                 {
-                    _logger.LogWarning("PaymentIntent status is not succeeded for BookingId: {BookingId}. Current Status: {Status} by User: {UserId}", ConfrimPaymentDto.BookingId, paymentIntent.Status, userId);
+                    _logger.LogWarning("PaymentIntent status is not succeeded for BookingId: {BookingId}. Current Status: {Status} by User: {UserId}", confirmPaymentDto.BookingId, paymentIntent.Status, userId);
                     await _unitOfWork.RollbackTransactionAsync();
                     throw new InvalidOperationException("Payment has not been completed successfully.");
                 }
@@ -113,13 +113,13 @@ namespace CinemaVerse.Services.Implementations.User
                 var currency = paymentIntent.Currency;
                 if (amount != (long)(existingPayment.Amount * 100))
                 {
-                    _logger.LogWarning("Amount mismatch for BookingId: {BookingId}. Expected: {ExpectedAmount}, PaymentIntent Amount: {PaymentIntentAmount} by User: {UserId}", ConfrimPaymentDto.BookingId, booking.TotalAmount * 100, amount, userId);
+                    _logger.LogWarning("Amount mismatch for BookingId: {BookingId}. Expected: {ExpectedAmount}, PaymentIntent Amount: {PaymentIntentAmount} by User: {UserId}", confirmPaymentDto.BookingId, booking.TotalAmount * 100, amount, userId);
                     await _unitOfWork.RollbackTransactionAsync();
                     throw new InvalidOperationException("Payment amount does not match the booking total.");
                 }
                 if (!string.Equals(currency, existingPayment.Currency, StringComparison.OrdinalIgnoreCase))
                 {
-                    _logger.LogWarning("Currency mismatch for BookingId: {BookingId}. Expected: {ExpectedCurrency}, PaymentIntent Currency: {PaymentIntentCurrency} by User: {UserId}", ConfrimPaymentDto.BookingId, existingPayment.Currency, currency, userId);
+                    _logger.LogWarning("Currency mismatch for BookingId: {BookingId}. Expected: {ExpectedCurrency}, PaymentIntent Currency: {PaymentIntentCurrency} by User: {UserId}", confirmPaymentDto.BookingId, existingPayment.Currency, currency, userId);
                     await _unitOfWork.RollbackTransactionAsync();
                     throw new InvalidOperationException("Payment currency does not match the booking currency.");
                 }
@@ -128,7 +128,7 @@ namespace CinemaVerse.Services.Implementations.User
                 existingPayment.Status = PaymentStatus.Completed;
                 await _unitOfWork.BookingPayments.UpdateAsync(existingPayment);
                 await _unitOfWork.CommitTransactionAsync();
-                _logger.LogInformation("Payment confirmed and booking updated. BookingId: {BookingId} by User: {UserId}", ConfrimPaymentDto.BookingId, userId);
+                _logger.LogInformation("Payment confirmed and booking updated. BookingId: {BookingId} by User: {UserId}", confirmPaymentDto.BookingId, userId);
                 
                 // ✅ Resolve BookingService from ServiceProvider to avoid circular dependency
                 var bookingService = _serviceProvider.GetRequiredService<IBookingService>();
@@ -144,7 +144,7 @@ namespace CinemaVerse.Services.Implementations.User
                         {
                             To = bookingWithDetails.User.Email,
                             BookingId = booking.Id,
-                            PaymentIntentId = ConfrimPaymentDto.PaymentIntentId,
+                            PaymentIntentId = confirmPaymentDto.PaymentIntentId,
                             Amount = existingPayment.Amount,
                             Currency = existingPayment.Currency ?? "EGP",
                             TransactionDate = DateTime.UtcNow,
@@ -164,56 +164,56 @@ namespace CinemaVerse.Services.Implementations.User
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while confirming payment for BookingId: {BookingId} by User: {UserId}", ConfrimPaymentDto.BookingId, userId);
+                _logger.LogError(ex, "Error occurred while confirming payment for BookingId: {BookingId} by User: {UserId}", confirmPaymentDto.BookingId, userId);
                 await _unitOfWork.RollbackTransactionAsync();
                 throw;
             }
         }
 
-        public async Task<CreatePaymentIntentResponseDto> CreatePaymentIntent(int userId, CreatePaymentIntentRequestDto CreatePaymentDto)
+        public async Task<CreatePaymentIntentResponseDto> CreatePaymentIntent(int userId, CreatePaymentIntentRequestDto createPaymentDto)
         {
-            int? bookingIdForLog = CreatePaymentDto?.BookingId;
+            int? bookingIdForLog = createPaymentDto?.BookingId;
             try
             {
-                if (CreatePaymentDto == null)
+                if (createPaymentDto == null)
                 {
-                    _logger.LogWarning("CreatePaymentDto is null while creating payment intent by User: {UserId}", userId);
-                    throw new ArgumentNullException(nameof(CreatePaymentDto), "CreatePaymentDto cannot be null.");
+                    _logger.LogWarning("createPaymentDto is null while creating payment intent by User: {UserId}", userId);
+                    throw new ArgumentNullException(nameof(createPaymentDto), "CreatePaymentIntentRequestDto cannot be null.");
                 }
 
-                _logger.LogInformation("Creating payment intent for BookingId: {BookingId} by User: {UserId}", CreatePaymentDto.BookingId, userId);
+                _logger.LogInformation("Creating payment intent for BookingId: {BookingId} by User: {UserId}", createPaymentDto.BookingId, userId);
 
                 if (userId <= 0)
                 {
-                    _logger.LogWarning("UserId must be greater than zero while creating payment intent for BookingId: {BookingId}", CreatePaymentDto.BookingId);
+                    _logger.LogWarning("UserId must be greater than zero while creating payment intent for BookingId: {BookingId}", createPaymentDto.BookingId);
                     throw new ArgumentException("UserId must be greater than zero.");
                 }
                 
-                if (CreatePaymentDto.BookingId <= 0)
+                if (createPaymentDto.BookingId <= 0)
                 {
-                    _logger.LogWarning("Invalid BookingId: {BookingId} by User: {UserId}", CreatePaymentDto.BookingId, userId);
+                    _logger.LogWarning("Invalid BookingId: {BookingId} by User: {UserId}", createPaymentDto.BookingId, userId);
                     throw new ArgumentException("BookingId must be greater than zero.");
                 }
 
-                if (CreatePaymentDto.Amount <= 0)
+                if (createPaymentDto.Amount <= 0)
                 {
-                    _logger.LogWarning("Invalid amount: {Amount} for BookingId: {BookingId} by User: {UserId}", CreatePaymentDto.Amount, CreatePaymentDto.BookingId, userId);
+                    _logger.LogWarning("Invalid amount: {Amount} for BookingId: {BookingId} by User: {UserId}", createPaymentDto.Amount, createPaymentDto.BookingId, userId);
                     throw new ArgumentException("Amount must be greater than zero.");
                 }
-                if (string.IsNullOrEmpty(CreatePaymentDto.Currency))
+                if (string.IsNullOrEmpty(createPaymentDto.Currency))
                 {
-                    _logger.LogWarning("Currency is null or empty for BookingId: {BookingId} by User: {UserId}", CreatePaymentDto.BookingId, userId);
+                    _logger.LogWarning("Currency is null or empty for BookingId: {BookingId} by User: {UserId}", createPaymentDto.BookingId, userId);
                     throw new ArgumentException("Currency must be provided.");
                 }
-                if (string.IsNullOrEmpty(CreatePaymentDto.PaymentMethodType))
+                if (string.IsNullOrEmpty(createPaymentDto.PaymentMethodType))
                 {
-                    CreatePaymentDto.PaymentMethodType = "card"; // Default to card if not provided
+                    createPaymentDto.PaymentMethodType = "card"; // Default to card if not provided
                 }
 
-                var booking = await _unitOfWork.Bookings.GetByIdAsync(CreatePaymentDto.BookingId);
+                var booking = await _unitOfWork.Bookings.GetByIdAsync(createPaymentDto.BookingId);
                 if (booking == null)
                 {
-                    _logger.LogWarning("Booking not found for BookingId: {BookingId} by User: {UserId}", CreatePaymentDto.BookingId, userId);
+                    _logger.LogWarning("Booking not found for BookingId: {BookingId} by User: {UserId}", createPaymentDto.BookingId, userId);
                     throw new KeyNotFoundException("Booking not found.");
                 }
                 if (booking.UserId != userId)
@@ -223,14 +223,14 @@ namespace CinemaVerse.Services.Implementations.User
                         userId, booking.UserId, booking.Id);
                     throw new UnauthorizedAccessException("You are not authorized to pay for this booking.");
                 }
-                if (booking.TotalAmount != CreatePaymentDto.Amount)
+                if (booking.TotalAmount != createPaymentDto.Amount)
                 {
-                    _logger.LogWarning("Amount mismatch for BookingId: {BookingId}. Expected: {ExpectedAmount}, Provided: {ProvidedAmount} by User: {UserId}", CreatePaymentDto.BookingId, booking.TotalAmount, CreatePaymentDto.Amount, userId);
+                    _logger.LogWarning("Amount mismatch for BookingId: {BookingId}. Expected: {ExpectedAmount}, Provided: {ProvidedAmount} by User: {UserId}", createPaymentDto.BookingId, booking.TotalAmount, createPaymentDto.Amount, userId);
                     // Do NOT trust client-provided amount; always charge the booking total.
                 }
                 if (booking.Status != BookingStatus.Pending)
                 {
-                    _logger.LogWarning("Invalid booking status for BookingId: {BookingId}. Current Status: {Status} by User: {UserId}", CreatePaymentDto.BookingId, booking.Status, userId);
+                    _logger.LogWarning("Invalid booking status for BookingId: {BookingId}. Current Status: {Status} by User: {UserId}", createPaymentDto.BookingId, booking.Status, userId);
                     throw new InvalidOperationException("Booking is not in a valid state for payment.");
                 }
                 if (booking.ExpiresAt.HasValue && booking.ExpiresAt.Value <= DateTime.UtcNow)
@@ -255,11 +255,11 @@ namespace CinemaVerse.Services.Implementations.User
                 var options = new PaymentIntentCreateOptions
                 {
                     Amount = (long)(booking.TotalAmount * 100), // Convert to smallest currency unit
-                    Currency = CreatePaymentDto.Currency.ToLowerInvariant(),
-                    PaymentMethodTypes = new List<string> { CreatePaymentDto.PaymentMethodType },
+                    Currency = createPaymentDto.Currency.ToLowerInvariant(),
+                    PaymentMethodTypes = new List<string> { createPaymentDto.PaymentMethodType },
                     Metadata = new Dictionary<string, string>
                     {
-                        { "BookingId", CreatePaymentDto.BookingId.ToString() }
+                        { "BookingId", createPaymentDto.BookingId.ToString() }
                     }
                 };
                 var service = new PaymentIntentService();
@@ -277,7 +277,7 @@ namespace CinemaVerse.Services.Implementations.User
                             PaymentIntentId = existingIntent.Id,
                             ClientSecret = existingIntent.ClientSecret,
                             Amount = booking.TotalAmount,
-                            Currency = CreatePaymentDto.Currency
+                            Currency = createPaymentDto.Currency
                         };
                     }
                     catch (StripeException ex)
@@ -295,7 +295,7 @@ namespace CinemaVerse.Services.Implementations.User
                 if (existingPayment != null)
                 {
                     existingPayment.Amount = booking.TotalAmount;
-                    existingPayment.Currency = CreatePaymentDto.Currency;
+                    existingPayment.Currency = createPaymentDto.Currency;
                     existingPayment.PaymentIntentId = paymentIntent.Id;
                     existingPayment.TransactionDate = DateTime.UtcNow;
                     existingPayment.Status = PaymentStatus.Pending;
@@ -307,7 +307,7 @@ namespace CinemaVerse.Services.Implementations.User
                     {
                         BookingId = booking.Id,
                         Amount = booking.TotalAmount,
-                        Currency = CreatePaymentDto.Currency,
+                        Currency = createPaymentDto.Currency,
                         PaymentIntentId = paymentIntent.Id,
                         TransactionDate = DateTime.UtcNow,
                         Status = PaymentStatus.Pending
@@ -324,7 +324,7 @@ namespace CinemaVerse.Services.Implementations.User
                     PaymentIntentId = paymentIntent.Id,
                     ClientSecret = paymentIntent.ClientSecret,
                     Amount = booking.TotalAmount,
-                    Currency = CreatePaymentDto.Currency
+                    Currency = createPaymentDto.Currency
                 };
             }
             catch (Exception ex)
@@ -336,7 +336,7 @@ namespace CinemaVerse.Services.Implementations.User
 
         // ... AI Code, Omar ...
 
-        public async Task<bool> RefundPaymentAsync(RefundPaymentRequestDto RefundPaymentDto)
+        public async Task<bool> RefundPaymentAsync(RefundPaymentRequestDto refundPaymentDto)
         {
             // Note: This method does NOT manage its own transaction
             // It should be called within an existing transaction context
@@ -345,43 +345,43 @@ namespace CinemaVerse.Services.Implementations.User
             try
             {
                 _logger.LogInformation("Processing refund for BookingId: {BookingId}, PaymentIntentId: {PaymentIntentId}",
-                    RefundPaymentDto.BookingId, RefundPaymentDto.PaymentIntentId);
+                    refundPaymentDto.BookingId, refundPaymentDto.PaymentIntentId);
 
                 // 1. Validate input
-                if (RefundPaymentDto == null)
+                if (refundPaymentDto == null)
                 {
-                    _logger.LogWarning("RefundPaymentDto is null");
-                    throw new ArgumentNullException(nameof(RefundPaymentDto), "RefundPaymentDto cannot be null.");
+                    _logger.LogWarning("RefundPaymentRequestDto is null");
+                    throw new ArgumentNullException(nameof(refundPaymentDto), "RefundPaymentRequestDto cannot be null.");
                 }
 
-                if (RefundPaymentDto.BookingId <= 0)
+                if (refundPaymentDto.BookingId <= 0)
                 {
-                    _logger.LogWarning("Invalid BookingId: {BookingId}", RefundPaymentDto.BookingId);
-                    throw new ArgumentException("BookingId must be greater than zero.", nameof(RefundPaymentDto.BookingId));
+                    _logger.LogWarning("Invalid BookingId: {BookingId}", refundPaymentDto.BookingId);
+                    throw new ArgumentException("BookingId must be greater than zero.", nameof(refundPaymentDto.BookingId));
                 }
 
-                if (string.IsNullOrEmpty(RefundPaymentDto.PaymentIntentId))
+                if (string.IsNullOrEmpty(refundPaymentDto.PaymentIntentId))
                 {
-                    _logger.LogWarning("PaymentIntentId is null or empty for BookingId: {BookingId}", RefundPaymentDto.BookingId);
-                    throw new ArgumentException("PaymentIntentId cannot be null or empty.", nameof(RefundPaymentDto.PaymentIntentId));
+                    _logger.LogWarning("PaymentIntentId is null or empty for BookingId: {BookingId}", refundPaymentDto.BookingId);
+                    throw new ArgumentException("PaymentIntentId cannot be null or empty.", nameof(refundPaymentDto.PaymentIntentId));
                 }
 
-                if (RefundPaymentDto.RefundAmount <= 0)
+                if (refundPaymentDto.RefundAmount <= 0)
                 {
                     _logger.LogWarning("Invalid RefundAmount: {RefundAmount} for BookingId: {BookingId}",
-                        RefundPaymentDto.RefundAmount, RefundPaymentDto.BookingId);
-                    throw new ArgumentException("RefundAmount must be greater than zero.", nameof(RefundPaymentDto.RefundAmount));
+                        refundPaymentDto.RefundAmount, refundPaymentDto.BookingId);
+                    throw new ArgumentException("RefundAmount must be greater than zero.", nameof(refundPaymentDto.RefundAmount));
                 }
 
                 // 2. Get booking payment from database
                 var bookingPayment = await _unitOfWork.BookingPayments.FirstOrDefaultAsync(bp =>
-                    bp.BookingId == RefundPaymentDto.BookingId &&
-                    bp.PaymentIntentId == RefundPaymentDto.PaymentIntentId);
+                    bp.BookingId == refundPaymentDto.BookingId &&
+                    bp.PaymentIntentId == refundPaymentDto.PaymentIntentId);
 
                 if (bookingPayment == null)
                 {
                     _logger.LogWarning("No payment record found for BookingId: {BookingId} with PaymentIntentId: {PaymentIntentId}",
-                        RefundPaymentDto.BookingId, RefundPaymentDto.PaymentIntentId);
+                        refundPaymentDto.BookingId, refundPaymentDto.PaymentIntentId);
                     throw new KeyNotFoundException("Payment record not found for the provided BookingId and PaymentIntentId.");
                 }
 
@@ -389,7 +389,7 @@ namespace CinemaVerse.Services.Implementations.User
                 if (bookingPayment.Status == PaymentStatus.Cancelled)
                 {
                     _logger.LogInformation("Payment already refunded for BookingId: {BookingId}, PaymentIntentId: {PaymentIntentId}",
-                        RefundPaymentDto.BookingId, RefundPaymentDto.PaymentIntentId);
+                        refundPaymentDto.BookingId, refundPaymentDto.PaymentIntentId);
                     return true; // Already refunded - idempotency
                 }
 
@@ -397,16 +397,16 @@ namespace CinemaVerse.Services.Implementations.User
                 if (bookingPayment.Status != PaymentStatus.Completed)
                 {
                     _logger.LogWarning("Cannot refund payment with status {Status} for BookingId: {BookingId}, PaymentIntentId: {PaymentIntentId}",
-                        bookingPayment.Status, RefundPaymentDto.BookingId, RefundPaymentDto.PaymentIntentId);
+                        bookingPayment.Status, refundPaymentDto.BookingId, refundPaymentDto.PaymentIntentId);
                     throw new InvalidOperationException($"Cannot refund payment. Only completed payments can be refunded. Current status: {bookingPayment.Status}.");
                 }
 
                 // 5. Validate refund amount matches payment amount
-                if (bookingPayment.Amount != RefundPaymentDto.RefundAmount)
+                if (bookingPayment.Amount != refundPaymentDto.RefundAmount)
                 {
                     _logger.LogWarning("Refund amount mismatch for BookingId: {BookingId}. Expected: {ExpectedAmount}, Provided: {ProvidedAmount}",
-                        RefundPaymentDto.BookingId, bookingPayment.Amount, RefundPaymentDto.RefundAmount);
-                    throw new InvalidOperationException($"Refund amount does not match the payment amount. Expected: {bookingPayment.Amount}, Provided: {RefundPaymentDto.RefundAmount}.");
+                        refundPaymentDto.BookingId, bookingPayment.Amount, refundPaymentDto.RefundAmount);
+                    throw new InvalidOperationException($"Refund amount does not match the payment amount. Expected: {bookingPayment.Amount}, Provided: {refundPaymentDto.RefundAmount}.");
                 }
 
                 // 6. Get PaymentIntent from Stripe to verify it exists and is succeeded
@@ -414,19 +414,19 @@ namespace CinemaVerse.Services.Implementations.User
                 PaymentIntent paymentIntent;
                 try
                 {
-                    paymentIntent = await paymentIntentService.GetAsync(RefundPaymentDto.PaymentIntentId);
+                    paymentIntent = await paymentIntentService.GetAsync(refundPaymentDto.PaymentIntentId);
                 }
                 catch (StripeException ex)
                 {
                     _logger.LogError(ex, "Failed to retrieve PaymentIntent {PaymentIntentId} from Stripe for BookingId: {BookingId}",
-                        RefundPaymentDto.PaymentIntentId, RefundPaymentDto.BookingId);
+                        refundPaymentDto.PaymentIntentId, refundPaymentDto.BookingId);
                     throw new InvalidOperationException($"Failed to retrieve payment information from payment processor. Please contact support.");
                 }
 
                 if (paymentIntent.Status != "succeeded")
                 {
                     _logger.LogWarning("PaymentIntent status is not succeeded for BookingId: {BookingId}. Current Status: {Status}",
-                        RefundPaymentDto.BookingId, paymentIntent.Status);
+                        refundPaymentDto.BookingId, paymentIntent.Status);
                     throw new InvalidOperationException($"Cannot refund payment. Payment status is not succeeded. Current status: {paymentIntent.Status}.");
                 }
 
@@ -435,14 +435,14 @@ namespace CinemaVerse.Services.Implementations.User
                 if (paymentIntent.Amount != paymentAmountInCents)
                 {
                     _logger.LogWarning("Amount mismatch for BookingId: {BookingId}. Expected: {ExpectedAmount}, PaymentIntent Amount: {PaymentIntentAmount}",
-                        RefundPaymentDto.BookingId, paymentAmountInCents, paymentIntent.Amount);
+                        refundPaymentDto.BookingId, paymentAmountInCents, paymentIntent.Amount);
                     throw new InvalidOperationException("Payment amount does not match the booking payment amount.");
                 }
 
                 if (!string.Equals(paymentIntent.Currency, bookingPayment.Currency, StringComparison.OrdinalIgnoreCase))
                 {
                     _logger.LogWarning("Currency mismatch for BookingId: {BookingId}. Expected: {ExpectedCurrency}, PaymentIntent Currency: {PaymentIntentCurrency}",
-                        RefundPaymentDto.BookingId, bookingPayment.Currency, paymentIntent.Currency);
+                        refundPaymentDto.BookingId, bookingPayment.Currency, paymentIntent.Currency);
                     throw new InvalidOperationException("Payment currency does not match the booking payment currency.");
                 }
 
@@ -452,7 +452,7 @@ namespace CinemaVerse.Services.Implementations.User
                 var refundService = new RefundService();
                 var refundOptions = new RefundCreateOptions
                 {
-                    PaymentIntent = RefundPaymentDto.PaymentIntentId,
+                    PaymentIntent = refundPaymentDto.PaymentIntentId,
                     Amount = paymentAmountInCents, // Convert to smallest currency unit (cents)
                     Reason = RefundReasons.RequestedByCustomer
                 };
@@ -462,12 +462,12 @@ namespace CinemaVerse.Services.Implementations.User
                 {
                     refund = await refundService.CreateAsync(refundOptions);
                     _logger.LogInformation("Refund created in Stripe. RefundId: {RefundId}, Amount: {Amount} {Currency} for BookingId: {BookingId}",
-                        refund.Id, RefundPaymentDto.RefundAmount, bookingPayment.Currency, RefundPaymentDto.BookingId);
+                        refund.Id, refundPaymentDto.RefundAmount, bookingPayment.Currency, refundPaymentDto.BookingId);
                 }
                 catch (StripeException ex)
                 {
                     _logger.LogError(ex, "Failed to create refund in Stripe for BookingId: {BookingId}, PaymentIntentId: {PaymentIntentId}",
-                        RefundPaymentDto.BookingId, RefundPaymentDto.PaymentIntentId);
+                        refundPaymentDto.BookingId, refundPaymentDto.PaymentIntentId);
                     throw new InvalidOperationException($"Failed to process refund. Please contact support. Error: {ex.Message}");
                 }
 
@@ -477,14 +477,14 @@ namespace CinemaVerse.Services.Implementations.User
                 await _unitOfWork.SaveChangesAsync();
 
                 _logger.LogInformation("Successfully processed refund for BookingId: {BookingId}, PaymentIntentId: {PaymentIntentId}, RefundId: {RefundId}",
-                    RefundPaymentDto.BookingId, RefundPaymentDto.PaymentIntentId, refund.Id);
+                    refundPaymentDto.BookingId, refundPaymentDto.PaymentIntentId, refund.Id);
 
                 return true;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while processing refund for BookingId: {BookingId}, PaymentIntentId: {PaymentIntentId}",
-                    RefundPaymentDto?.BookingId, RefundPaymentDto?.PaymentIntentId);
+                    refundPaymentDto?.BookingId, refundPaymentDto?.PaymentIntentId);
                 throw;
             }
         }
@@ -509,7 +509,7 @@ namespace CinemaVerse.Services.Implementations.User
                 {
                     _logger.LogWarning("RefundPaymentDto is null for UserId: {UserId}", userId);
                     await _unitOfWork.RollbackTransactionAsync();
-                    throw new ArgumentNullException(nameof(refundPaymentDto), "RefundPaymentDto cannot be null.");
+                    throw new ArgumentNullException(nameof(refundPaymentDto), "RefundPaymentRequestDto cannot be null.");
                 }
 
                 // Validate that the booking belongs to the user

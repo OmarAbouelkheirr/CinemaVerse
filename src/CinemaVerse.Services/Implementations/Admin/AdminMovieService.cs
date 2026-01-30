@@ -18,35 +18,35 @@ namespace CinemaVerse.Services.Implementations.Admin
             _unitOfWork = unitOfWork;
             _logger = logger;
         }
-        public async Task<int> CreateMovieAsync(CreateMovieRequestDto Request)
+        public async Task<int> CreateMovieAsync(CreateMovieRequestDto request)
         {
             await _unitOfWork.BeginTransactionAsync();
             try
             {
-                _logger.LogInformation("Creating movie with movie name : {MovieName}", Request.MovieName);
-                if (Request == null)
+                _logger.LogInformation("Creating movie with movie name : {MovieName}", request.MovieName);
+                if (request == null)
                 {
                     _logger.LogWarning("CreateMovieRequestDto is null");
-                    throw new ArgumentNullException(nameof(Request), "CreateMovieRequestDto cannot be null");
+                    throw new ArgumentNullException(nameof(request), "CreateMovieRequestDto cannot be null");
                 }
 
                 var existingMovie = await _unitOfWork.Movies
-                        .FirstOrDefaultAsync(m => m.MovieName.ToLower() == Request.MovieName.ToLower());
+                        .FirstOrDefaultAsync(m => m.MovieName.ToLower() == request.MovieName.ToLower());
 
                 if (existingMovie != null)
                 {
-                    _logger.LogWarning("Movie with name {MovieName} already exists", Request.MovieName);
-                    throw new InvalidOperationException($"Movie with name {Request.MovieName} already exists.");
+                    _logger.LogWarning("Movie with name {MovieName} already exists", request.MovieName);
+                    throw new InvalidOperationException($"Movie with name {request.MovieName} already exists.");
                 }
 
                 // Validate all GenreIds exist - Single database call
                 var allGenres = await _unitOfWork.Genres.GetAllAsync();
                 var existingGenreIds = allGenres
-                    .Where(g => Request.GenreIds.Contains(g.Id))
+                    .Where(g => request.GenreIds.Contains(g.Id))
                     .Select(g => g.Id)
                     .ToList(); 
 
-                var invalidGenreIds = Request.GenreIds.Except(existingGenreIds).ToList();
+                var invalidGenreIds = request.GenreIds.Except(existingGenreIds).ToList();
                 if (invalidGenreIds.Any())
                 {
                     _logger.LogWarning("Invalid genres found: {InvalidGenreIds}", string.Join(", ", invalidGenreIds));
@@ -55,22 +55,22 @@ namespace CinemaVerse.Services.Implementations.Admin
 
                 var movie = new Movie
                 {
-                    MovieName = Request.MovieName,
-                    MovieDescription = Request.MovieDescription,
-                    MovieDuration = Request.MovieDuration,
-                    ReleaseDate = Request.ReleaseDate,
-                    MovieAgeRating = Request.MovieAgeRating,
+                    MovieName = request.MovieName,
+                    MovieDescription = request.MovieDescription,
+                    MovieDuration = request.MovieDuration,
+                    ReleaseDate = request.ReleaseDate,
+                    MovieAgeRating = request.MovieAgeRating,
                     MovieRating = 0,
-                    TrailerUrl = Request.TrailerUrl!,
-                    MoviePoster = Request.MoviePoster ?? string.Empty,
-                    Status = Request.Status
+                    TrailerUrl = request.TrailerUrl!,
+                    MoviePoster = request.MoviePoster ?? string.Empty,
+                    Status = request.Status
                 };
                 await _unitOfWork.Movies.AddAsync(movie);
 
                 await _unitOfWork.SaveChangesAsync();
 
                 // Add cast members after movie is saved
-                foreach (var cast in Request.CastMembers)
+                foreach (var cast in request.CastMembers)
                 {
                     await _unitOfWork.MovieCastMembers.AddAsync(new MovieCastMember
                     {
@@ -85,7 +85,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 }
 
                 // Add genres and images after movie is saved
-                foreach (var genreId in Request.GenreIds)
+                foreach (var genreId in request.GenreIds)
                 {
                     await _unitOfWork.MovieGenres.AddAsync(new MovieGenre
                     {
@@ -94,7 +94,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                     });
                 }
 
-                foreach (var imageUrl in Request.ImageUrls)
+                foreach (var imageUrl in request.ImageUrls)
                 {
                     await _unitOfWork.MovieImages.AddAsync(new MovieImage
                     {
@@ -106,13 +106,13 @@ namespace CinemaVerse.Services.Implementations.Admin
                 await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.CommitTransactionAsync();
 
-                _logger.LogInformation("Successfully created movie {MovieId}: {MovieName}", movie.Id, Request.MovieName);
+                _logger.LogInformation("Successfully created movie {MovieId}: {MovieName}", movie.Id, request.MovieName);
                 return movie.Id;
             }
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync();
-                _logger.LogError(ex, "Error creating movie with movie name : {MovieName}", Request.MovieName);
+                _logger.LogError(ex, "Error creating movie with movie name : {MovieName}", request.MovieName);
                 throw;
             }
         }
@@ -143,16 +143,16 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
-        public async Task<int> EditMovieAsync(int movieId, UpdateMovieRequestDto Request)
+        public async Task<int> EditMovieAsync(int movieId, UpdateMovieRequestDto request)
         {
             await _unitOfWork.BeginTransactionAsync();
             try
             {
                 _logger.LogInformation("Updating movie with movie id {EditMovie}", movieId);
-                if (Request == null)
+                if (request == null)
                 {
                     _logger.LogWarning("UpdateMovieRequestDto is null");
-                    throw new ArgumentNullException(nameof(Request), "UpdateMovieRequestDto cannot be null");
+                    throw new ArgumentNullException(nameof(request), "UpdateMovieRequestDto cannot be null");
                 }
                 if (movieId <= 0)
                 {
@@ -167,15 +167,15 @@ namespace CinemaVerse.Services.Implementations.Admin
                 }
 
                 // ✅ Validate GenreIds if provided - Single database call
-                if (Request.GenreIds != null && Request.GenreIds.Any())
+                if (request.GenreIds != null && request.GenreIds.Any())
                 {
                     var genreQuery = _unitOfWork.Genres.GetQueryable();
                     var existingGenreIds = genreQuery
-                        .Where(g => Request.GenreIds.Contains(g.Id))
+                        .Where(g => request.GenreIds.Contains(g.Id))
                         .Select(g => g.Id)
                         .ToList();
 
-                    var invalidGenreIds = Request.GenreIds.Except(existingGenreIds).ToList();
+                    var invalidGenreIds = request.GenreIds.Except(existingGenreIds).ToList();
                     if (invalidGenreIds.Any())
                     {
                         _logger.LogWarning("Invalid genres found: {InvalidGenreIds}", string.Join(", ", invalidGenreIds));
@@ -184,20 +184,20 @@ namespace CinemaVerse.Services.Implementations.Admin
                 }
 
                 // ===== UPDATE MOVIE PROPERTIES (PATCH style) =====
-                if (Request.MovieName != null)
-                    movie.MovieName = Request.MovieName;
+                if (request.MovieName != null)
+                    movie.MovieName = request.MovieName;
 
-                if (Request.MovieDescription != null)
-                    movie.MovieDescription = Request.MovieDescription;
+                if (request.MovieDescription != null)
+                    movie.MovieDescription = request.MovieDescription;
 
-                if (Request.MovieDuration.HasValue)
-                    movie.MovieDuration = Request.MovieDuration.Value;
+                if (request.MovieDuration.HasValue)
+                    movie.MovieDuration = request.MovieDuration.Value;
 
-                if (Request.ReleaseDate.HasValue)
-                    movie.ReleaseDate = Request.ReleaseDate.Value;
+                if (request.ReleaseDate.HasValue)
+                    movie.ReleaseDate = request.ReleaseDate.Value;
 
                 // ===== UPDATE CAST MEMBERS (if provided) =====
-                if (Request.CastMembers != null)
+                if (request.CastMembers != null)
                 {
                     var existingCast = await _unitOfWork.MovieCastMembers
                         .FindAllAsync(c => c.MovieId == movieId);
@@ -205,7 +205,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                     {
                         await _unitOfWork.MovieCastMembers.DeleteAsync(c);
                     }
-                    foreach (var cast in Request.CastMembers)
+                    foreach (var cast in request.CastMembers)
                     {
                         await _unitOfWork.MovieCastMembers.AddAsync(new MovieCastMember
                         {
@@ -220,24 +220,24 @@ namespace CinemaVerse.Services.Implementations.Admin
                     }
                 }
 
-                if (Request.MovieAgeRating.HasValue)
-                    movie.MovieAgeRating = Request.MovieAgeRating.Value;
+                if (request.MovieAgeRating.HasValue)
+                    movie.MovieAgeRating = request.MovieAgeRating.Value;
 
-                if (Request.TrailerUrl != null)
-                    movie.TrailerUrl = Request.TrailerUrl;
+                if (request.TrailerUrl != null)
+                    movie.TrailerUrl = request.TrailerUrl;
 
-                if (Request.MoviePoster != null)
-                    movie.MoviePoster = Request.MoviePoster;
+                if (request.MoviePoster != null)
+                    movie.MoviePoster = request.MoviePoster;
 
                 // MovieRating is driven by user reviews only - do not update from Admin
 
-                if (Request.Status.HasValue)
-                    movie.Status = Request.Status.Value;
+                if (request.Status.HasValue)
+                    movie.Status = request.Status.Value;
 
                 await _unitOfWork.Movies.UpdateAsync(movie);
 
                 // ===== UPDATE GENRES (if provided) =====
-                if (Request.GenreIds != null)
+                if (request.GenreIds != null)
                 {
                     // ✅ Remove existing genres - Bulk delete
                     var existingGenres = await _unitOfWork.MovieGenres
@@ -250,7 +250,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                     }
 
                     // Add new genres
-                    foreach (var genreId in Request.GenreIds)
+                    foreach (var genreId in request.GenreIds)
                     {
                         await _unitOfWork.MovieGenres.AddAsync(new MovieGenre
                         {
@@ -261,7 +261,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 }
 
                 // ===== UPDATE IMAGES (if provided) =====
-                if (Request.ImageUrls != null)
+                if (request.ImageUrls != null)
                 {
                     // ✅ Remove existing images - Bulk delete
                     var existingImages = await _unitOfWork.MovieImages
@@ -274,7 +274,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                     }
 
                     // Add new images
-                    foreach (var imageUrl in Request.ImageUrls)
+                    foreach (var imageUrl in request.ImageUrls)
                     {
                         await _unitOfWork.MovieImages.AddAsync(new MovieImage
                         {

@@ -54,7 +54,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
                     .Include(h => h.Branch)
                     .Include(h => h.Seats)
                      .Include(h => h.MovieShowTimes)
-                    //.Include(h => h.MovieShowTimes.Where(st => st.ShowStartTime > DateTime.Now))
+                    //.Include(h => h.MovieShowTimes.Where(st => st.ShowStartTime > DateTime.UtcNow))
                     .FirstOrDefaultAsync(h => h.Id == id);
 
                 if (hall == null)

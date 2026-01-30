@@ -20,44 +20,44 @@ namespace CinemaVerse.Services.Implementations.Admin
             _logger = logger;
             _unitOfWork = unitOfWork;
         }
-        public async Task<int> CreateHallAsync(CreateHallRequestDto Request)
+        public async Task<int> CreateHallAsync(CreateHallRequestDto request)
         {
             await _unitOfWork.BeginTransactionAsync();
             try
             {
                 _logger.LogInformation("Creating a new hall with number: {HallNumber} and type: {HallType}", 
-                    Request?.HallNumber, Request?.HallType);
+                    request?.HallNumber, request?.HallType);
 
-                if (Request == null)
+                if (request == null)
                 {
                     _logger.LogWarning("CreateHallRequestDto is null.");
-                    throw new ArgumentNullException(nameof(Request), "CreateHallRequestDto cannot be null.");
+                    throw new ArgumentNullException(nameof(request), "CreateHallRequestDto cannot be null.");
                 }
 
-                var branch = await _unitOfWork.Branches.GetByIdAsync(Request.BranchId);
+                var branch = await _unitOfWork.Branches.GetByIdAsync(request.BranchId);
                 if (branch == null)
                 {
-                    _logger.LogWarning("Branch with ID {BranchId} not found.", Request.BranchId);
-                    throw new KeyNotFoundException($"Branch with ID {Request.BranchId} not found.");
+                    _logger.LogWarning("Branch with ID {BranchId} not found.", request.BranchId);
+                    throw new KeyNotFoundException($"Branch with ID {request.BranchId} not found.");
                 }
 
-                var hallNumberExists = await _unitOfWork.Halls.IsHallNumberExistsAsync(Request.BranchId, Request.HallNumber);
+                var hallNumberExists = await _unitOfWork.Halls.IsHallNumberExistsAsync(request.BranchId, request.HallNumber);
 
                 if (hallNumberExists)
                 {
                     _logger.LogWarning("A hall with number {HallNumber} already exists in branch {BranchId}.",
-                        Request.HallNumber, Request.BranchId);
+                        request.HallNumber, request.BranchId);
                     throw new InvalidOperationException(
-                        $"A hall with number {Request.HallNumber} already exists in this branch.");
+                        $"A hall with number {request.HallNumber} already exists in this branch.");
                 }
 
                 var newHall = new Hall
                 {
-                    BranchId = Request.BranchId,
-                    Capacity = Request.Capacity,
-                    HallNumber = Request.HallNumber,
-                    HallStatus = Request.HallStatus,
-                    HallType = Request.HallType
+                    BranchId = request.BranchId,
+                    Capacity = request.Capacity,
+                    HallNumber = request.HallNumber,
+                    HallStatus = request.HallStatus,
+                    HallType = request.HallType
                 };
 
                 // 1) Create hall
@@ -251,15 +251,15 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
-        public async Task<int> EditHallAsync(int hallId, UpdateHallRequestDto Request)
+        public async Task<int> EditHallAsync(int hallId, UpdateHallRequestDto request)
         {
             try
             {
                 _logger.LogInformation("Editing hall with id: {hallId}", hallId);
-                if (Request == null)
+                if (request == null)
                 {
                     _logger.LogWarning("UpdateHallRequestDto is null.");
-                    throw new ArgumentNullException(nameof(Request), "UpdateHallRequestDto cannot be null.");
+                    throw new ArgumentNullException(nameof(request), "UpdateHallRequestDto cannot be null.");
                 }
                 if (hallId <= 0)
                 {
@@ -272,28 +272,28 @@ namespace CinemaVerse.Services.Implementations.Admin
                     _logger.LogWarning("Hall with id {hallId} not found.", hallId);
                     throw new KeyNotFoundException($"Hall with id {hallId} not found.");
                 }
-                if (Request.BranchId.HasValue && Request.BranchId.Value != hall.BranchId)
+                if (request.BranchId.HasValue && request.BranchId.Value != hall.BranchId)
                 {
-                    var branch = await _unitOfWork.Branches.GetByIdAsync(Request.BranchId.Value);
+                    var branch = await _unitOfWork.Branches.GetByIdAsync(request.BranchId.Value);
                     if (branch == null)
                     {
-                        _logger.LogWarning("Branch with ID {BranchId} not found.", Request.BranchId.Value);
-                        throw new KeyNotFoundException($"Branch with ID {Request.BranchId.Value} not found.");
+                        _logger.LogWarning("Branch with ID {BranchId} not found.", request.BranchId.Value);
+                        throw new KeyNotFoundException($"Branch with ID {request.BranchId.Value} not found.");
                     }
-                    hall.BranchId = Request.BranchId.Value;
+                    hall.BranchId = request.BranchId.Value;
                 }
 
-                if (Request.Capacity.HasValue)
-                    hall.Capacity = Request.Capacity.Value;
+                if (request.Capacity.HasValue)
+                    hall.Capacity = request.Capacity.Value;
 
-                if (!string.IsNullOrWhiteSpace(Request.HallNumber))
-                    hall.HallNumber = Request.HallNumber;
+                if (!string.IsNullOrWhiteSpace(request.HallNumber))
+                    hall.HallNumber = request.HallNumber;
 
-                if (Request.HallStatus.HasValue)
-                    hall.HallStatus = Request.HallStatus.Value;
+                if (request.HallStatus.HasValue)
+                    hall.HallStatus = request.HallStatus.Value;
 
-                if (Request.HallType.HasValue)
-                    hall.HallType = Request.HallType.Value;
+                if (request.HallType.HasValue)
+                    hall.HallType = request.HallType.Value;
 
                 await _unitOfWork.Halls.UpdateAsync(hall);
                 var result = await _unitOfWork.SaveChangesAsync();

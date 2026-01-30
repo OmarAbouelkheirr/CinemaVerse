@@ -18,32 +18,32 @@ namespace CinemaVerse.Services.Implementations.Admin
             _unitOfWork = unitOfWork;
             _logger = logger;
         }
-        public async Task<int> CreateBranchAsync(CreateBranchRequestDto Request)
+        public async Task<int> CreateBranchAsync(CreateBranchRequestDto request)
         {
             try
             {
-                _logger.LogInformation("Creating Branch {@Request}", Request);
-                if (Request == null)
+                _logger.LogInformation("Creating Branch {@request}", request);
+                if (request == null)
                 {
-                    _logger.LogWarning("Request cannot be null");
-                    throw new ArgumentNullException(nameof(Request), "Request cannot be null.");
+                    _logger.LogWarning("CreateBranchRequestDto cannot be null");
+                    throw new ArgumentNullException(nameof(request), "CreateBranchRequestDto cannot be null.");
                 }
-                if (string.IsNullOrWhiteSpace(Request.BranchName) || string.IsNullOrWhiteSpace(Request.BranchLocation))
+                if (string.IsNullOrWhiteSpace(request.BranchName) || string.IsNullOrWhiteSpace(request.BranchLocation))
                 {
-                    _logger.LogWarning("Invalid branch data {@Request}", Request);
+                    _logger.LogWarning("Invalid branch data {@request}", request);
                     throw new ArgumentException("Branch name and location cannot be empty.");
                 }
                 var existingBranch = await _unitOfWork.Branches
-                    .FirstOrDefaultAsync(b => b.BranchName.ToLower() == Request.BranchName.ToLower());
+                    .FirstOrDefaultAsync(b => b.BranchName.ToLower() == request.BranchName.ToLower());
                 if (existingBranch != null)
                 {
-                    _logger.LogWarning("Branch with name {BranchName} already exists", Request.BranchName);
-                    throw new InvalidOperationException($"Branch with name {Request.BranchName} already exists.");
+                    _logger.LogWarning("Branch with name {BranchName} already exists", request.BranchName);
+                    throw new InvalidOperationException($"Branch with name {request.BranchName} already exists.");
                 }
                 var branch = new Branch
                 {
-                    BranchName = Request.BranchName,
-                    BranchLocation = Request.BranchLocation
+                    BranchName = request.BranchName,
+                    BranchLocation = request.BranchLocation
                 };
                 await _unitOfWork.Branches.AddAsync(branch);
                 await _unitOfWork.SaveChangesAsync();
@@ -52,7 +52,7 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creaing branch {@Request}", Request);
+                _logger.LogError(ex, "Error creating branch {@request}", request);
                 throw;
             }
         }
@@ -79,7 +79,7 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
-        public async Task<int> EditBranchAsync(int branchId, UpdateBranchRequestDto Request)
+        public async Task<int> EditBranchAsync(int branchId, UpdateBranchRequestDto request)
         {
             try
             {
@@ -95,13 +95,13 @@ namespace CinemaVerse.Services.Implementations.Admin
                     _logger.LogWarning("Branch with Id {branchId} not found", branchId);
                     throw new KeyNotFoundException($"Branch with Id {branchId} not found.");
                 }
-                if (!string.IsNullOrWhiteSpace(Request.BranchName))
+                if (!string.IsNullOrWhiteSpace(request.BranchName))
                 {
-                    branch.BranchName = Request.BranchName;
+                    branch.BranchName = request.BranchName;
                 }
-                if (!string.IsNullOrWhiteSpace(Request.BranchLocation))
+                if (!string.IsNullOrWhiteSpace(request.BranchLocation))
                 {
-                    branch.BranchLocation = Request.BranchLocation;
+                    branch.BranchLocation = request.BranchLocation;
                 }
                 await _unitOfWork.Branches.UpdateAsync(branch);
 

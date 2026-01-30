@@ -23,64 +23,64 @@ namespace CinemaVerse.Services.Implementations.Admin
         }
 
 
-        public async Task<int> CreateBookingAsync(CreateBookingRequestDto Request)
+        public async Task<int> CreateBookingAsync(CreateBookingRequestDto request)
         {
             await _unitOfWork.BeginTransactionAsync();
             try
             {
-                _logger.LogInformation("Creating booking for user {UserId}", Request.UserId);
-                if (Request.SeatIds == null || !Request.SeatIds.Any())
+                _logger.LogInformation("Creating booking for user {UserId}", request.UserId);
+                if (request.SeatIds == null || !request.SeatIds.Any())
                 {
-                    _logger.LogWarning("No seats provided for booking by user {UserId}", Request.UserId);
+                    _logger.LogWarning("No seats provided for booking by user {UserId}", request.UserId);
                     throw new ArgumentException("At least one seat must be selected for booking.");
                 }
-                if (Request.UserId <= 0)
+                if (request.UserId <= 0)
                 {
-                    _logger.LogWarning("Invalid UserId {UserId} provided for booking", Request.UserId);
+                    _logger.LogWarning("Invalid UserId {UserId} provided for booking", request.UserId);
                     throw new ArgumentException("A valid UserId must be provided for booking.");
                 }
-                var User = await _unitOfWork.Users.GetByIdAsync(Request.UserId);
-                if (User == null)//apply roles
+                var user = await _unitOfWork.Users.GetByIdAsync(request.UserId);
+                if (user == null)//apply roles
                 {
-                    _logger.LogWarning("User {UserId} not found or is not a customer", Request.UserId);
+                    _logger.LogWarning("User {UserId} not found or is not a customer", request.UserId);
                     throw new ArgumentException("A valid customer UserId must be provided for booking.");
                 }
-                if (Request.MovieShowTimeId <= 0)
+                if (request.MovieShowTimeId <= 0)
                 {
-                    _logger.LogWarning("Invalid MovieShowTimeId {MovieShowTimeId} provided for booking", Request.MovieShowTimeId);
+                    _logger.LogWarning("Invalid MovieShowTimeId {MovieShowTimeId} provided for booking", request.MovieShowTimeId);
                     throw new ArgumentException("A valid MovieShowTimeId must be provided for booking.");
                 }
-                var MovieShowTime = await _unitOfWork.MovieShowTimes.GetByIdAsync(Request.MovieShowTimeId);
-                if (MovieShowTime == null)
+                var movieShowTime = await _unitOfWork.MovieShowTimes.GetByIdAsync(request.MovieShowTimeId);
+                if (movieShowTime == null)
                 {
-                    _logger.LogWarning("MovieShowTime {MovieShowTimeId} not found", Request.MovieShowTimeId);
+                    _logger.LogWarning("MovieShowTime {MovieShowTimeId} not found", request.MovieShowTimeId);
                     throw new ArgumentException("A valid MovieShowTimeId must be provided for booking.");
                 }
-                if (MovieShowTime.ShowStartTime <= DateTime.UtcNow)
+                if (movieShowTime.ShowStartTime <= DateTime.UtcNow)
                 {
-                    _logger.LogWarning("Cannot book seats for past or ongoing show {MovieShowTimeId}", Request.MovieShowTimeId);
+                    _logger.LogWarning("Cannot book seats for past or ongoing show {MovieShowTimeId}", request.MovieShowTimeId);
                     throw new InvalidOperationException("Cannot book seats for a show that has already started or passed.");
                 }
-                var requestedSeats = await _unitOfWork.Seats.FindAllAsync(s => Request.SeatIds.Contains(s.Id));
-                if (requestedSeats.Count() != Request.SeatIds.Count)
+                var requestedSeats = await _unitOfWork.Seats.FindAllAsync(s => request.SeatIds.Contains(s.Id));
+                if (requestedSeats.Count() != request.SeatIds.Count)
                 {
                     var foundSeatIds = requestedSeats.Select(s => s.Id).ToList();
-                    var missingSeatIds = Request.SeatIds.Except(foundSeatIds).ToList();
+                    var missingSeatIds = request.SeatIds.Except(foundSeatIds).ToList();
 
                     _logger.LogWarning("Seats not found: {MissingSeatIds}", string.Join(", ", missingSeatIds));
                     throw new ArgumentException($"The following seat IDs were not found: {string.Join(", ", missingSeatIds)}");
                 }
-                var invalidHallSeats = requestedSeats.Where(s => s.HallId != MovieShowTime.HallId).ToList();
+                var invalidHallSeats = requestedSeats.Where(s => s.HallId != movieShowTime.HallId).ToList();
                 if (invalidHallSeats.Any())
                 {
                     var invalidSeatIds = invalidHallSeats.Select(s => s.Id).ToList();
                     _logger.LogWarning("Seats do not belong to the correct hall: {InvalidSeatIds}", string.Join(", ", invalidSeatIds));
-                    throw new ArgumentException($"The following seats do not belong to hall {MovieShowTime.HallId}: {string.Join(", ", invalidSeatIds)}");
+                    throw new ArgumentException($"The following seats do not belong to hall {movieShowTime.HallId}: {string.Join(", ", invalidSeatIds)}");
                 }
                 var existingBookings = await _unitOfWork.BookingSeat
                         .FindAllAsync(bs =>
-                            Request.SeatIds.Contains(bs.SeatId) &&
-                            bs.Booking.MovieShowTimeId == Request.MovieShowTimeId &&
+                            request.SeatIds.Contains(bs.SeatId) &&
+                            bs.Booking.MovieShowTimeId == request.MovieShowTimeId &&
                             (bs.Booking.Status == BookingStatus.Confirmed ||
                              bs.Booking.Status == BookingStatus.Pending));
 
@@ -90,11 +90,11 @@ namespace CinemaVerse.Services.Implementations.Admin
                     _logger.LogWarning("Seats already booked for this showtime: {BookedSeatIds}", string.Join(", ", bookedSeatIds));
                     throw new InvalidOperationException($"The following seats are already booked: {string.Join(", ", bookedSeatIds)}");
                 }
-                decimal totalAmount = requestedSeats.Count() * MovieShowTime.Price;
+                decimal totalAmount = requestedSeats.Count() * movieShowTime.Price;
                 var booking = new Booking
                 {
-                    UserId = Request.UserId,
-                    MovieShowTimeId = Request.MovieShowTimeId,
+                    UserId = request.UserId,
+                    MovieShowTimeId = request.MovieShowTimeId,
                     Status = BookingStatus.Pending,
                     TotalAmount = totalAmount,
                     CreatedAt = DateTime.UtcNow,
@@ -103,7 +103,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 await _unitOfWork.Bookings.AddAsync(booking);
                 await _unitOfWork.SaveChangesAsync();
 
-                foreach (var seatId in Request.SeatIds)
+                foreach (var seatId in request.SeatIds)
                 {
                     var bookingSeat = new BookingSeat
                     {
@@ -116,13 +116,13 @@ namespace CinemaVerse.Services.Implementations.Admin
                 await _unitOfWork.CommitTransactionAsync();
 
                 _logger.LogInformation("Successfully created booking {BookingId} for user {UserId} with {SeatCount} seats",
-                    booking.Id, Request.UserId, Request.SeatIds.Count);
+                    booking.Id, request.UserId, request.SeatIds.Count);
 
                 return booking.Id;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while creating booking for user {UserId}", Request.UserId);
+                _logger.LogError(ex, "Error occurred while creating booking for user {UserId}", request.UserId);
                 await _unitOfWork.RollbackTransactionAsync();
                 throw;
             }
@@ -155,11 +155,11 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
-        public async Task<int> UpdateBookingStatusAsync(int bookingId, BookingStatus NewStatus)
+        public async Task<int> UpdateBookingStatusAsync(int bookingId, BookingStatus newStatus)
         {
             try
             {
-                _logger.LogInformation("Updating status for booking {BookingId} to {NewStatus}", bookingId, NewStatus);
+                _logger.LogInformation("Updating status for booking {BookingId} to {newStatus}", bookingId, newStatus);
                 if (bookingId <= 0)
                 {
                     _logger.LogWarning("Invalid BookingId {BookingId} provided", bookingId);
@@ -172,9 +172,9 @@ namespace CinemaVerse.Services.Implementations.Admin
                     _logger.LogWarning("Booking {BookingId} not found", bookingId);
                     throw new KeyNotFoundException($"Booking with ID {bookingId} not found.");
                 }
-                await _unitOfWork.Bookings.UpdateBookingStatusAsync(bookingId, NewStatus);
+                await _unitOfWork.Bookings.UpdateBookingStatusAsync(bookingId, newStatus);
                 var result = await _unitOfWork.SaveChangesAsync();
-                _logger.LogInformation("Successfully updated status for booking {BookingId} to {NewStatus}", bookingId, NewStatus);
+                _logger.LogInformation("Successfully updated status for booking {BookingId} to {newStatus}", bookingId, newStatus);
                 return result;
             }
             catch (Exception ex)
