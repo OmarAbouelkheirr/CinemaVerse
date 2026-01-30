@@ -45,6 +45,20 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CinemaVerseApiCorsPolicy", policy =>
+    {
+        policy
+            .WithOrigins(
+                "https://localhost:7227",
+                "http://localhost:5073"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -54,6 +68,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("CinemaVerseApiCorsPolicy");
 
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
