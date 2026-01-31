@@ -30,8 +30,6 @@ namespace CinemaVerse.API.Controllers.User
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CreateReview([FromRoute] int userId, [FromBody] CreateReviewRequestDto dto)
         {
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
             _logger.LogInformation("User {UserId}: Creating review for movie {MovieId}", userId, dto.MovieId);
             var result = await _reviewService.CreateReviewAsync(userId, dto);
             _logger.LogInformation("User {UserId}: Successfully created review for movie {MovieId}", userId, dto.MovieId);
@@ -46,8 +44,6 @@ namespace CinemaVerse.API.Controllers.User
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateReview([FromRoute] int userId, [FromRoute] int reviewId, [FromBody] UpdateReviewRequestDto dto)
         {
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
             _logger.LogInformation("User {UserId}: Updating review {ReviewId}", userId, reviewId);
             var result = await _reviewService.UpdateReviewAsync(userId, reviewId, dto);
             _logger.LogInformation("User {UserId}: Successfully updated review {ReviewId}", userId, reviewId);
@@ -75,13 +71,10 @@ namespace CinemaVerse.API.Controllers.User
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetUserReviews(
             [FromRoute] int userId,
-            [FromQuery] int? page,
-            [FromQuery] int? pageSize)
+            [FromQuery] ReviewListFilterDto? filter = null)
         {
-            var pageValue = page is null or <= 0 ? 1 : page.Value;
-            var pageSizeValue = pageSize is null or <= 0 || pageSize > 100 ? 20 : pageSize.Value;
-            _logger.LogInformation("Getting reviews for user {UserId} (page {Page}, pageSize {PageSize})", userId, pageValue, pageSizeValue);
-            var result = await _reviewService.GetUserReviewsAsync(userId, pageValue, pageSizeValue);
+            _logger.LogInformation("Getting reviews for user {UserId} with filter: {@Filter}", userId, filter);
+            var result = await _reviewService.GetUserReviewsAsync(userId, filter ?? new ReviewListFilterDto());
             _logger.LogInformation("Successfully retrieved {Count} reviews for user {UserId}", result.Items.Count, userId);
             return Ok(result);
         }
@@ -92,13 +85,10 @@ namespace CinemaVerse.API.Controllers.User
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetReviewsByMovieId(
             [FromRoute] int movieId,
-            [FromQuery] int? page,
-            [FromQuery] int? pageSize)
+            [FromQuery] ReviewListFilterDto? filter = null)
         {
-            var pageValue = page is null or <= 0 ? 1 : page.Value;
-            var pageSizeValue = pageSize is null or <= 0 || pageSize > 100 ? 20 : pageSize.Value;
-            _logger.LogInformation("Getting reviews for movie {MovieId}", movieId);
-            var result = await _reviewService.GetReviewsByMovieIdAsync(movieId, pageValue, pageSizeValue);
+            _logger.LogInformation("Getting reviews for movie {MovieId} with filter: {@Filter}", movieId, filter);
+            var result = await _reviewService.GetReviewsByMovieIdAsync(movieId, filter ?? new ReviewListFilterDto());
             _logger.LogInformation("Successfully retrieved reviews for movie {MovieId}", movieId);
             return Ok(result);
         }
