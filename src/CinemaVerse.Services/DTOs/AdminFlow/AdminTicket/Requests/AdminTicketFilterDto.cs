@@ -16,8 +16,8 @@ namespace CinemaVerse.Services.DTOs.AdminFlow.AdminTicket.Requests
         public DateTime? EndDate { get; set; }
         [StringLength(50, ErrorMessage = "Ticket number must not exceed 50 characters")]
         public string? TicketNumber { get; set; }
-        [Range(1, int.MaxValue, ErrorMessage = "Page number must be at least 1")]
-        public int PageNumber { get; set; } = 1;
+        [Range(1, int.MaxValue, ErrorMessage = "Page must be at least 1")]
+        public int Page { get; set; } = 1;
         [Range(1, 100, ErrorMessage = "Page size must be between 1 and 100")]
         public int PageSize { get; set; } = 10;
     }

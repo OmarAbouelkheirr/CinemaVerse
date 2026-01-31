@@ -7,6 +7,7 @@ using CinemaVerse.Services.DTOs.AdminFlow.AdminTicket.Response;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.Interfaces.Admin;
 using CinemaVerse.Services.Interfaces.User;
+using CinemaVerse.Services.Mappers;
 using Microsoft.Extensions.Logging;
 
 namespace CinemaVerse.Services.Implementations.Admin
@@ -25,10 +26,6 @@ namespace CinemaVerse.Services.Implementations.Admin
         }
 
 
-        public Task<bool> CancelTicketAsync(int ticketId)
-        {
-            throw new NotImplementedException();
-        }
 
         public async Task<TicketCheckResultDto> CheckTicketByQrTokenAsync(string qrToken)
         {
@@ -37,25 +34,18 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogInformation("Checking ticket by QR token {QrToken}", qrToken);
 
                 if (string.IsNullOrWhiteSpace(qrToken))
-                {
-                    _logger.LogWarning("QR token is null or empty");
                     throw new ArgumentException("QR token cannot be null or empty.", nameof(qrToken));
-                }
 
                 var ticket = await _unitOfWork.Tickets.GetTicketByQrTokenAsync(qrToken);
 
                 if (ticket == null)
-                {
-                    _logger.LogWarning("Ticket with QR token {QrToken} not found", qrToken);
-
                     return new TicketCheckResultDto
                     {
                         IsFound = false,
                         Message = "Ticket not found."
                     };
-                }
 
-                var baseDto = _ticketService.MapToDto(ticket);
+                var baseDto = TicketMapper.ToTicketDetailsDto(ticket);
 
                 var result = new TicketCheckResultDto
                 {
@@ -90,15 +80,9 @@ namespace CinemaVerse.Services.Implementations.Admin
             {
                 _logger.LogInformation("Getting all tickets with filter: {@Filter}", filter);
 
-                if (filter == null)
-                {
-                    _logger.LogWarning("AdminTicketFilterDto is null");
-                    throw new ArgumentNullException(nameof(filter), "AdminTicketFilterDto cannot be null.");
-                }
-
                 // Validate pagination
-                if (filter.PageNumber <= 0)
-                    filter.PageNumber = 1;
+                if (filter.Page <= 0)
+                    filter.Page = 1;
 
                 if (filter.PageSize <= 0 || filter.PageSize > PaginationConstants.MaxPageSize)
                     filter.PageSize = PaginationConstants.DefaultPageSize;
@@ -148,7 +132,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 var tickets = await _unitOfWork.Tickets.GetPagedAsync(
                     query: query,
                     orderBy: orderByFunc,
-                    skip: (filter.PageNumber - 1) * filter.PageSize,
+                    skip: (filter.Page - 1) * filter.PageSize,
                     take: filter.PageSize,
                     includeProperties: "Booking.User,Booking.MovieShowTime.Movie.MovieImages,Booking.MovieShowTime.Hall.Branch,Seat"
                 );
@@ -156,7 +140,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 var ticketDtos = new List<AdminTicketListItemDto>();
                 foreach (var ticket in tickets)
                 {
-                    var baseDto = _ticketService.MapToDto(ticket);
+                    var baseDto = TicketMapper.ToTicketDetailsDto(ticket);
 
                     var adminDto = new AdminTicketListItemDto
                     {
@@ -181,7 +165,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 return new PagedResultDto<AdminTicketListItemDto>
                 {
                     Items = ticketDtos,
-                    Page = filter.PageNumber,
+                    Page = filter.Page,
                     PageSize = filter.PageSize,
                     TotalCount = totalCount
                 };
@@ -193,57 +177,22 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
-        public async Task<AdminTicketDetailsDto?> GetTicketByIdAsync(int ticketId)
+        public async Task<AdminTicketDetailsDto> GetTicketByIdAsync(int ticketId)
         {
             try
             {
                 _logger.LogInformation("Getting ticket with ID {TicketId}", ticketId);
 
                 if (ticketId <= 0)
-                {
-                    _logger.LogWarning("Invalid ticketId: {TicketId}", ticketId);
-                    throw new ArgumentException("Ticket ID must be greater than zero.", nameof(ticketId));
-                }
+                    throw new ArgumentException("Ticket ID must be a positive integer.", nameof(ticketId));
 
                 var ticket = await _unitOfWork.Tickets.GetTicketWithDetailsAsync(ticketId);
 
                 if (ticket == null)
-                {
-                    _logger.LogWarning("Ticket with ID {TicketId} not found", ticketId);
-                    return null;
-                }
-
-                var baseDto = _ticketService.MapToDto(ticket);
-
-                var adminDto = new AdminTicketDetailsDto
-                {
-                    // Base properties from TicketDetailsDto
-                    TicketId = baseDto.TicketId,
-                    TicketNumber = baseDto.TicketNumber,
-                    MovieName = baseDto.MovieName,
-                    ShowStartTime = baseDto.ShowStartTime,
-                    MovieDuration = baseDto.MovieDuration,
-                    HallNumber = baseDto.HallNumber,
-                    HallType = baseDto.HallType,
-                    SeatLabel = baseDto.SeatLabel,
-                    MoviePoster = baseDto.MoviePoster,
-                    MovieAgeRating = baseDto.MovieAgeRating,
-                    QrToken = baseDto.QrToken,
-                    Status = baseDto.Status,
-                    Price = baseDto.Price,
-                    BranchName = baseDto.BranchName,
-
-                    // Admin-specific properties (with null checks)
-                    UserId = ticket.Booking?.UserId ?? 0,
-                    UserEmail = ticket.Booking?.User?.Email ?? string.Empty,
-                    FullName = ticket.Booking?.User?.FullName ?? string.Empty,
-                    BookingId = ticket.BookingId,
-                    BookingStatus = ticket.Booking?.Status ?? BookingStatus.Pending,
-                    UsedAt = ticket.Status == TicketStatus.Used ? ticket.CreatedAt : null
-                };
+                    throw new KeyNotFoundException($"Ticket with ID {ticketId} not found.");
 
                 _logger.LogInformation("Successfully retrieved ticket {TicketId}", ticketId);
-                return adminDto;
+                return TicketMapper.ToAdminTicketDetailsDto(ticket);
             }
             catch (Exception ex)
             {
@@ -259,10 +208,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogInformation("Getting tickets for booking ID {BookingId}", bookingId);
 
                 if (bookingId <= 0)
-                {
-                    _logger.LogWarning("Invalid bookingId: {BookingId}", bookingId);
-                    throw new ArgumentException("Booking ID must be greater than zero.", nameof(bookingId));
-                }
+                    throw new ArgumentException("Booking ID must be a positive integer.", nameof(bookingId));
 
                 var query = _unitOfWork.Tickets.GetQueryable()
                     .Where(t => t.BookingId == bookingId);
@@ -276,46 +222,9 @@ namespace CinemaVerse.Services.Implementations.Admin
                 );
 
                 if (tickets == null || !tickets.Any())
-                {
-                    _logger.LogWarning("No tickets found for booking ID {BookingId}", bookingId);
                     return new List<AdminTicketDetailsDto>();
-                }
 
-                var ticketDetails = new List<AdminTicketDetailsDto>();
-
-                foreach (var ticket in tickets)
-                {
-                    var baseDto = _ticketService.MapToDto(ticket);
-
-                    var adminDto = new AdminTicketDetailsDto
-                    {
-                        // Base properties from TicketDetailsDto
-                        TicketId = baseDto.TicketId,
-                        TicketNumber = baseDto.TicketNumber,
-                        MovieName = baseDto.MovieName,
-                        ShowStartTime = baseDto.ShowStartTime,
-                        MovieDuration = baseDto.MovieDuration,
-                        HallNumber = baseDto.HallNumber,
-                        HallType = baseDto.HallType,
-                        SeatLabel = baseDto.SeatLabel,
-                        MoviePoster = baseDto.MoviePoster,
-                        MovieAgeRating = baseDto.MovieAgeRating,
-                        QrToken = baseDto.QrToken,
-                        Status = baseDto.Status,
-                        Price = baseDto.Price,
-                        BranchName = baseDto.BranchName,
-
-                        // Admin-specific properties (with null checks)
-                        UserId = ticket.Booking?.UserId ?? 0,
-                        UserEmail = ticket.Booking?.User?.Email ?? string.Empty,
-                        FullName = ticket.Booking?.User?.FullName ?? string.Empty,
-                        BookingId = ticket.BookingId,
-                        BookingStatus = ticket.Booking?.Status ?? BookingStatus.Pending,
-                        UsedAt = ticket.Status == TicketStatus.Used ? ticket.CreatedAt : null
-                    };
-
-                    ticketDetails.Add(adminDto);
-                }
+                var ticketDetails = tickets.Select(TicketMapper.ToAdminTicketDetailsDto).ToList();
 
                 _logger.LogInformation("Successfully retrieved {Count} tickets for booking ID {BookingId}",
                     ticketDetails.Count, bookingId);
@@ -336,10 +245,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogInformation("Getting tickets for showtime ID {ShowtimeId}", showtimeId);
 
                 if (showtimeId <= 0)
-                {
-                    _logger.LogWarning("Invalid showtimeId: {ShowtimeId}", showtimeId);
-                    throw new ArgumentException("Showtime ID must be greater than zero.", nameof(showtimeId));
-                }
+                    throw new ArgumentException("Showtime ID must be a positive integer.", nameof(showtimeId));
 
                 var query = _unitOfWork.Tickets.GetQueryable()
                     .Where(t => t.Booking.MovieShowTimeId == showtimeId);
@@ -353,46 +259,9 @@ namespace CinemaVerse.Services.Implementations.Admin
                 );
 
                 if (tickets == null || !tickets.Any())
-                {
-                    _logger.LogWarning("No tickets found for showtime ID {ShowtimeId}", showtimeId);
                     return new List<AdminTicketDetailsDto>();
-                }
 
-                var ticketDetails = new List<AdminTicketDetailsDto>();
-
-                foreach (var ticket in tickets)
-                {
-                    var baseDto = _ticketService.MapToDto(ticket);
-
-                    var adminDto = new AdminTicketDetailsDto
-                    {
-                        // Base properties from TicketDetailsDto
-                        TicketId = baseDto.TicketId,
-                        TicketNumber = baseDto.TicketNumber,
-                        MovieName = baseDto.MovieName,
-                        ShowStartTime = baseDto.ShowStartTime,
-                        MovieDuration = baseDto.MovieDuration,
-                        HallNumber = baseDto.HallNumber,
-                        HallType = baseDto.HallType,
-                        SeatLabel = baseDto.SeatLabel,
-                        MoviePoster = baseDto.MoviePoster,
-                        MovieAgeRating = baseDto.MovieAgeRating,
-                        QrToken = baseDto.QrToken,
-                        Status = baseDto.Status,
-                        Price = baseDto.Price,
-                        BranchName = baseDto.BranchName,
-
-                        // Admin-specific properties (with null checks)
-                        UserId = ticket.Booking?.UserId ?? 0,
-                        UserEmail = ticket.Booking?.User?.Email ?? string.Empty,
-                        FullName = ticket.Booking?.User?.FullName ?? string.Empty,
-                        BookingId = ticket.BookingId,
-                        BookingStatus = ticket.Booking?.Status ?? BookingStatus.Pending,
-                        UsedAt = ticket.Status == TicketStatus.Used ? ticket.CreatedAt : null
-                    };
-
-                    ticketDetails.Add(adminDto);
-                }
+                var ticketDetails = tickets.Select(TicketMapper.ToAdminTicketDetailsDto).ToList();
 
                 _logger.LogInformation("Successfully retrieved {Count} tickets for showtime ID {ShowtimeId}",
                     ticketDetails.Count, showtimeId);
@@ -413,62 +282,39 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogInformation("Marking ticket as used by QR token {QrToken}", qrToken);
 
                 if (string.IsNullOrWhiteSpace(qrToken))
-                {
-                    _logger.LogWarning("QR token is null or empty");
                     throw new ArgumentException("QR token cannot be null or empty.", nameof(qrToken));
-                }
-
                 var ticket = await _unitOfWork.Tickets.GetTicketByQrTokenAsync(qrToken);
-
                 if (ticket == null)
-                {
-                    _logger.LogWarning("Ticket with QR token {QrToken} not found", qrToken);
-
                     return new TicketCheckInResultDto
                     {
                         Success = false,
                         Result = TicketCheckInResult.NotFound,
                         Message = "Ticket not found."
                     };
-                }
 
                 if (ticket.Status == TicketStatus.Used)
-                {
-                    _logger.LogWarning("Ticket with QR token {QrToken} is already used", qrToken);
-
                     return new TicketCheckInResultDto
                     {
                         Success = false,
                         Result = TicketCheckInResult.AlreadyUsed,
                         Message = "Ticket has already been used."
                     };
-                }
 
                 if (ticket.Status == TicketStatus.Cancelled)
-                {
-                    _logger.LogWarning("Ticket with QR token {QrToken} is cancelled", qrToken);
-
                     return new TicketCheckInResultDto
                     {
                         Success = false,
                         Result = TicketCheckInResult.Cancelled,
                         Message = "Ticket is cancelled."
                     };
-                }
 
                 if (ticket.Status != TicketStatus.Active)
-                {
-                    _logger.LogWarning(
-                        "Ticket with QR token {QrToken} is in invalid status {Status} for check-in",
-                        qrToken, ticket.Status);
-
                     return new TicketCheckInResultDto
                     {
                         Success = false,
                         Result = TicketCheckInResult.InvalidStatus,
                         Message = $"Ticket is in invalid status: {ticket.Status}."
                     };
-                }
 
                 _logger.LogInformation("Updating ticket with QR token {QrToken} status to Used", qrToken);
 
@@ -487,8 +333,6 @@ namespace CinemaVerse.Services.Implementations.Admin
                         Message = "Ticket marked as used successfully."
                     };
                 }
-
-                _logger.LogWarning("SaveChanges affected 0 rows while marking ticket with QR token {QrToken} as used", qrToken);
 
                 return new TicketCheckInResultDto
                 {

@@ -19,6 +19,7 @@ using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 using System.Text;
 using CinemaVerse.Services.DTOs.UserFlow.Booking.Helpers;
+using CinemaVerse.Services.Mappers;
 
 namespace CinemaVerse.Services.Implementations.Admin
 {
@@ -42,31 +43,10 @@ namespace CinemaVerse.Services.Implementations.Admin
             {
                 _logger.LogInformation("Creating user with email: {Email}", request.Email);
 
-                if (request == null)
-                {
-                    _logger.LogWarning("CreateUserRequestDto is null");
-                    throw new ArgumentNullException(nameof(request), "CreateUserRequestDto cannot be null");
-                }
-
-                if (string.IsNullOrWhiteSpace(request.Email))
-                {
-                    _logger.LogWarning("Email is null or empty");
-                    throw new ArgumentException("Email cannot be null or empty.", nameof(request));
-                }
-
-                if (string.IsNullOrWhiteSpace(request.Password))
-                {
-                    _logger.LogWarning("Password is null or empty");
-                    throw new ArgumentException("Password cannot be null or empty.", nameof(request));
-                }
-
-                // Check if email already exists
+                // Check if email already exists (business rule)
                 var existingUser = await _unitOfWork.Users.GetByEmailAsync(request.Email);
                 if (existingUser != null)
-                {
-                    _logger.LogWarning("User with email {Email} already exists", request.Email);
                     throw new InvalidOperationException($"User with email '{request.Email}' already exists.");
-                }
 
                 // Hash password
                 var passwordHash = HashPassword(request.Password);
@@ -127,34 +107,19 @@ namespace CinemaVerse.Services.Implementations.Admin
             {
                 _logger.LogInformation("Updating user with ID: {UserId}", userId);
 
-                if (request == null)
-                {
-                    _logger.LogWarning("UpdateUserRequestDto is null");
-                    throw new ArgumentNullException(nameof(request), "UpdateUserRequestDto cannot be null");
-                }
-
                 if (userId <= 0)
-                {
-                    _logger.LogWarning("Invalid user ID: {UserId}", userId);
                     throw new ArgumentException("User ID must be a positive integer.", nameof(userId));
-                }
 
                 var user = await _unitOfWork.Users.GetByIdAsync(userId);
                 if (user == null)
-                {
-                    _logger.LogWarning("User with ID {UserId} not found", userId);
                     throw new KeyNotFoundException($"User with ID {userId} not found.");
-                }
 
                 // Check for email conflict if being changed
                 if (!string.IsNullOrWhiteSpace(request.Email) && request.Email.ToLower() != user.Email.ToLower())
                 {
                     var existingUser = await _unitOfWork.Users.GetByEmailAsync(request.Email);
                     if (existingUser != null && existingUser.Id != userId)
-                    {
-                        _logger.LogWarning("User with email {Email} already exists", request.Email);
                         throw new InvalidOperationException($"User with email '{request.Email}' already exists.");
-                    }
                 }
 
                 // Update properties (PATCH style - only update if provided)
@@ -213,28 +178,19 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogInformation("Deleting user with ID: {UserId}", userId);
 
                 if (userId <= 0)
-                {
-                    _logger.LogWarning("Invalid user ID: {UserId}", userId);
                     throw new ArgumentException("User ID must be a positive integer.", nameof(userId));
-                }
 
                 var user = await _unitOfWork.Users.GetByIdAsync(userId);
                 if (user == null)
-                {
-                    _logger.LogWarning("User with ID {UserId} not found", userId);
                     throw new KeyNotFoundException($"User with ID {userId} not found.");
-                }
 
                 // Check if user has bookings
                 var hasBookings = await _unitOfWork.Bookings
                     .AnyAsync(b => b.UserId == userId);
 
                 if (hasBookings)
-                {
-                    _logger.LogWarning("Cannot delete user {UserId} because they have associated bookings", userId);
                     throw new InvalidOperationException(
                         $"Cannot delete user {userId} because they have associated bookings. Please deactivate the user instead.");
-                }
 
                 await _unitOfWork.Users.DeleteAsync(user);
                 await _unitOfWork.SaveChangesAsync();
@@ -252,62 +208,34 @@ namespace CinemaVerse.Services.Implementations.Admin
 
         public async Task<UserDetailsDto?> GetUserByIdAsync(int userId)
         {
-            try
-            {
-                _logger.LogInformation("Getting user with ID: {UserId}", userId);
+            _logger.LogInformation("Getting user with ID: {UserId}", userId);
 
-                if (userId <= 0)
-                {
-                    _logger.LogWarning("Invalid user ID: {UserId}", userId);
-                    throw new ArgumentException("User ID must be a positive integer.", nameof(userId));
-                }
+            if (userId <= 0)
+                throw new ArgumentException("User ID must be a positive integer.", nameof(userId));
 
-                var user = await _unitOfWork.Users.GetByIdAsync(userId);
-                if (user == null)
-                {
-                    _logger.LogWarning("User with ID {UserId} not found", userId);
-                    return null;
-                }
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null)
+                throw new KeyNotFoundException($"User with ID {userId} not found.");
 
-                var dto = MapToUserDetailsDto(user);
-                _logger.LogInformation("Successfully retrieved user {UserId}: {Email}", userId, user.Email);
-                return dto;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting user with ID: {UserId}", userId);
-                throw;
-            }
+            var dto = UserMapper.ToUserDetailsDto(user);
+            _logger.LogInformation("Successfully retrieved user {UserId}: {Email}", userId, user.Email);
+            return dto;
         }
 
         public async Task<UserDetailsDto?> GetUserByEmailAsync(string email)
         {
-            try
-            {
-                _logger.LogInformation("Getting user with email: {Email}", email);
+            _logger.LogInformation("Getting user with email: {Email}", email);
 
-                if (string.IsNullOrWhiteSpace(email))
-                {
-                    _logger.LogWarning("Email is null or empty");
-                    throw new ArgumentException("Email cannot be null or empty.", nameof(email));
-                }
+            if (string.IsNullOrWhiteSpace(email))
+                throw new ArgumentException("Email cannot be null or empty.", nameof(email));
 
-                var user = await _unitOfWork.Users.GetByEmailAsync(email);
-                if (user == null)
-                {
-                    _logger.LogWarning("User with email {Email} not found", email);
-                    return null;
-                }
+            var user = await _unitOfWork.Users.GetByEmailAsync(email);
+            if (user == null)
+                throw new KeyNotFoundException($"User with email '{email}' not found.");
 
-                var dto = MapToUserDetailsDto(user);
-                _logger.LogInformation("Successfully retrieved user with email {Email}", email);
-                return dto;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting user with email: {Email}", email);
-                throw;
-            }
+            var dto = UserMapper.ToUserDetailsDto(user);
+            _logger.LogInformation("Successfully retrieved user with email {Email}", email);
+            return dto;
         }
 
         public async Task<PagedResultDto<UserDetailsDto>> GetAllUsersAsync(AdminUserFilterDto filter)
@@ -315,11 +243,6 @@ namespace CinemaVerse.Services.Implementations.Admin
             try
             {
                 _logger.LogInformation("Getting all users with filter: {@Filter}", filter);
-
-                if (filter == null)
-                {
-                    throw new ArgumentNullException(nameof(filter));
-                }
 
                 // Validate pagination
                 if (filter.Page <= 0)
@@ -414,7 +337,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 );
 
                 // Map to DTOs
-                var userDtos = users.Select(user => MapToUserDetailsDto(user)).ToList();
+                var userDtos = users.Select(user => UserMapper.ToUserDetailsDto(user)).ToList();
 
                 _logger.LogInformation("Retrieved {Count} users out of {Total} total",
                     userDtos.Count, totalCount);
@@ -442,18 +365,10 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogInformation("Activating user with ID: {UserId}", userId);
 
                 if (userId <= 0)
-                {
-                    _logger.LogWarning("Invalid user ID: {UserId}", userId);
                     throw new ArgumentException("User ID must be a positive integer.", nameof(userId));
-                }
-
                 var user = await _unitOfWork.Users.GetByIdAsync(userId);
                 if (user == null)
-                {
-                    _logger.LogWarning("User with ID {UserId} not found", userId);
                     throw new KeyNotFoundException($"User with ID {userId} not found.");
-                }
-
                 if (user.IsActive)
                 {
                     _logger.LogInformation("User with ID {UserId} is already active", userId);
@@ -486,18 +401,10 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogInformation("Deactivating user with ID: {UserId}", userId);
 
                 if (userId <= 0)
-                {
-                    _logger.LogWarning("Invalid user ID: {UserId}", userId);
                     throw new ArgumentException("User ID must be a positive integer.", nameof(userId));
-                }
-
                 var user = await _unitOfWork.Users.GetByIdAsync(userId);
                 if (user == null)
-                {
-                    _logger.LogWarning("User with ID {UserId} not found", userId);
                     throw new KeyNotFoundException($"User with ID {userId} not found.");
-                }
-
                 if (!user.IsActive)
                 {
                     _logger.LogInformation("User with ID {UserId} is already inactive", userId);
@@ -522,93 +429,7 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
-        public async Task<bool> ConfirmUserEmailAsync(int userId)
-        {
-            await _unitOfWork.BeginTransactionAsync();
-            try
-            {
-                _logger.LogInformation("Confirming email for user with ID: {UserId}", userId);
 
-                if (userId <= 0)
-                {
-                    _logger.LogWarning("Invalid user ID: {UserId}", userId);
-                    throw new ArgumentException("User ID must be a positive integer.", nameof(userId));
-                }
-
-                var user = await _unitOfWork.Users.GetByIdAsync(userId);
-                if (user == null)
-                {
-                    _logger.LogWarning("User with ID {UserId} not found", userId);
-                    throw new KeyNotFoundException($"User with ID {userId} not found.");
-                }
-
-                if (user.IsEmailConfirmed)
-                {
-                    _logger.LogInformation("User with ID {UserId} email is already confirmed", userId);
-                    await _unitOfWork.RollbackTransactionAsync();
-                    return true;
-                }
-
-                user.IsEmailConfirmed = true;
-                user.LastUpdatedAt = DateTime.UtcNow;
-                await _unitOfWork.Users.UpdateAsync(user);
-                await _unitOfWork.SaveChangesAsync();
-                await _unitOfWork.CommitTransactionAsync();
-
-                _logger.LogInformation("Successfully confirmed email for user {UserId}", userId);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                await _unitOfWork.RollbackTransactionAsync();
-                _logger.LogError(ex, "Error confirming email for user with ID: {UserId}", userId);
-                throw;
-            }
-        }
-
-        public async Task<bool> UnconfirmUserEmailAsync(int userId)
-        {
-            await _unitOfWork.BeginTransactionAsync();
-            try
-            {
-                _logger.LogInformation("Unconfirming email for user with ID: {UserId}", userId);
-
-                if (userId <= 0)
-                {
-                    _logger.LogWarning("Invalid user ID: {UserId}", userId);
-                    throw new ArgumentException("User ID must be a positive integer.", nameof(userId));
-                }
-
-                var user = await _unitOfWork.Users.GetByIdAsync(userId);
-                if (user == null)
-                {
-                    _logger.LogWarning("User with ID {UserId} not found", userId);
-                    throw new KeyNotFoundException($"User with ID {userId} not found.");
-                }
-
-                if (!user.IsEmailConfirmed)
-                {
-                    _logger.LogInformation("User with ID {UserId} email is already unconfirmed", userId);
-                    await _unitOfWork.RollbackTransactionAsync();
-                    return true;
-                }
-
-                user.IsEmailConfirmed = false;
-                user.LastUpdatedAt = DateTime.UtcNow;
-                await _unitOfWork.Users.UpdateAsync(user);
-                await _unitOfWork.SaveChangesAsync();
-                await _unitOfWork.CommitTransactionAsync();
-
-                _logger.LogInformation("Successfully unconfirmed email for user {UserId}", userId);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                await _unitOfWork.RollbackTransactionAsync();
-                _logger.LogError(ex, "Error unconfirming email for user with ID: {UserId}", userId);
-                throw;
-            }
-        }
 
         public async Task<PagedResultDto<BookingDetailsDto>> GetUserBookingsAsync(int userId, AdminBookingFilterDto filter)
         {
@@ -617,23 +438,10 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogInformation("Getting bookings for user {UserId} with filter: {@Filter}", userId, filter);
 
                 if (userId <= 0)
-                {
-                    _logger.LogWarning("Invalid user ID: {UserId}", userId);
                     throw new ArgumentException("User ID must be a positive integer.", nameof(userId));
-                }
-
-                if (filter == null)
-                {
-                    throw new ArgumentNullException(nameof(filter));
-                }
-
-                // Verify user exists
                 var user = await _unitOfWork.Users.GetByIdAsync(userId);
                 if (user == null)
-                {
-                    _logger.LogWarning("User with ID {UserId} not found", userId);
                     throw new KeyNotFoundException($"User with ID {userId} not found.");
-                }
 
                 // Validate pagination
                 if (filter.Page <= 0)
@@ -716,43 +524,8 @@ namespace CinemaVerse.Services.Implementations.Admin
                     includeProperties: "User,MovieShowTime.Movie.MovieImages,BookingSeats.Seat,Tickets"
                 );
 
-                // Map to DTOs - using AdminBookingService pattern
-                var bookingDtos = bookings.Select(booking =>
-                {
-                    var showtime = booking.MovieShowTime;
-                    var movie = showtime?.Movie;
-                    var hall = showtime?.Hall;
-
-                    return new BookingDetailsDto
-                    {
-                        BookingId = booking.Id,
-                        Status = booking.Status,
-                        TotalAmount = booking.TotalAmount,
-                        CreatedAt = booking.CreatedAt,
-                        ExpiresAt = booking.ExpiresAt,
-                        Showtime = new ShowtimeDto
-                        {
-                            MovieShowTimeId = showtime?.Id ?? 0,
-                            MovieTitle = movie?.MovieName ?? string.Empty,
-                            StartTime = showtime?.ShowStartTime ?? DateTime.MinValue,
-                            PosterUrl = movie?.MoviePoster ?? string.Empty
-                        },
-                        BookedSeats = booking.BookingSeats?.Select(bs => new DTOs.HallSeat.Responses.SeatDto
-                        {
-                            SeatId = bs.Seat?.Id ?? 0,
-                            SeatLabel = bs.Seat?.SeatLabel ?? string.Empty
-                        }).ToList() ?? new List<DTOs.HallSeat.Responses.SeatDto>(),
-                        Tickets = booking.Tickets?.Select(t => new TicketDetailsDto
-                        {
-                            TicketId = t.Id,
-                            TicketNumber = t.TicketNumber,
-                            SeatLabel = t.Seat?.SeatLabel ?? string.Empty,
-                            Price = t.Price,
-                            QrToken = t.QrToken,
-                            Status = t.Status
-                        }).ToList() ?? new List<TicketDetailsDto>()
-                    };
-                }).ToList();
+                // Map to DTOs
+                var bookingDtos = bookings.Select(b => BookingMapper.ToDetailsDto(b)).ToList();
 
                 _logger.LogInformation("Retrieved {Count} bookings for user {UserId} out of {Total} total",
                     bookingDtos.Count, userId, totalCount);
@@ -772,131 +545,6 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
-        public async Task<PagedResultDto<TicketDetailsDto>> GetUserTicketsAsync(int userId, AdminTicketFilterDto filter)
-        {
-            try
-            {
-                _logger.LogInformation("Getting tickets for user {UserId} with filter: {@Filter}", userId, filter);
-
-                if (userId <= 0)
-                {
-                    _logger.LogWarning("Invalid user ID: {UserId}", userId);
-                    throw new ArgumentException("User ID must be a positive integer.", nameof(userId));
-                }
-
-                if (filter == null)
-                {
-                    throw new ArgumentNullException(nameof(filter));
-                }
-
-                // Verify user exists
-                var user = await _unitOfWork.Users.GetByIdAsync(userId);
-                if (user == null)
-                {
-                    _logger.LogWarning("User with ID {UserId} not found", userId);
-                    throw new KeyNotFoundException($"User with ID {userId} not found.");
-                }
-
-                // Validate pagination
-                if (filter.PageNumber <= 0)
-                    filter.PageNumber = 1;
-
-                if (filter.PageSize <= 0 || filter.PageSize > PaginationConstants.MaxPageSize)
-                    filter.PageSize = PaginationConstants.DefaultPageSize;
-
-                // Build query - get tickets through bookings
-                var query = _unitOfWork.Tickets.GetQueryable()
-                    .Where(t => t.Booking.UserId == userId);
-
-                // Apply filters
-                if (filter.Status.HasValue)
-                {
-                    query = query.Where(t => t.Status == filter.Status.Value);
-                }
-
-                if (filter.BookingId.HasValue)
-                {
-                    query = query.Where(t => t.BookingId == filter.BookingId.Value);
-                }
-
-                if (filter.ShowtimeId.HasValue)
-                {
-                    query = query.Where(t => t.Booking.MovieShowTimeId == filter.ShowtimeId.Value);
-                }
-
-                if (!string.IsNullOrWhiteSpace(filter.TicketNumber))
-                {
-                    query = query.Where(t => t.TicketNumber.Contains(filter.TicketNumber));
-                }
-
-                if (filter.StartDate.HasValue)
-                {
-                    query = query.Where(t => t.Booking.MovieShowTime.ShowStartTime >= filter.StartDate.Value);
-                }
-
-                if (filter.EndDate.HasValue)
-                {
-                    query = query.Where(t => t.Booking.MovieShowTime.ShowStartTime <= filter.EndDate.Value);
-                }
-
-                // Get total count
-                var totalCount = await _unitOfWork.Tickets.CountAsync(query);
-
-                // Apply sorting (default by showtime)
-                query = query.OrderByDescending(t => t.Booking.MovieShowTime.ShowStartTime);
-
-                // Get paged results
-                var tickets = await _unitOfWork.Tickets.GetPagedAsync(
-                    query: query,
-                    orderBy: null,
-                    skip: (filter.PageNumber - 1) * filter.PageSize,
-                    take: filter.PageSize,
-                    includeProperties: "Booking.MovieShowTime.Movie,Booking.MovieShowTime.Movie.MovieImages,Booking.MovieShowTime.Hall,Booking.MovieShowTime.Hall.Branch,Seat"
-                );
-
-                // Map to DTOs
-                var ticketDtos = tickets.Select(ticket =>
-                {
-                    var showtime = ticket.Booking?.MovieShowTime;
-                    var movie = showtime?.Movie;
-                    var hall = showtime?.Hall;
-
-                    return new TicketDetailsDto
-                    {
-                        TicketId = ticket.Id,
-                        TicketNumber = ticket.TicketNumber,
-                        MovieName = movie?.MovieName ?? string.Empty,
-                        ShowStartTime = showtime?.ShowStartTime ?? DateTime.MinValue,
-                        MovieDuration = movie?.MovieDuration ?? TimeSpan.Zero,
-                        HallNumber = hall?.HallNumber ?? string.Empty,
-                        HallType = hall?.HallType ?? HallType.TwoD,
-                        SeatLabel = ticket.Seat?.SeatLabel ?? string.Empty,
-                        MoviePoster = movie?.MoviePoster ?? string.Empty,
-                        MovieAgeRating = movie?.MovieAgeRating ?? MovieAgeRating.G,
-                        QrToken = ticket.QrToken,
-                        Status = ticket.Status,
-                        Price = ticket.Price,
-                        BranchName = hall?.Branch?.BranchName ?? string.Empty
-                    };
-                }).ToList();
-
-                _logger.LogInformation("Retrieved {Count} tickets for user {UserId} out of {Total} total",
-                    ticketDtos.Count, userId, totalCount);
-
-                return new PagedResultDto<TicketDetailsDto>
-                {
-                    Items = ticketDtos,
-                    Page = filter.PageNumber,
-                    PageSize = filter.PageSize,
-                    TotalCount = totalCount
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting tickets for user {UserId}", userId);
-                throw;
-            }
-        }
 
         public async Task<PagedResultDto<PaymentDetailsResponseDto>> GetUserPaymentsAsync(int userId, AdminPaymentFilterDto filter)
         {
@@ -905,23 +553,10 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogInformation("Getting payments for user {UserId} with filter: {@Filter}", userId, filter);
 
                 if (userId <= 0)
-                {
-                    _logger.LogWarning("Invalid user ID: {UserId}", userId);
                     throw new ArgumentException("User ID must be a positive integer.", nameof(userId));
-                }
-
-                if (filter == null)
-                {
-                    throw new ArgumentNullException(nameof(filter));
-                }
-
-                // Verify user exists
                 var user = await _unitOfWork.Users.GetByIdAsync(userId);
                 if (user == null)
-                {
-                    _logger.LogWarning("User with ID {UserId} not found", userId);
                     throw new KeyNotFoundException($"User with ID {userId} not found.");
-                }
 
                 // Validate pagination
                 if (filter.Page <= 0)
@@ -1005,15 +640,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 );
 
                 // Map to DTOs
-                var paymentDtos = payments.Select(payment => new PaymentDetailsResponseDto
-                {
-                    PaymentId = payment.Id,
-                    BookingId = payment.BookingId,
-                    Amount = payment.Amount,
-                    Currency = payment.Currency ?? "EGP",
-                    TransactionDate = payment.TransactionDate,
-                    Status = payment.Status
-                }).ToList();
+                var paymentDtos = payments.Select(PaymentMapper.ToPaymentDetailsResponseDto).ToList();
 
                 _logger.LogInformation("Retrieved {Count} payments for user {UserId} out of {Total} total",
                     paymentDtos.Count, userId, totalCount);
@@ -1031,26 +658,6 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogError(ex, "Error getting payments for user {UserId}", userId);
                 throw;
             }
-        }
-
-        // Helper Methods
-        private UserDetailsDto MapToUserDetailsDto(UserEntity user)
-        {
-            return new UserDetailsDto
-            {
-                UserId = user.Id,
-                Email = user.Email,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                PhoneNumber = user.PhoneNumber,
-                Address = user.Address,
-                City = user.City,
-                DateOfBirth = user.DateOfBirth,
-                IsActive = user.IsActive,
-                IsEmailConfirmed = user.IsEmailConfirmed,
-                Gender = user.Gender,
-                CreatedAt = user.CreatedAt
-            };
         }
 
         private string HashPassword(string password)
