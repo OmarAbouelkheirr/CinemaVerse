@@ -1,24 +1,3 @@
-﻿//using System.ComponentModel.DataAnnotations;
-//using CinemaVerse.Data.Enums;
-
-//namespace CinemaVerse.Services.DTOs.UserFlow.Auth
-//{
-//    public class RegisterRequestDto
-//    {
-//        [Required]
-//        public string FirstName { get; set; } = string.Empty;
-//        public string LastName { get; set; } = string.Empty;
-//        public string Email { get; set; } = string.Empty;
-//        public string Password { get; set; } = string.Empty;
-//        public string? PhoneNumber { get; set; }
-//        public string Address { get; set; } = string.Empty;
-//        public string City { get; set; } = string.Empty;
-//        public DateTime DateOfBirth { get; set; }
-//        public Genders Genders { get; set; }
-//    }
-//}
-
-
 using System.ComponentModel.DataAnnotations;
 using CinemaVerse.Data.Enums;
 
