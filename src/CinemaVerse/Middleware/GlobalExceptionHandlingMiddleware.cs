@@ -56,7 +56,7 @@ namespace CinemaVerse.Middleware
             return ex switch
             {
                 KeyNotFoundException => (HttpStatusCode.NotFound, "NOT_FOUND", ex.Message),
-                UnauthorizedAccessException => (HttpStatusCode.Forbidden, "FORBIDDEN", ex.Message),
+                UnauthorizedAccessException => (HttpStatusCode.Unauthorized, "UNAUTHORIZED", ex.Message),
                 ArgumentNullException or ArgumentException => (HttpStatusCode.BadRequest, "BAD_REQUEST", ex.Message),
                 InvalidOperationException inv when inv.Message.Contains("already", StringComparison.OrdinalIgnoreCase)
                     => (HttpStatusCode.Conflict, "CONFLICT", ex.Message),
