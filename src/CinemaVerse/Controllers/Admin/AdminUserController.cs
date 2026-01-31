@@ -40,7 +40,7 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAllUsers([FromQuery] AdminUserFilterDto filter)
         {
-            _logger.LogInformation("Admin: Getting all users with filter: {@Filter}", filter);
+            _logger.LogInformation("Admin: Getting all users, Page {Page}, PageSize {PageSize}", filter?.Page ?? 1, filter?.PageSize ?? 20);
             var result = await _adminUserService.GetAllUsersAsync(filter);
             return Ok(result);
         }
@@ -66,8 +66,11 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserRequestDto request)
         {
-            _logger.LogInformation("Admin: Creating new user: {Email}", request?.Email);
-            var userId = await _adminUserService.CreateUserAsync(request!);
+            if (request == null)
+                return BadRequest(new { error = "Request body is required." });
+
+            _logger.LogInformation("Admin: Creating new user");
+            var userId = await _adminUserService.CreateUserAsync(request);
             _logger.LogInformation("Admin: Successfully created user with ID: {UserId}", userId);
             var user = await _adminUserService.GetUserByIdAsync(userId);
             return CreatedAtAction(nameof(GetUserById), new { id = userId }, user);
@@ -81,6 +84,9 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequestDto request)
         {
+            if (request == null)
+                return BadRequest(new { error = "Request body is required." });
+
             _logger.LogInformation("Admin: Updating user with ID: {UserId}", id);
             await _adminUserService.UpdateUserAsync(id, request);
             _logger.LogInformation("Admin: Successfully updated user with ID: {UserId}", id);
@@ -134,7 +140,7 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetUserBookings(int id, [FromQuery] AdminBookingFilterDto filter)
         {
-            _logger.LogInformation("Admin: Getting bookings for user {UserId} with filter: {@Filter}", id, filter);
+            _logger.LogInformation("Admin: Getting bookings for user {UserId}, Page {Page}, PageSize {PageSize}", id, filter?.Page ?? 1, filter?.PageSize ?? 10);
             var result = await _bookingService.GetUserBookingsAsync(id, filter);
             return Ok(result);
         }
@@ -147,7 +153,7 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetUserTickets(int id, [FromQuery] AdminTicketFilterDto filter)
         {
-            _logger.LogInformation("Admin: Getting tickets for user {UserId} with filter: {@Filter}", id, filter);
+            _logger.LogInformation("Admin: Getting tickets for user {UserId}, Page {Page}, PageSize {PageSize}", id, filter?.Page ?? 1, filter?.PageSize ?? 10);
             var result = await _ticketService.GetUserTicketsAsync(id, filter);
             return Ok(result);
         }
@@ -159,7 +165,7 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetUserPayments(int id, [FromQuery] AdminPaymentFilterDto filter)
         {
-            _logger.LogInformation("Admin: Getting payments for user {UserId} with filter: {@Filter}", id, filter);
+            _logger.LogInformation("Admin: Getting payments for user {UserId}, Page {Page}, PageSize {PageSize}", id, filter?.Page ?? 1, filter?.PageSize ?? 10);
             var result = await _paymentService.GetUserPaymentsAsync(id, filter);
             return Ok(result);
         }

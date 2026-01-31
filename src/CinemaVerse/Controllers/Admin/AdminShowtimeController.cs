@@ -28,7 +28,7 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetShowtimes([FromQuery] AdminShowtimeFilterDto adminShowtimeFilterDto)
         {
-            _logger.LogInformation("Admin: Getting all showtimes with filter: {@Filter}", adminShowtimeFilterDto);
+            _logger.LogInformation("Admin: Getting all showtimes, Page {Page}, PageSize {PageSize}", adminShowtimeFilterDto?.Page ?? 1, adminShowtimeFilterDto?.PageSize ?? 20);
             var result = await _adminShowtimeService.GetAllShowtimesAsync(adminShowtimeFilterDto);
             return Ok(result);
         }
@@ -40,7 +40,10 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CreateShowtime([FromBody] CreateShowtimeRequestDto createShowtimeDto)
         {
-            _logger.LogInformation("Admin: Creating a new showtime: {@CreateShowtimeDto}", createShowtimeDto);
+            if (createShowtimeDto == null)
+                return BadRequest(new { error = "Request body is required." });
+
+            _logger.LogInformation("Admin: Creating showtime for MovieId {MovieId}, HallId {HallId}", createShowtimeDto.MovieId, createShowtimeDto.HallId);
             var showtimeId = await _adminShowtimeService.CreateShowtimeAsync(createShowtimeDto);
             _logger.LogInformation("Showtime created successfully with ID: {ShowtimeId}", showtimeId);
             var showtime = await _adminShowtimeService.GetShowtimeByIdAsync(showtimeId);
@@ -67,6 +70,9 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateShowtime([FromRoute] int id, [FromBody] UpdateShowtimeRequestDto updateShowtimeDto)
         {
+            if (updateShowtimeDto == null)
+                return BadRequest(new { error = "Request body is required." });
+
             _logger.LogInformation("Admin: Updating showtime with ID: {ShowtimeId}", id);
             await _adminShowtimeService.UpdateShowtimeAsync(id, updateShowtimeDto);
             _logger.LogInformation("Showtime with ID {ShowtimeId} updated successfully", id);

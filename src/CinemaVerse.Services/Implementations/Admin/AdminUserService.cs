@@ -41,7 +41,7 @@ namespace CinemaVerse.Services.Implementations.Admin
             await _unitOfWork.BeginTransactionAsync();
             try
             {
-                _logger.LogInformation("Creating user with email: {Email}", request.Email);
+                _logger.LogInformation("Admin: Creating new user");
 
                 // Check if email already exists (business rule)
                 var existingUser = await _unitOfWork.Users.GetByEmailAsync(request.Email);
@@ -72,7 +72,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.CommitTransactionAsync();
 
-                _logger.LogInformation("Successfully created user {UserId} with email {Email}", user.Id, user.Email);
+                _logger.LogInformation("Successfully created user {UserId}", user.Id);
 
                 try
                 {
@@ -83,11 +83,11 @@ namespace CinemaVerse.Services.Implementations.Admin
                         Subject = "Welcome to CinemaVerse"
                     };
                     await _emailService.SendWelcomeEmailAsync(welcomeEmail);
-                    _logger.LogInformation("Welcome email sent to {Email} for UserId {UserId}", user.Email, user.Id);
+                    _logger.LogInformation("Welcome email sent for UserId {UserId}", user.Id);
                 }
                 catch (Exception emailEx)
                 {
-                    _logger.LogError(emailEx, "Failed to send welcome email to {Email}, but user was created", user.Email);
+                    _logger.LogError(emailEx, "Failed to send welcome email for UserId {UserId}, but user was created", user.Id);
                 }
 
                 return user.Id;
@@ -95,7 +95,7 @@ namespace CinemaVerse.Services.Implementations.Admin
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync();
-                _logger.LogError(ex, "Error creating user with email: {Email}", request?.Email);
+                _logger.LogError(ex, "Error creating user");
                 throw;
             }
         }

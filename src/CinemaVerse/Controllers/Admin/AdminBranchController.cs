@@ -28,7 +28,7 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAllBranches([FromQuery] AdminBranchFilterDto filter)
         {
-            _logger.LogInformation("Admin: Getting all branches with filter: {@Filter}", filter);
+            _logger.LogInformation("Admin: Getting all branches, Page {Page}, PageSize {PageSize}", filter?.Page ?? 1, filter?.PageSize ?? 20);
             var result = await _adminBranchService.GetAllBranchesAsync(filter);
             return Ok(result);
         }
@@ -51,7 +51,10 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CreateBranch([FromBody] CreateBranchRequestDto createBranchDto)
         {
-            _logger.LogInformation("Admin: Creating a new branch: {@CreateBranchDto}", createBranchDto);
+            if (createBranchDto == null)
+                return BadRequest(new { error = "Request body is required." });
+
+            _logger.LogInformation("Admin: Creating new branch");
             var branchId = await _adminBranchService.CreateBranchAsync(createBranchDto);
             _logger.LogInformation("Branch created successfully with ID: {BranchId}", branchId);
             var result = await _adminBranchService.GetBranchByIdAsync(branchId);
@@ -65,6 +68,9 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> EditBranch([FromRoute] int id, [FromBody] UpdateBranchRequestDto updateBranchDto)
         {
+            if (updateBranchDto == null)
+                return BadRequest(new { error = "Request body is required." });
+
             _logger.LogInformation("Admin: Updating branch with ID: {BranchId}", id);
             await _adminBranchService.EditBranchAsync(id, updateBranchDto);
             _logger.LogInformation("Branch with ID {BranchId} updated successfully", id);

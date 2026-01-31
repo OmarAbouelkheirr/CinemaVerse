@@ -30,7 +30,7 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAllMovies([FromQuery] AdminMovieFilterDto filter)
         {
-            _logger.LogInformation("Admin: Getting all movies with filter: {@Filter}", filter);
+            _logger.LogInformation("Admin: Getting all movies, Page {Page}, PageSize {PageSize}", filter?.Page ?? 1, filter?.PageSize ?? 20);
             var result = await _adminMovieService.GetAllMoviesAsync(filter);
             return Ok(result);
         }
@@ -53,8 +53,11 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CreateMovie([FromBody] CreateMovieRequestDto request)
         {
-            _logger.LogInformation("Admin: Creating new movie: {MovieName}", request?.MovieName);
-            var movieId = await _adminMovieService.CreateMovieAsync(request!);
+            if (request == null)
+                return BadRequest(new { error = "Request body is required." });
+
+            _logger.LogInformation("Admin: Creating new movie");
+            var movieId = await _adminMovieService.CreateMovieAsync(request);
             _logger.LogInformation("Admin: Successfully created movie with ID: {MovieId}", movieId);
             var movie = await _adminMovieService.GetMovieAsync(movieId);
             return CreatedAtAction(nameof(GetMovieById), new { id = movieId }, movie);
@@ -67,6 +70,9 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateMovie(int id, [FromBody] UpdateMovieRequestDto request)
         {
+            if (request == null)
+                return BadRequest(new { error = "Request body is required." });
+
             _logger.LogInformation("Admin: Updating movie with ID: {MovieId}", id);
             await _adminMovieService.EditMovieAsync(id, request);
             _logger.LogInformation("Admin: Successfully updated movie with ID: {MovieId}", id);

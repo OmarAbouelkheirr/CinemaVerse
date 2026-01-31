@@ -29,9 +29,9 @@ namespace CinemaVerse.API.Controllers.User
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> BrowseMovie([FromQuery] BrowseMoviesFilterDto filter)
         {
-            _logger.LogInformation("User: Browsing movies with filter: {@filter}", filter);
+            _logger.LogInformation("User: Browsing movies, Page {Page}, PageSize {PageSize}", filter?.Page ?? 1, filter?.PageSize ?? 20);
             var result = await _movieService.BrowseMoviesAsync(filter);
-            _logger.LogInformation("User: Successfully retrieved movies with filter: {@filter}", filter);
+            _logger.LogInformation("User: Successfully retrieved movies, Page {Page}, PageSize {PageSize}", filter?.Page ?? 1, filter?.PageSize ?? 20);
             return Ok(result);
         }
 

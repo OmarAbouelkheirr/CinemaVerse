@@ -28,7 +28,7 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAllHalls([FromQuery] AdminHallFilterDto filter)
         {
-            _logger.LogInformation("Admin: Getting all Halls with filter: {@Filter}", filter);
+            _logger.LogInformation("Admin: Getting all Halls, Page {Page}, PageSize {PageSize}", filter?.Page ?? 1, filter?.PageSize ?? 20);
             var result = await _adminHallService.GetAllHallsAsync(filter);
             return Ok(result);
         }
@@ -51,7 +51,10 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CreateHall([FromBody] CreateHallRequestDto createHallDto)
         {
-            _logger.LogInformation("Admin: Creating a new Hall: {@CreateHallDto}", createHallDto);
+            if (createHallDto == null)
+                return BadRequest(new { error = "Request body is required." });
+
+            _logger.LogInformation("Admin: Creating hall for BranchId {BranchId}", createHallDto.BranchId);
             var hallId = await _adminHallService.CreateHallAsync(createHallDto);
             _logger.LogInformation("Hall created successfully with ID: {HallId}", hallId);
             var result = await _adminHallService.GetHallWithSeatsByIdAsync(hallId);
@@ -65,6 +68,9 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> EditHall([FromRoute] int id, [FromBody] UpdateHallRequestDto updateHallDto)
         {
+            if (updateHallDto == null)
+                return BadRequest(new { error = "Request body is required." });
+
             _logger.LogInformation("Admin: Updating Hall with ID: {HallId}", id);
             await _adminHallService.EditHallAsync(id, updateHallDto);
             _logger.LogInformation("Hall with ID {HallId} updated successfully", id);
