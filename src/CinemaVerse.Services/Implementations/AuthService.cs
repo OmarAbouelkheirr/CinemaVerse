@@ -3,6 +3,7 @@ using CinemaVerse.Data.Repositories;
 using CinemaVerse.Services.DTOs.Email.Requests;
 using CinemaVerse.Services.DTOs.UserFlow.Auth;
 using CinemaVerse.Services.Interfaces;
+using CinemaVerse.Services.Mappers;
 using CinemaVerse.Services.Interfaces.User;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -31,27 +32,12 @@ namespace CinemaVerse.Services.Implementations
 
         public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request)
         {
-            if (request == null)
-            {
-                _logger.LogError("RegisterAsync: Request is null");
-                throw new ArgumentNullException(nameof(request));
-            }
-
             var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
-
             if (user == null)
-            {
-                _logger.LogWarning("User with email {Email} is not exists", request.Email);
-                throw new UnauthorizedAccessException($"Invalid credentials");
-            }
-
+                throw new UnauthorizedAccessException("Invalid credentials");
             bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
-
             if (!isPasswordValid)
-            {
-                _logger.LogWarning("Invalid password for user with email {Email}", request.Email);
                 throw new UnauthorizedAccessException("Invalid credentials.");
-            }
 
             var claims = new[]
             {
@@ -92,19 +78,9 @@ namespace CinemaVerse.Services.Implementations
 
         public async Task<int> RegisterAsync(RegisterRequestDto request)
         {
-            if (request == null)
-            {
-                _logger.LogError("RegisterAsync: Request is null");
-                throw new ArgumentNullException(nameof(request));
-            }
-
             var existingUser = await _unitOfWork.Users.GetByEmailAsync(request.Email);
-
             if (existingUser != null)
-            {
-                _logger.LogWarning("User with email {Email} already exists", request.Email);
                 throw new InvalidOperationException($"User with email '{request.Email}' already exists.");
-            }
 
             var passwordHashed = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
@@ -133,12 +109,7 @@ namespace CinemaVerse.Services.Implementations
 
             try
             {
-                var welcomeEmail = new WelcomeEmailDto
-                {
-                    To = user.Email,
-                    FullName = user.FullName,
-                    Subject = "Welcome to CinemaVerse"
-                };
+                var welcomeEmail = UserMapper.ToWelcomeEmailDto(user);
                 await _emailService.SendWelcomeEmailAsync(welcomeEmail);
                 _logger.LogInformation("Welcome email sent to {Email} for UserId {UserId}", user.Email, user.Id);
             }

@@ -1,4 +1,3 @@
-using CinemaVerse.Extensions;
 using CinemaVerse.Models;
 using CinemaVerse.Services.DTOs.UserFlow.Auth;
 using CinemaVerse.Services.Interfaces;
@@ -26,19 +25,9 @@ namespace CinemaVerse.API.Controllers
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
         {
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
-
-            try
-            {
-                var userId = await _authService.RegisterAsync(request);
-                _logger.LogInformation("User registered successfully with Id {UserId}", userId);
-                return StatusCode(StatusCodes.Status201Created, new { userId });
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
-            {
-                return Conflict(new { error = ex.Message });
-            }
+            var userId = await _authService.RegisterAsync(request);
+            _logger.LogInformation("User registered successfully with Id {UserId}", userId);
+            return StatusCode(StatusCodes.Status201Created, new { userId });
         }
 
         [HttpPost("login")]
@@ -47,19 +36,9 @@ namespace CinemaVerse.API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
         {
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
-
-            try
-            {
-                var result = await _authService.LoginAsync(request);
-                _logger.LogInformation("User logged in successfully with Id {UserId}", result.UserId);
-                return Ok(result);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Unauthorized(new { error = "Invalid email or password." });
-            }
+            var result = await _authService.LoginAsync(request);
+            _logger.LogInformation("User logged in successfully with Id {UserId}", result.UserId);
+            return Ok(result);
         }
 
     }
