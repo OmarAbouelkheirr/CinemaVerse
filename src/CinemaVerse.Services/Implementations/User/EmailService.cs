@@ -32,7 +32,6 @@ namespace CinemaVerse.Services.Implementations.User
         {
             if (emailDto == null)
             {
-                _logger.LogWarning("BookingCancellationEmailDto is null");
                 throw new ArgumentNullException(nameof(emailDto));
             }
 
@@ -61,10 +60,7 @@ namespace CinemaVerse.Services.Implementations.User
         public async Task SendBookingConfirmationEmailAsync(BookingConfirmationEmailDto emailDto)
         {
             if (emailDto == null)
-            {
-                _logger.LogWarning("BookingConfirmationEmailDto is null");
                 throw new ArgumentNullException(nameof(emailDto));
-            }
 
             try
             {
@@ -92,7 +88,6 @@ namespace CinemaVerse.Services.Implementations.User
         {
             if (emailDto == null)
             {
-                _logger.LogWarning("BookingReminderEmailDto is null");
                 throw new ArgumentNullException(nameof(emailDto));
             }
 
@@ -122,10 +117,7 @@ namespace CinemaVerse.Services.Implementations.User
             try
             {
                 if (emailDto == null)
-                {
-                    _logger.LogWarning("SendEmailDto is null");
                     throw new ArgumentNullException(nameof(emailDto));
-                }
 
                 _logger.LogInformation("Sending email to {Email} with subject {Subject}", emailDto.To, emailDto.Subject);
                 var message = new MimeMessage();
@@ -176,7 +168,6 @@ namespace CinemaVerse.Services.Implementations.User
         {
             if (emailDto == null)
             {
-                _logger.LogWarning("PasswordResetEmailDto is null");
                 throw new ArgumentNullException(nameof(emailDto));
             }
 
@@ -228,7 +219,6 @@ namespace CinemaVerse.Services.Implementations.User
         {
             if (emailDto == null)
             {
-                _logger.LogWarning("WelcomeEmailDto is null");
                 throw new ArgumentNullException(nameof(emailDto));
             }
 
