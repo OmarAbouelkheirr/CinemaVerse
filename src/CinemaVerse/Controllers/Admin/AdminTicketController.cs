@@ -41,8 +41,6 @@ namespace CinemaVerse.API.Controllers.Admin
         {
             _logger.LogInformation("Admin: Getting ticket by ID: {TicketId}", id);
             var ticket = await _adminTicketService.GetTicketByIdAsync(id);
-            if (ticket == null)
-                return NotFound(new { error = "Ticket not found" });
             return Ok(ticket);
         }
 

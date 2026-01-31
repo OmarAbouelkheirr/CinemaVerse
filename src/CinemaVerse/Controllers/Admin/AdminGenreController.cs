@@ -42,8 +42,6 @@ namespace CinemaVerse.API.Controllers.Admin
         {
             _logger.LogInformation("Admin: Getting genre by ID: {GenreId}", id);
             var result = await _adminGenreService.GetGenreAsync(id);
-            if (result == null)
-                return NotFound(new { error = "Genre not found" });
             return Ok(result);
         }
 
@@ -54,8 +52,6 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> CreateGenre([FromBody] CreateGenreRequestDto createGenreDto)
         {
             _logger.LogInformation("Admin: Creating a new genre: {@CreateGenreDto}", createGenreDto);
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
             var genreId = await _adminGenreService.CreateGenreAsync(createGenreDto);
             _logger.LogInformation("Genre created successfully with ID: {GenreId}", genreId);
             var result = await _adminGenreService.GetGenreAsync(genreId);
@@ -70,8 +66,6 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> EditGenre([FromRoute] int id, [FromBody] UpdateGenreRequestDto updateGenreDto)
         {
             _logger.LogInformation("Admin: Updating genre with ID: {GenreId}", id);
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
             await _adminGenreService.UpdateGenreAsync(id, updateGenreDto);
             _logger.LogInformation("Genre with ID {GenreId} updated successfully", id);
             return NoContent();

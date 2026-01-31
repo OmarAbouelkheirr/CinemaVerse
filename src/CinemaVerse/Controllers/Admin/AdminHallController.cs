@@ -42,8 +42,6 @@ namespace CinemaVerse.API.Controllers.Admin
         {
             _logger.LogInformation("Admin: Getting Hall by ID: {HallId}", id);
             var result = await _adminHallService.GetHallWithSeatsByIdAsync(id);
-            if (result == null)
-                return NotFound(new { error = "Hall not found" });
             return Ok(result);
         }
 
@@ -54,8 +52,6 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> CreateHall([FromBody] CreateHallRequestDto createHallDto)
         {
             _logger.LogInformation("Admin: Creating a new Hall: {@CreateHallDto}", createHallDto);
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
             var hallId = await _adminHallService.CreateHallAsync(createHallDto);
             _logger.LogInformation("Hall created successfully with ID: {HallId}", hallId);
             var result = await _adminHallService.GetHallWithSeatsByIdAsync(hallId);
@@ -70,8 +66,6 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> EditHall([FromRoute] int id, [FromBody] UpdateHallRequestDto updateHallDto)
         {
             _logger.LogInformation("Admin: Updating Hall with ID: {HallId}", id);
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
             await _adminHallService.EditHallAsync(id, updateHallDto);
             _logger.LogInformation("Hall with ID {HallId} updated successfully", id);
             return NoContent();

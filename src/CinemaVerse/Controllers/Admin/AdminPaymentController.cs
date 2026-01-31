@@ -41,8 +41,6 @@ namespace CinemaVerse.API.Controllers.Admin
         {
             _logger.LogInformation("Admin: Getting Payment by ID: {PaymentId}", id);
             var result = await _adminPaymentService.GetPaymentByIdAsync(id);
-            if (result == null)
-                return NotFound(new { error = "Payment not found" });
             return Ok(result);
         }
     }

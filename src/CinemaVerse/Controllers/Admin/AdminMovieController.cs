@@ -44,8 +44,6 @@ namespace CinemaVerse.API.Controllers.Admin
         {
             _logger.LogInformation("Admin: Getting movie with ID: {MovieId}", id);
             var movie = await _adminMovieService.GetMovieAsync(id);
-            if (movie == null)
-                return NotFound(new { error = $"Movie with ID {id} not found" });
             return Ok(movie);
         }
 
@@ -56,8 +54,6 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> CreateMovie([FromBody] CreateMovieRequestDto request)
         {
             _logger.LogInformation("Admin: Creating new movie: {MovieName}", request?.MovieName);
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
             var movieId = await _adminMovieService.CreateMovieAsync(request!);
             _logger.LogInformation("Admin: Successfully created movie with ID: {MovieId}", movieId);
             var movie = await _adminMovieService.GetMovieAsync(movieId);
@@ -72,8 +68,6 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> UpdateMovie(int id, [FromBody] UpdateMovieRequestDto request)
         {
             _logger.LogInformation("Admin: Updating movie with ID: {MovieId}", id);
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
             await _adminMovieService.EditMovieAsync(id, request);
             _logger.LogInformation("Admin: Successfully updated movie with ID: {MovieId}", id);
             return NoContent();

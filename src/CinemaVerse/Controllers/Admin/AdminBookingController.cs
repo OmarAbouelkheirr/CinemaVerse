@@ -39,8 +39,6 @@ namespace CinemaVerse.API.Controllers.Admin
         {
             _logger.LogInformation("Admin: Getting Booking by ID: {BookingId}", id);
             var result = await _adminBookingService.GetBookingByIdAsync(id);
-            if (result == null)
-                return NotFound(new { error = "Booking not found" });
             return Ok(result);
         }
 
@@ -51,8 +49,6 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequestDto createBookingDto)
         {
             _logger.LogInformation("Admin: Creating a new Booking: {@CreateBookingDto}", createBookingDto);
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
             var bookingId = await _adminBookingService.CreateBookingAsync(createBookingDto);
             _logger.LogInformation("Booking created successfully with ID: {BookingId}", bookingId);
             var result = await _adminBookingService.GetBookingByIdAsync(bookingId);
@@ -67,8 +63,6 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> EditBooking([FromRoute] int id, [FromBody] UpdateBookingRequestDto updateBookingDto)
         {
             _logger.LogInformation("Admin: Updating Booking with ID: {BookingId}", id);
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
             await _adminBookingService.UpdateBookingStatusAsync(id, updateBookingDto.NewStatus);
             _logger.LogInformation("Booking with ID {BookingId} updated successfully", id);
             return NoContent();

@@ -41,8 +41,6 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> CreateShowtime([FromBody] CreateShowtimeRequestDto createShowtimeDto)
         {
             _logger.LogInformation("Admin: Creating a new showtime: {@CreateShowtimeDto}", createShowtimeDto);
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
             var showtimeId = await _adminShowtimeService.CreateShowtimeAsync(createShowtimeDto);
             _logger.LogInformation("Showtime created successfully with ID: {ShowtimeId}", showtimeId);
             var showtime = await _adminShowtimeService.GetShowtimeByIdAsync(showtimeId);
@@ -58,8 +56,6 @@ namespace CinemaVerse.API.Controllers.Admin
         {
             _logger.LogInformation("Admin: Getting showtime by ID: {ShowtimeId}", id);
             var showtime = await _adminShowtimeService.GetShowtimeByIdAsync(id);
-            if (showtime == null)
-                return NotFound(new { error = "Showtime not found" });
             return Ok(showtime);
         }
 
@@ -72,8 +68,6 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> UpdateShowtime([FromRoute] int id, [FromBody] UpdateShowtimeRequestDto updateShowtimeDto)
         {
             _logger.LogInformation("Admin: Updating showtime with ID: {ShowtimeId}", id);
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
             await _adminShowtimeService.UpdateShowtimeAsync(id, updateShowtimeDto);
             _logger.LogInformation("Showtime with ID {ShowtimeId} updated successfully", id);
             return NoContent();

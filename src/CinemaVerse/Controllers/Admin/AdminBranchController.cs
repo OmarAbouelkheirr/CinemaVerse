@@ -42,8 +42,6 @@ namespace CinemaVerse.API.Controllers.Admin
         {
             _logger.LogInformation("Admin: Getting branch by ID: {BranchId}", id);
             var result = await _adminBranchService.GetBranchByIdAsync(id);
-            if (result == null)
-                return NotFound(new { error = "Branch not found" });
             return Ok(result);
         }
 
@@ -54,8 +52,6 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> CreateBranch([FromBody] CreateBranchRequestDto createBranchDto)
         {
             _logger.LogInformation("Admin: Creating a new branch: {@CreateBranchDto}", createBranchDto);
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
             var branchId = await _adminBranchService.CreateBranchAsync(createBranchDto);
             _logger.LogInformation("Branch created successfully with ID: {BranchId}", branchId);
             var result = await _adminBranchService.GetBranchByIdAsync(branchId);
@@ -70,8 +66,6 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> EditBranch([FromRoute] int id, [FromBody] UpdateBranchRequestDto updateBranchDto)
         {
             _logger.LogInformation("Admin: Updating branch with ID: {BranchId}", id);
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
             await _adminBranchService.EditBranchAsync(id, updateBranchDto);
             _logger.LogInformation("Branch with ID {BranchId} updated successfully", id);
             return NoContent();
