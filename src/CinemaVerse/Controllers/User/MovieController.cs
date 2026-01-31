@@ -44,8 +44,6 @@ namespace CinemaVerse.API.Controllers.User
         {
             _logger.LogInformation("User: Getting movie details for ID: {MovieId}", id);
             var result = await _movieService.GetMovieDetailsAsync(id);
-            if (result == null)
-                return NotFound(new { error = "Movie not found" });
             _logger.LogInformation("User: Successfully retrieved movie details for ID: {MovieId}", id);
             return Ok(result);
         }

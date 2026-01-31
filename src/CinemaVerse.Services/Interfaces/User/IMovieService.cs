@@ -7,7 +7,7 @@ namespace CinemaVerse.Services.Interfaces.User
     public interface IMovieService
     {
         Task<BrowseMoviesResponseDto> BrowseMoviesAsync(BrowseMoviesFilterDto browseDto);
-        Task<MovieDetailsDto?> GetMovieDetailsAsync(int movieId);
+        Task<MovieDetailsDto> GetMovieDetailsAsync(int movieId);
     }
 }
 
