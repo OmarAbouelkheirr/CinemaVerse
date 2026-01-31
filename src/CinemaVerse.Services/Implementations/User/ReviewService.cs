@@ -6,6 +6,7 @@ using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.DTOs.UserFlow.Review.Requests;
 using CinemaVerse.Services.DTOs.UserFlow.Review.Responses;
 using CinemaVerse.Services.Interfaces.User;
+using CinemaVerse.Services.Mappers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -55,7 +56,7 @@ namespace CinemaVerse.Services.Implementations.User
             await UpdateMovieRatingFromReviewsAsync(dto.MovieId);
 
             var user = await _unitOfWork.Users.GetByIdAsync(userId);
-            return MapToReviewDto(review, user?.FullName ?? string.Empty);
+            return ReviewMapper.ToReviewDto(review, user?.FullName ?? string.Empty);
         }
 
         public async Task<ReviewDto> UpdateReviewAsync(int userId, int reviewId, UpdateReviewRequestDto dto)
@@ -81,7 +82,7 @@ namespace CinemaVerse.Services.Implementations.User
             _logger.LogInformation("Updated review {ReviewId} for user {UserId}", reviewId, userId);
 
             var user = await _unitOfWork.Users.GetByIdAsync(userId);
-            return MapToReviewDto(review, user?.FullName ?? string.Empty);
+            return ReviewMapper.ToReviewDto(review, user?.FullName ?? string.Empty);
         }
 
         public async Task<bool> DeleteReviewAsync(int userId, int reviewId)
@@ -102,13 +103,12 @@ namespace CinemaVerse.Services.Implementations.User
             return true;
         }
 
-        public async Task<PagedResultDto<ReviewDto>> GetReviewsByMovieIdAsync(int movieId, int page, int pageSize)
+        public async Task<PagedResultDto<ReviewDto>> GetReviewsByMovieIdAsync(int movieId, ReviewListFilterDto filter)
         {
-            // Validate pagination (consistent with GetAllMoviesAsync and BrowseMoviesAsync)
-            if (page <= 0)
-                page = 1;
-            if (pageSize <= 0 || pageSize > PaginationConstants.MaxPageSize)
-                pageSize = PaginationConstants.DefaultPageSize;
+            if (filter.Page <= 0)
+                filter.Page = 1;
+            if (filter.PageSize <= 0 || filter.PageSize > PaginationConstants.MaxPageSize)
+                filter.PageSize = PaginationConstants.DefaultPageSize;
 
             var query = _unitOfWork.Reviews.GetQueryable()
                 .Where(r => r.MovieId == movieId);
@@ -118,35 +118,34 @@ namespace CinemaVerse.Services.Implementations.User
             var reviews = await _unitOfWork.Reviews.GetPagedAsync(
                 query,
                 q => q.OrderByDescending(r => r.CreatedAt),
-                skip: (page - 1) * pageSize,
-                take: pageSize,
+                skip: (filter.Page - 1) * filter.PageSize,
+                take: filter.PageSize,
                 includeProperties: "User");
 
-            var items = reviews.Select(r => MapToReviewDto(r, r.User?.FullName ?? string.Empty)).ToList();
+            var items = reviews.Select(r => ReviewMapper.ToReviewDto(r, r.User?.FullName ?? string.Empty)).ToList();
 
             return new PagedResultDto<ReviewDto>
             {
                 Items = items,
-                Page = page,
-                PageSize = pageSize,
+                Page = filter.Page,
+                PageSize = filter.PageSize,
                 TotalCount = totalCount
             };
         }
 
-        public async Task<PagedResultDto<ReviewDto>> GetUserReviewsAsync(int userId, int page, int pageSize)
+        public async Task<PagedResultDto<ReviewDto>> GetUserReviewsAsync(int userId, ReviewListFilterDto filter)
         {
             if (userId <= 0)
-                throw new ArgumentException("UserId must be greater than zero.", nameof(userId));
+                throw new ArgumentException("User ID must be a positive integer.", nameof(userId));
 
             var user = await _unitOfWork.Users.GetByIdAsync(userId);
             if (user == null)
                 throw new KeyNotFoundException($"User with ID {userId} not found.");
 
-            // Validate pagination (consistent with GetReviewsByMovieIdAsync)
-            if (page <= 0)
-                page = 1;
-            if (pageSize <= 0 || pageSize > PaginationConstants.MaxPageSize)
-                pageSize = PaginationConstants.DefaultPageSize;
+            if (filter.Page <= 0)
+                filter.Page = 1;
+            if (filter.PageSize <= 0 || filter.PageSize > PaginationConstants.MaxPageSize)
+                filter.PageSize = PaginationConstants.DefaultPageSize;
 
             var query = _unitOfWork.Reviews.GetQueryable()
                 .Where(r => r.UserId == userId);
@@ -156,17 +155,17 @@ namespace CinemaVerse.Services.Implementations.User
             var reviews = await _unitOfWork.Reviews.GetPagedAsync(
                 query,
                 q => q.OrderByDescending(r => r.CreatedAt),
-                skip: (page - 1) * pageSize,
-                take: pageSize,
+                skip: (filter.Page - 1) * filter.PageSize,
+                take: filter.PageSize,
                 includeProperties: "User,Movie");
 
-            var items = reviews.Select(r => MapToReviewDto(r, r.User?.FullName ?? string.Empty, r.Movie?.MovieName)).ToList();
+            var items = reviews.Select(r => ReviewMapper.ToReviewDto(r, r.User?.FullName ?? string.Empty, r.Movie?.MovieName)).ToList();
 
             return new PagedResultDto<ReviewDto>
             {
                 Items = items,
-                Page = page,
-                PageSize = pageSize,
+                Page = filter.Page,
+                PageSize = filter.PageSize,
                 TotalCount = totalCount
             };
         }
@@ -180,7 +179,7 @@ namespace CinemaVerse.Services.Implementations.User
                 return null;
 
             var user = await _unitOfWork.Users.GetByIdAsync(userId);
-            return MapToReviewDto(review, user?.FullName ?? string.Empty);
+            return ReviewMapper.ToReviewDto(review, user?.FullName ?? string.Empty);
         }
 
         private async Task UpdateMovieRatingFromReviewsAsync(int movieId)
@@ -202,20 +201,5 @@ namespace CinemaVerse.Services.Implementations.User
             _logger.LogInformation("Updated movie {MovieId} rating to {Rating}", movieId, movie.MovieRating);
         }
 
-        private static ReviewDto MapToReviewDto(Review r, string userName, string? movieName = null)
-        {
-            return new ReviewDto
-            {
-                Id = r.Id,
-                UserId = r.UserId,
-                UserName = userName,
-                MovieId = r.MovieId,
-                MovieName = movieName,
-                Rating = r.Rating,
-                Comment = r.Comment,
-                CreatedAt = r.CreatedAt,
-                UpdatedAt = r.UpdatedAt
-            };
-        }
-    }
+            }
 }

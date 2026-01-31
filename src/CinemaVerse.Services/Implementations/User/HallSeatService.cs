@@ -1,7 +1,8 @@
-﻿using CinemaVerse.Data.Models;
+using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
 using CinemaVerse.Services.DTOs.HallSeat.Responses;
 using CinemaVerse.Services.Interfaces.User;
+using CinemaVerse.Services.Mappers;
 using Microsoft.Extensions.Logging;
 
 namespace CinemaVerse.Services.Implementations.User
@@ -22,19 +23,11 @@ namespace CinemaVerse.Services.Implementations.User
             {
                 _logger.LogInformation("Fetching hall with seats for MovieShowTimeId: {MovieShowTimeId}", MovieShowTimeId);
                 if (MovieShowTimeId <= 0)
-                {
-                    _logger.LogWarning("Invalid MovieShowTimeId {MovieShowTimeId}", MovieShowTimeId);
-                    throw new ArgumentException("MovieShowTimeId must be a positive integer.", nameof(MovieShowTimeId));
-                }
-
+                    throw new ArgumentException("Movie showtime ID must be a positive integer.", nameof(MovieShowTimeId));
                 var MovieShowTime = await _unitOfWork.MovieShowTimes.GetMovieShowTimeWithDetailsAsync(MovieShowTimeId);
                 _logger.LogInformation("Fetched hall details for MovieShowTimeId: {MovieShowTimeId}", MovieShowTimeId);
-
                 if (MovieShowTime == null)
-                {
-                    _logger.LogWarning("MovieShowTime with ID {MovieShowTimeId} not found", MovieShowTimeId);
                     throw new KeyNotFoundException($"MovieShowTime with ID {MovieShowTimeId} not found.");
-                }
 
                 if (MovieShowTime.Hall == null)
                 {
@@ -52,29 +45,7 @@ namespace CinemaVerse.Services.Implementations.User
                     "Successfully fetched hall details for MovieShowTimeId: {MovieShowTimeId}. Available: {AvailableCount}, Reserved: {ReservedCount}, Capacity: {Capacity}",
                     MovieShowTimeId, availableSeatsList.Count, reservedSeatsList.Count, MovieShowTime.Hall.Capacity);
 
-                return new HallWithSeatsDto
-                {
-                    HallId = MovieShowTime.Hall.Id,
-                    HallNumber = MovieShowTime.Hall.HallNumber,
-                    Branch = MovieShowTime.Hall.Branch.BranchLocation,
-                    Capacity = MovieShowTime.Hall.Capacity,
-                    HallType = MovieShowTime.Hall.HallType,
-                    AvailableSeats = availableSeatsList.Select(s => new SeatDto
-                    {
-                        SeatId = s.Id,
-                        SeatLabel = s.SeatLabel,
-                        SeatRow = s.SeatLabel.Substring(0, 1),
-                        SeatColumn = s.SeatLabel.Substring(1)
-                    }).ToList()
-                    ,
-                    ReservedSeats = reservedSeats.Select(s => new SeatDto
-                    {
-                        SeatId = s.Id,
-                        SeatLabel = s.SeatLabel,
-                        SeatRow = s.SeatLabel.Substring(0, 1),
-                        SeatColumn = s.SeatLabel.Substring(1)
-                    }).ToList()
-                };
+                return HallSeatMapper.ToHallWithSeatsDto(MovieShowTime, availableSeatsList, reservedSeatsList);
 
             }
             catch (Exception ex)

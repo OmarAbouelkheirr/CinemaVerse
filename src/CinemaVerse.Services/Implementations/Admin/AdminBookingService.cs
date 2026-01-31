@@ -5,9 +5,8 @@ using CinemaVerse.Services.Constants;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminBooking.Requests;
 using CinemaVerse.Services.DTOs.UserFlow.Booking.Helpers;
 using CinemaVerse.Services.DTOs.Common;
-using CinemaVerse.Services.DTOs.HallSeat.Responses;
-using CinemaVerse.Services.DTOs.Ticket.Response;
 using CinemaVerse.Services.Interfaces.Admin;
+using CinemaVerse.Services.Mappers;
 using Microsoft.Extensions.Logging;
 
 namespace CinemaVerse.Services.Implementations.Admin
@@ -31,50 +30,32 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogInformation("Creating booking for user {UserId}", request.UserId);
                 if (request.SeatIds == null || !request.SeatIds.Any())
                 {
-                    _logger.LogWarning("No seats provided for booking by user {UserId}", request.UserId);
                     throw new ArgumentException("At least one seat must be selected for booking.");
                 }
                 if (request.UserId <= 0)
-                {
-                    _logger.LogWarning("Invalid UserId {UserId} provided for booking", request.UserId);
-                    throw new ArgumentException("A valid UserId must be provided for booking.");
-                }
+                    throw new ArgumentException("User ID must be a positive integer.", nameof(request.UserId));
                 var user = await _unitOfWork.Users.GetByIdAsync(request.UserId);
-                if (user == null)//apply roles
-                {
-                    _logger.LogWarning("User {UserId} not found or is not a customer", request.UserId);
-                    throw new ArgumentException("A valid customer UserId must be provided for booking.");
-                }
+                if (user == null)
+                    throw new KeyNotFoundException($"User with ID {request.UserId} not found.");
                 if (request.MovieShowTimeId <= 0)
-                {
-                    _logger.LogWarning("Invalid MovieShowTimeId {MovieShowTimeId} provided for booking", request.MovieShowTimeId);
-                    throw new ArgumentException("A valid MovieShowTimeId must be provided for booking.");
-                }
+                    throw new ArgumentException("Movie showtime ID must be a positive integer.", nameof(request.MovieShowTimeId));
                 var movieShowTime = await _unitOfWork.MovieShowTimes.GetByIdAsync(request.MovieShowTimeId);
                 if (movieShowTime == null)
-                {
-                    _logger.LogWarning("MovieShowTime {MovieShowTimeId} not found", request.MovieShowTimeId);
-                    throw new ArgumentException("A valid MovieShowTimeId must be provided for booking.");
-                }
+                    throw new KeyNotFoundException($"MovieShowTime with ID {request.MovieShowTimeId} not found.");
                 if (movieShowTime.ShowStartTime <= DateTime.UtcNow)
-                {
-                    _logger.LogWarning("Cannot book seats for past or ongoing show {MovieShowTimeId}", request.MovieShowTimeId);
                     throw new InvalidOperationException("Cannot book seats for a show that has already started or passed.");
-                }
                 var requestedSeats = await _unitOfWork.Seats.FindAllAsync(s => request.SeatIds.Contains(s.Id));
                 if (requestedSeats.Count() != request.SeatIds.Count)
                 {
                     var foundSeatIds = requestedSeats.Select(s => s.Id).ToList();
                     var missingSeatIds = request.SeatIds.Except(foundSeatIds).ToList();
 
-                    _logger.LogWarning("Seats not found: {MissingSeatIds}", string.Join(", ", missingSeatIds));
                     throw new ArgumentException($"The following seat IDs were not found: {string.Join(", ", missingSeatIds)}");
                 }
                 var invalidHallSeats = requestedSeats.Where(s => s.HallId != movieShowTime.HallId).ToList();
                 if (invalidHallSeats.Any())
                 {
                     var invalidSeatIds = invalidHallSeats.Select(s => s.Id).ToList();
-                    _logger.LogWarning("Seats do not belong to the correct hall: {InvalidSeatIds}", string.Join(", ", invalidSeatIds));
                     throw new ArgumentException($"The following seats do not belong to hall {movieShowTime.HallId}: {string.Join(", ", invalidSeatIds)}");
                 }
                 var existingBookings = await _unitOfWork.BookingSeat
@@ -87,7 +68,6 @@ namespace CinemaVerse.Services.Implementations.Admin
                 if (existingBookings.Any())
                 {
                     var bookedSeatIds = existingBookings.Select(bs => bs.SeatId).Distinct().ToList();
-                    _logger.LogWarning("Seats already booked for this showtime: {BookedSeatIds}", string.Join(", ", bookedSeatIds));
                     throw new InvalidOperationException($"The following seats are already booked: {string.Join(", ", bookedSeatIds)}");
                 }
                 decimal totalAmount = requestedSeats.Count() * movieShowTime.Price;
@@ -134,16 +114,10 @@ namespace CinemaVerse.Services.Implementations.Admin
             {
                 _logger.LogInformation("Deleting booking {BookingId}", bookingId);
                 if (bookingId <= 0)
-                {
-                    _logger.LogWarning("Invalid BookingId {BookingId} provided for deletion", bookingId);
-                    throw new ArgumentException("A valid BookingId must be provided for deletion.");
-                }
+                    throw new ArgumentException("Booking ID must be a positive integer.", nameof(bookingId));
                 var booking = await _unitOfWork.Bookings.GetByIdAsync(bookingId);
                 if (booking == null)
-                {
-                    _logger.LogWarning("Booking {BookingId} not found for deletion", bookingId);
-                    throw new ArgumentException("Booking not found.");
-                }
+                    throw new KeyNotFoundException("Booking not found.");
                 await _unitOfWork.Bookings.DeleteAsync(booking);
                 await _unitOfWork.SaveChangesAsync();
                 _logger.LogInformation("Successfully deleted booking {BookingId}", bookingId);
@@ -162,16 +136,11 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogInformation("Updating status for booking {BookingId} to {newStatus}", bookingId, newStatus);
                 if (bookingId <= 0)
                 {
-                    _logger.LogWarning("Invalid BookingId {BookingId} provided", bookingId);
-                    throw new ArgumentException("A valid BookingId must be provided.", nameof(bookingId));
+                    throw new ArgumentException("Booking ID must be a positive integer.", nameof(bookingId));
                 }
-
                 var booking = await _unitOfWork.Bookings.GetByIdAsync(bookingId);
                 if (booking == null)
-                {
-                    _logger.LogWarning("Booking {BookingId} not found", bookingId);
                     throw new KeyNotFoundException($"Booking with ID {bookingId} not found.");
-                }
                 await _unitOfWork.Bookings.UpdateBookingStatusAsync(bookingId, newStatus);
                 var result = await _unitOfWork.SaveChangesAsync();
                 _logger.LogInformation("Successfully updated status for booking {BookingId} to {newStatus}", bookingId, newStatus);
@@ -191,10 +160,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogInformation("Getting all bookings with filter: {@Filter}", filter);
 
                 if (filter == null)
-                {
-                    _logger.LogWarning("AdminBookingFilterDto is null.");
                     throw new ArgumentNullException(nameof(filter), "AdminBookingFilterDto cannot be null.");
-                }
 
                 // Validate pagination
                 if (filter.Page <= 0)
@@ -297,15 +263,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 );
 
                 // Map to DTOs
-                var bookingDtos = bookings.Select(booking => BuildBookingDetailsDto(booking,
-                    booking.Tickets.Select(t => new TicketDetailsDto
-                    {
-                        TicketId = t.Id,
-                        SeatLabel = t.Seat?.SeatLabel ?? string.Empty,
-                        Price = t.Price,
-                        QrToken = t.QrToken
-                    })
-                )).ToList();
+                var bookingDtos = bookings.Select(booking => BookingMapper.ToDetailsDto(booking)).ToList();
 
                 var pagedResult = new PagedResultDto<BookingDetailsDto>
                 {
@@ -327,30 +285,19 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
-        public async Task<BookingDetailsDto?> GetBookingByIdAsync(int bookingId)
+        public async Task<BookingDetailsDto> GetBookingByIdAsync(int bookingId)
         {
             try
             {
                 _logger.LogInformation("Getting booking with Id {BookingId}", bookingId);
                 if (bookingId <= 0)
                 {
-                    _logger.LogWarning("Invalid BookingId {BookingId} provided for retrieval", bookingId);
-                    throw new ArgumentException("A valid BookingId must be provided.");
+                    throw new ArgumentException("Booking ID must be a positive integer.", nameof(bookingId));
                 }
                 var bookingWithDetails = await _unitOfWork.Bookings.GetBookingWithDetailsAsync(bookingId);
                 if (bookingWithDetails == null)
-                {
-                    _logger.LogWarning("Booking {BookingId} not found", bookingId);
-                    return null;
-                }
-                var tickets = bookingWithDetails.Tickets?.Select(t => new TicketDetailsDto
-                {
-                    TicketId = t.Id,
-                    SeatLabel = t.Seat?.SeatLabel ?? string.Empty,
-                    Price = t.Price,
-                    QrToken = t.QrToken
-                }) ?? Enumerable.Empty<TicketDetailsDto>();
-                return BuildBookingDetailsDto(bookingWithDetails, tickets);
+                    throw new KeyNotFoundException($"Booking with ID {bookingId} not found.");
+                return BookingMapper.ToDetailsDto(bookingWithDetails);
 
             }
             catch (Exception ex)
@@ -358,39 +305,6 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogError(ex, "Error occurred while getting booking with Id {BookingId}", bookingId);
                 throw;
             }
-        }
-        private BookingDetailsDto BuildBookingDetailsDto(Booking booking, IEnumerable<TicketDetailsDto> tickets)
-        {
-            var posterUrl = booking.MovieShowTime?.Movie?.MoviePoster ?? string.Empty;
-
-            // Build BookedSeats from BookingSeats
-            var bookedSeats = booking.BookingSeats?
-                .Select(bs => new SeatDto
-                {
-                    SeatId = bs.SeatId,
-                    SeatLabel = bs.Seat?.SeatLabel ?? string.Empty,
-                    SeatRow = bs.Seat?.SeatLabel?.Length > 0 ? bs.Seat.SeatLabel.Substring(0, 1) : string.Empty,
-                    SeatColumn = bs.Seat?.SeatLabel?.Length > 1 ? bs.Seat.SeatLabel.Substring(1) : string.Empty
-                })
-                .ToList() ?? new List<SeatDto>();
-
-            return new BookingDetailsDto
-            {
-                BookingId = booking.Id,
-                Status = booking.Status,
-                TotalAmount = booking.TotalAmount,
-                CreatedAt = booking.CreatedAt,
-                ExpiresAt = booking.ExpiresAt,
-                Showtime = new ShowtimeDto
-                {
-                    MovieShowTimeId = booking.MovieShowTime?.Id ?? 0,
-                    MovieTitle = booking.MovieShowTime?.Movie?.MovieName ?? string.Empty,
-                    StartTime = booking.MovieShowTime?.ShowStartTime ?? DateTime.MinValue,
-                    PosterUrl = posterUrl
-                },
-                BookedSeats = bookedSeats,
-                Tickets = tickets.ToList()
-            };
         }
     }
 }

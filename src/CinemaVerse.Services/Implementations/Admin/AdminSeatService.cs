@@ -5,6 +5,7 @@ using CinemaVerse.Services.DTOs.AdminFlow.AdminSeat.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminSeat.Response;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.Interfaces.Admin;
+using CinemaVerse.Services.Mappers;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 
@@ -30,16 +31,11 @@ namespace CinemaVerse.Services.Implementations.Admin
 
                 if (seatId <= 0)
                 {
-                    _logger.LogWarning("Invalid seat ID: {SeatId}", seatId);
                     throw new ArgumentException("Seat ID must be a positive integer.", nameof(seatId));
                 }
-
                 var seat = await _unitOfWork.Seats.GetByIdAsync(seatId);
                 if (seat == null)
-                {
-                    _logger.LogWarning("Seat with ID {SeatId} not found", seatId);
-                    return null;
-                }
+                    throw new KeyNotFoundException($"Seat with ID {seatId} not found.");
 
                 // Load Hall and Branch details
                 var hall = await _unitOfWork.Halls.GetByIdAsync(seat.HallId);
@@ -124,14 +120,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 );
 
                 // Map to DTOs
-                var seatDtos = seats.Select(seat => new SeatDetailsDto
-                {
-                    SeatId = seat.Id,
-                    SeatLabel = seat.SeatLabel,
-                    HallId = seat.HallId,
-                    HallNumber = seat.Hall?.HallNumber ?? string.Empty,
-                    BranchName = seat.Hall?.Branch?.BranchName ?? string.Empty
-                }).ToList();
+                var seatDtos = seats.Select(seat => SeatMapper.ToSeatDetailsDto(seat, seat.Hall)).ToList();
 
                 _logger.LogInformation("Retrieved {Count} seats out of {Total} total",
                     seatDtos.Count, totalCount);

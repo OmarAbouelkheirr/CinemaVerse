@@ -5,6 +5,7 @@ using CinemaVerse.Services.DTOs.AdminFlow.AdminGenre.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminGenre.Response;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.Interfaces.Admin;
+using CinemaVerse.Services.Mappers;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 
@@ -28,21 +29,10 @@ namespace CinemaVerse.Services.Implementations.Admin
             {
                 _logger.LogInformation("Creating genre with name: {GenreName}", request.GenreName);
 
-                if (request == null)
-                {
-                    _logger.LogWarning("CreateGenreRequestDto is null");
-                    throw new ArgumentNullException(nameof(request), "CreateGenreRequestDto cannot be null");
-                }
-
-                // Check if genre name already exists
                 var existingGenre = await _unitOfWork.Genres
                     .FirstOrDefaultAsync(g => g.GenreName.ToLower() == request.GenreName.ToLower());
-
                 if (existingGenre != null)
-                {
-                    _logger.LogWarning("Genre with name {GenreName} already exists", request.GenreName);
                     throw new InvalidOperationException($"Genre with name '{request.GenreName}' already exists.");
-                }
 
                 var genre = new Genre
                 {
@@ -73,24 +63,11 @@ namespace CinemaVerse.Services.Implementations.Admin
             {
                 _logger.LogInformation("Updating genre with ID: {GenreId}", genreId);
 
-                if (request == null)
-                {
-                    _logger.LogWarning("UpdateGenreRequestDto is null");
-                    throw new ArgumentNullException(nameof(request), "UpdateGenreRequestDto cannot be null");
-                }
-
                 if (genreId <= 0)
-                {
-                    _logger.LogWarning("Invalid genre ID: {GenreId}", genreId);
                     throw new ArgumentException("Genre ID must be a positive integer.", nameof(genreId));
-                }
-
                 var genre = await _unitOfWork.Genres.GetByIdAsync(genreId);
                 if (genre == null)
-                {
-                    _logger.LogWarning("Genre with ID {GenreId} not found", genreId);
                     throw new KeyNotFoundException($"Genre with ID {genreId} not found.");
-                }
 
                 // Check for genre name conflict if being changed
                 if (!string.IsNullOrWhiteSpace(request.GenreName))
@@ -100,11 +77,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                                                   g.Id != genreId);
 
                     if (existingGenre != null)
-                    {
-                        _logger.LogWarning("Genre with name {GenreName} already exists", request.GenreName);
-                        throw new InvalidOperationException(
-                            $"Genre with name '{request.GenreName}' already exists.");
-                    }
+                        throw new InvalidOperationException($"Genre with name '{request.GenreName}' already exists.");
                 }
 
                 // Update properties (PATCH style)
@@ -132,30 +105,15 @@ namespace CinemaVerse.Services.Implementations.Admin
             try
             {
                 if (genreId <= 0)
-                {
-                    _logger.LogWarning("Invalid genre ID: {GenreId}", genreId);
                     throw new ArgumentException("Genre ID must be a positive integer.", nameof(genreId));
-                }
-
                 _logger.LogInformation("Deleting genre with ID: {GenreId}", genreId);
-
                 var genre = await _unitOfWork.Genres.GetByIdAsync(genreId);
                 if (genre == null)
-                {
-                    _logger.LogWarning("Genre with ID {GenreId} not found", genreId);
                     throw new KeyNotFoundException($"Genre with ID {genreId} not found.");
-                }
-
-                // Check if genre is used in any movies
-                var hasMovies = await _unitOfWork.MovieGenres
-                    .AnyAsync(mg => mg.GenreID == genreId);
-
+                var hasMovies = await _unitOfWork.MovieGenres.AnyAsync(mg => mg.GenreID == genreId);
                 if (hasMovies)
-                {
-                    _logger.LogWarning("Cannot delete genre {GenreId} because it has associated movies", genreId);
                     throw new InvalidOperationException(
                         $"Cannot delete genre {genreId} because it has associated movies. Please remove genre from movies first.");
-                }
 
                 await _unitOfWork.Genres.DeleteAsync(genre);
                 await _unitOfWork.SaveChangesAsync();
@@ -171,35 +129,23 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
-        public async Task<GenreDetailsDto?> GetGenreAsync(int genreId)
+        public async Task<GenreDetailsDto> GetGenreAsync(int genreId)
         {
             try
             {
                 _logger.LogInformation("Getting genre with ID: {GenreId}", genreId);
 
                 if (genreId <= 0)
-                {
-                    _logger.LogWarning("Invalid genre ID: {GenreId}", genreId);
                     throw new ArgumentException("Genre ID must be a positive integer.", nameof(genreId));
-                }
-
                 var genre = await _unitOfWork.Genres.GetByIdAsync(genreId);
                 if (genre == null)
-                {
-                    _logger.LogWarning("Genre with ID {GenreId} not found", genreId);
-                    return null;
-                }
+                    throw new KeyNotFoundException($"Genre with ID {genreId} not found.");
 
                 // Count movies associated with this genre
                 var moviesCount = await _unitOfWork.MovieGenres
                     .CountAsync(mg => mg.GenreID == genreId);
 
-                var dto = new GenreDetailsDto
-                {
-                    GenreId = genre.Id,
-                    GenreName = genre.GenreName,
-                    MoviesCount = moviesCount
-                };
+                var dto = GenreMapper.ToGenreDetailsDto(genre, moviesCount);
 
                 _logger.LogInformation("Successfully retrieved genre {GenreId}: {GenreName}", genreId, genre.GenreName);
                 return dto;
@@ -216,11 +162,6 @@ namespace CinemaVerse.Services.Implementations.Admin
             try
             {
                 _logger.LogInformation("Getting all genres with filter: {@Filter}", filter);
-
-                if (filter == null)
-                {
-                    throw new ArgumentNullException(nameof(filter));
-                }
 
                 // Validate pagination
                 if (filter.Page <= 0)
@@ -275,12 +216,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                     .ToDictionary(g => g.Key, g => g.Count());
 
                 // Map to DTOs
-                var genreDtos = genres.Select(genre => new GenreDetailsDto
-                {
-                    GenreId = genre.Id,
-                    GenreName = genre.GenreName,
-                    MoviesCount = movieCountsDict.GetValueOrDefault(genre.Id, 0)
-                }).ToList();
+                var genreDtos = genres.Select(genre => GenreMapper.ToGenreDetailsDto(genre, movieCountsDict.GetValueOrDefault(genre.Id, 0))).ToList();
 
                 _logger.LogInformation("Retrieved {Count} genres out of {Total} total",
                     genreDtos.Count, totalCount);

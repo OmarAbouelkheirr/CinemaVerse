@@ -5,6 +5,7 @@ using CinemaVerse.Services.DTOs.AdminFlow.AdminBranch.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminBranch.Response;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.Interfaces.Admin;
+using CinemaVerse.Services.Mappers;
 using Microsoft.Extensions.Logging;
 
 namespace CinemaVerse.Services.Implementations.Admin
@@ -23,23 +24,10 @@ namespace CinemaVerse.Services.Implementations.Admin
             try
             {
                 _logger.LogInformation("Creating Branch {@request}", request);
-                if (request == null)
-                {
-                    _logger.LogWarning("CreateBranchRequestDto cannot be null");
-                    throw new ArgumentNullException(nameof(request), "CreateBranchRequestDto cannot be null.");
-                }
-                if (string.IsNullOrWhiteSpace(request.BranchName) || string.IsNullOrWhiteSpace(request.BranchLocation))
-                {
-                    _logger.LogWarning("Invalid branch data {@request}", request);
-                    throw new ArgumentException("Branch name and location cannot be empty.");
-                }
                 var existingBranch = await _unitOfWork.Branches
                     .FirstOrDefaultAsync(b => b.BranchName.ToLower() == request.BranchName.ToLower());
                 if (existingBranch != null)
-                {
-                    _logger.LogWarning("Branch with name {BranchName} already exists", request.BranchName);
                     throw new InvalidOperationException($"Branch with name {request.BranchName} already exists.");
-                }
                 var branch = new Branch
                 {
                     BranchName = request.BranchName,
@@ -64,10 +52,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogInformation("Deleting Branch with branch Id {branchId}", branchId);
                 var branch = await _unitOfWork.Branches.GetByIdAsync(branchId);
                 if (branch == null)
-                {
-                    _logger.LogWarning("Branch with Id {branchId} not found", branchId);
                     throw new KeyNotFoundException($"Branch with Id {branchId} not found.");
-                }
                 await _unitOfWork.Branches.DeleteAsync(branch);
                 await _unitOfWork.SaveChangesAsync();
                 _logger.LogInformation("Branch with Id {branchId} deleted successfully", branchId);
@@ -85,16 +70,10 @@ namespace CinemaVerse.Services.Implementations.Admin
             {
                 _logger.LogInformation("Updating Branch with branch Id {branchId}", branchId);
                 if (branchId <= 0)
-                {
-                    _logger.LogWarning("Invalid branch Id {branchId}", branchId);
-                    throw new ArgumentException("Invalid branch Id.");
-                }
+                    throw new ArgumentException("Branch ID must be a positive integer.", nameof(branchId));
                 var branch = await _unitOfWork.Branches.GetByIdAsync(branchId);
                 if (branch == null)
-                {
-                    _logger.LogWarning("Branch with Id {branchId} not found", branchId);
                     throw new KeyNotFoundException($"Branch with Id {branchId} not found.");
-                }
                 if (!string.IsNullOrWhiteSpace(request.BranchName))
                 {
                     branch.BranchName = request.BranchName;
@@ -121,11 +100,6 @@ namespace CinemaVerse.Services.Implementations.Admin
             try
             {
                 _logger.LogInformation("Getting all Branches");
-                if (filter == null)
-                {
-                    _logger.LogWarning("Filter cannot be null");
-                    throw new ArgumentNullException(nameof(filter), "Filter cannot be null.");
-                }
                 if (filter.Page <= 0)
                     filter.Page = 1;
 
@@ -172,11 +146,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                     skip: (filter.Page - 1) * filter.PageSize,
                     take: filter.PageSize
                     );
-                var branchDtos = branches.Select(b => new BranchDetailsResponseDto
-                {
-                    BranchName = b.BranchName,
-                    BranchLocation = b.BranchLocation
-                }).ToList();
+                var branchDtos = branches.Select(BranchMapper.ToDetailsResponseDto).ToList();
                 var pagedResult = new PagedResultDto<BranchDetailsResponseDto>
                 {
                     Items = branchDtos,
@@ -194,27 +164,17 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
-        public async Task<BranchDetailsResponseDto?> GetBranchByIdAsync(int branchId)
+        public async Task<BranchDetailsResponseDto> GetBranchByIdAsync(int branchId)
         {
             try
             {
                 _logger.LogInformation("Getting Branch with branch Id {branchId}", branchId);
                 if (branchId <= 0)
-                {
-                    _logger.LogWarning("Invalid branch Id {branchId}", branchId);
-                    throw new ArgumentException("Invalid branch Id.");
-                }
+                    throw new ArgumentException("Branch ID must be a positive integer.", nameof(branchId));
                 var branch = await _unitOfWork.Branches.GetByIdAsync(branchId);
                 if (branch == null)
-                {
-                    _logger.LogWarning("Branch with Id {branchId} not found", branchId);
-                    return null;
-                }
-                var response = new BranchDetailsResponseDto
-                {
-                    BranchName = branch.BranchName,
-                    BranchLocation = branch.BranchLocation
-                };
+                    throw new KeyNotFoundException($"Branch with Id {branchId} not found.");
+                var response = BranchMapper.ToDetailsResponseDto(branch);
                 _logger.LogInformation("Branch with Id {branchId} retrieved successfully", branchId);
                 return response;
             }

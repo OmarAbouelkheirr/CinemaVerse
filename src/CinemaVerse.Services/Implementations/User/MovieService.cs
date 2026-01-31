@@ -5,6 +5,7 @@ using CinemaVerse.Services.DTOs.UserFlow.Movie.Flow;
 using CinemaVerse.Services.DTOs.Movie.Requests;
 using CinemaVerse.Services.DTOs.UserFlow.Movie.Response;
 using CinemaVerse.Services.Interfaces.User;
+using CinemaVerse.Services.Mappers;
 using Microsoft.Extensions.Logging;
 using CinemaVerse.Data.Enums;
 
@@ -27,12 +28,6 @@ namespace CinemaVerse.Services.Implementations.User
             {
                 _logger.LogInformation("Browsing movies with parameters: {@BrowseDto}", browseDto);
 
-                if (browseDto == null)
-                {
-                    _logger.LogWarning("BrowseMoviesRequestDto is null");
-                    throw new ArgumentNullException(nameof(browseDto));
-                }
-
                 // Validate pagination (consistent with Admin services)
                 if (browseDto.Page <= 0)
                     browseDto.Page = 1;
@@ -45,10 +40,7 @@ namespace CinemaVerse.Services.Implementations.User
                 {
                     var genreExists = await _unitOfWork.Genres.AnyAsync(g => g.Id == browseDto.GenreId.Value);
                     if (!genreExists)
-                    {
-                        _logger.LogWarning("Genre with ID {GenreId} does not exist.", browseDto.GenreId.Value);
                         throw new ArgumentException($"Genre with ID {browseDto.GenreId.Value} does not exist.");
-                    }
                 }
 
                 // Build query at database level (do NOT materialize yet)
@@ -129,7 +121,7 @@ namespace CinemaVerse.Services.Implementations.User
                     includeProperties: "MovieImages,MovieGenres.Genre" // Eager load navigation properties
                 );
 
-                var movieCards = pagedMovies.Select(MapToMovieCardDto).ToList();
+                var movieCards = pagedMovies.Select(MovieMapper.ToMovieCardDto).ToList();
 
                 _logger.LogInformation("Returning {Count} movies for page {Page} with page size {PageSize}", movieCards.Count, browseDto.Page, browseDto.PageSize);
 
@@ -148,81 +140,20 @@ namespace CinemaVerse.Services.Implementations.User
             }
         }
 
-        public async Task<MovieDetailsDto?> GetMovieDetailsAsync(int movieId)
+        public async Task<MovieDetailsDto> GetMovieDetailsAsync(int movieId)
         {
             try
             {
                 _logger.LogInformation("Getting movie details for id: {movieId}", movieId);
 
                 if (movieId <= 0)
-                {
-                    _logger.LogWarning("Invalid movie ID: {movieId}", movieId);
-                    throw new ArgumentException("Movie ID must be greater than zero.", nameof(movieId));
-                }
-
-                // Fetch movie with related data (now includes all nested navigation)
+                    throw new ArgumentException("Movie ID must be a positive integer.", nameof(movieId));
                 var movie = await _unitOfWork.Movies.GetMovieWithDetailsByIdAsync(movieId);
-
                 if (movie == null)
-                {
-                    _logger.LogWarning("Movie with ID {movieId} not found.", movieId);
-                    return null;
-                }
-
-                var movieDetails = new MovieDetailsDto
-                {
-                    MovieId = movie.Id,
-                    MovieName = movie.MovieName,
-                    MovieDescription = movie.MovieDescription,
-                    MovieDuration = movie.MovieDuration,
-                    ReleaseDate = movie.ReleaseDate,
-                    MovieAgeRating = movie.MovieAgeRating,
-                    MovieRating = movie.MovieRating,
-                    TrailerUrl = movie.TrailerUrl,
-                    MoviePoster = movie.MoviePoster ?? string.Empty,
-                    Status = movie.Status,
-                    CastMembers = movie.CastMembers?
-                        .OrderBy(c => c.DisplayOrder)
-                        .Select(c => new CastMemberDto
-                        {
-                            Id = c.Id,
-                            PersonName = c.PersonName,
-                            ImageUrl = c.ImageUrl,
-                            RoleType = c.RoleType,
-                            CharacterName = c.CharacterName,
-                            DisplayOrder = c.DisplayOrder,
-                            IsLead = c.IsLead
-                        }).ToList() ?? new List<CastMemberDto>(),
-                    Genres = movie.MovieGenres
-                        .Where(mg => mg.Genre != null) // Safety check
-                        .Select(mg => new GenreDto
-                        {
-                            GenreId = mg.Genre.Id,
-                            Name = mg.Genre.GenreName
-                        }).ToList(),
-                    Images = movie.MovieImages.Select(mi => new MovieImageDto
-                    {
-                        Id = mi.Id,
-                        ImageUrl = mi.ImageUrl
-                    }).ToList(),
-                    ShowTimes = movie.MovieShowTimes
-                        .Where(ms => ms.Hall != null && ms.Hall.Branch != null) // Safety check
-                        .Select(ms => new MovieShowTimeDto
-                        {
-                            MovieShowTimeId = ms.Id,
-                            ShowStartTime = ms.ShowStartTime,
-                            HallId = ms.HallId,
-                            HallNumber = ms.Hall.HallNumber,
-                            HallType = ms.Hall.HallType,
-                            BranchId = ms.Hall.BranchId,
-                            BranchName = ms.Hall.Branch.BranchName,
-                            BranchLocation = ms.Hall.Branch.BranchLocation,
-                            TicketPrice = ms.Price
-                        }).ToList()
-                };
+                    throw new KeyNotFoundException($"Movie with ID {movieId} not found.");
 
                 _logger.LogInformation("Successfully retrieved details for movie ID {movieId}", movieId);
-                return movieDetails;
+                return MovieMapper.ToMovieDetailsDto(movie);
             }
             catch (Exception ex)
             {
@@ -235,17 +166,5 @@ namespace CinemaVerse.Services.Implementations.User
 
 
 
-        private MovieCardDto MapToMovieCardDto(Movie movie)
-        {
-            return new MovieCardDto
-            {
-                MovieId = movie.Id,
-                MovieName = movie.MovieName,
-                MoviePosterImageUrl = movie.MoviePoster ?? string.Empty,
-                MovieDuration = movie.MovieDuration.ToString(@"hh\:mm"),
-                Genres = movie.MovieGenres.Select(mg => mg.Genre.GenreName).ToList(),
-                MovieRating = movie.MovieRating
-            };
-        }
-    }
+            }
 }

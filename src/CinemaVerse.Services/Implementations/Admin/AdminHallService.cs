@@ -7,6 +7,7 @@ using CinemaVerse.Services.DTOs.AdminFlow.AdminHall.Response;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminSeat.Response;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.Interfaces.Admin;
+using CinemaVerse.Services.Mappers;
 using Microsoft.Extensions.Logging;
 
 namespace CinemaVerse.Services.Implementations.Admin
@@ -25,31 +26,15 @@ namespace CinemaVerse.Services.Implementations.Admin
             await _unitOfWork.BeginTransactionAsync();
             try
             {
-                _logger.LogInformation("Creating a new hall with number: {HallNumber} and type: {HallType}", 
-                    request?.HallNumber, request?.HallType);
-
-                if (request == null)
-                {
-                    _logger.LogWarning("CreateHallRequestDto is null.");
-                    throw new ArgumentNullException(nameof(request), "CreateHallRequestDto cannot be null.");
-                }
+                _logger.LogInformation("Creating a new hall with number: {HallNumber} and type: {HallType}",
+                    request.HallNumber, request.HallType);
 
                 var branch = await _unitOfWork.Branches.GetByIdAsync(request.BranchId);
                 if (branch == null)
-                {
-                    _logger.LogWarning("Branch with ID {BranchId} not found.", request.BranchId);
                     throw new KeyNotFoundException($"Branch with ID {request.BranchId} not found.");
-                }
-
                 var hallNumberExists = await _unitOfWork.Halls.IsHallNumberExistsAsync(request.BranchId, request.HallNumber);
-
                 if (hallNumberExists)
-                {
-                    _logger.LogWarning("A hall with number {HallNumber} already exists in branch {BranchId}.",
-                        request.HallNumber, request.BranchId);
-                    throw new InvalidOperationException(
-                        $"A hall with number {request.HallNumber} already exists in this branch.");
-                }
+                    throw new InvalidOperationException($"A hall with number {request.HallNumber} already exists in this branch.");
 
                 var newHall = new Hall
                 {
@@ -230,16 +215,10 @@ namespace CinemaVerse.Services.Implementations.Admin
             {
                 _logger.LogInformation("Deleting hall with id: {hallId}", hallId);
                 if (hallId <= 0)
-                {
-                    _logger.LogWarning("Invalid hallId: {hallId}", hallId);
-                    throw new ArgumentException("hallId must be greater than zero.", nameof(hallId));
-                }
+                    throw new ArgumentException("Hall ID must be a positive integer.", nameof(hallId));
                 var hall = await _unitOfWork.Halls.GetByIdAsync(hallId);
                 if (hall == null)
-                {
-                    _logger.LogWarning("Hall with id {hallId} not found.", hallId);
                     throw new KeyNotFoundException($"Hall with id {hallId} not found.");
-                }
                 await _unitOfWork.Halls.DeleteAsync(hall);
                 await _unitOfWork.SaveChangesAsync();
                 _logger.LogInformation("Successfully deleted hall with id: {hallId}", hallId);
@@ -256,30 +235,16 @@ namespace CinemaVerse.Services.Implementations.Admin
             try
             {
                 _logger.LogInformation("Editing hall with id: {hallId}", hallId);
-                if (request == null)
-                {
-                    _logger.LogWarning("UpdateHallRequestDto is null.");
-                    throw new ArgumentNullException(nameof(request), "UpdateHallRequestDto cannot be null.");
-                }
                 if (hallId <= 0)
-                {
-                    _logger.LogWarning("Invalid hallId: {hallId}", hallId);
-                    throw new ArgumentException("hallId must be greater than zero.", nameof(hallId));
-                }
+                    throw new ArgumentException("Hall ID must be a positive integer.", nameof(hallId));
                 var hall = await _unitOfWork.Halls.GetByIdAsync(hallId);
                 if (hall == null)
-                {
-                    _logger.LogWarning("Hall with id {hallId} not found.", hallId);
                     throw new KeyNotFoundException($"Hall with id {hallId} not found.");
-                }
                 if (request.BranchId.HasValue && request.BranchId.Value != hall.BranchId)
                 {
                     var branch = await _unitOfWork.Branches.GetByIdAsync(request.BranchId.Value);
                     if (branch == null)
-                    {
-                        _logger.LogWarning("Branch with ID {BranchId} not found.", request.BranchId.Value);
                         throw new KeyNotFoundException($"Branch with ID {request.BranchId.Value} not found.");
-                    }
                     hall.BranchId = request.BranchId.Value;
                 }
 
@@ -313,11 +278,6 @@ namespace CinemaVerse.Services.Implementations.Admin
             try
             {
                 _logger.LogInformation("Getting all halls.");
-                if (filter == null)
-                {
-                    _logger.LogWarning("AdminHallFilterDto is null.");
-                    throw new ArgumentNullException(nameof(filter), "AdminHallFilterDto cannot be null.");
-                }
                 if (filter.Page <= 0)
                     filter.Page = 1;
 
@@ -375,14 +335,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                     includeProperties: "Branch"
                 );
 
-                var hallDtos = halls.Select(hall => new HallDetailsResponseDto
-                {
-                    BranchId = hall.BranchId,
-                    Capacity = hall.Capacity,
-                    HallNumber = hall.HallNumber,
-                    HallStatus = hall.HallStatus.ToString(),
-                    HallType = hall.HallType.ToString()
-                }).ToList();
+                var hallDtos = halls.Select(HallMapper.ToHallDetailsResponseDto).ToList();
                 var pagedResult = new PagedResultDto<HallDetailsResponseDto>
                 {
                     Items = hallDtos,
@@ -400,43 +353,17 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
-        public async Task<HallDetailsResponseDto?> GetHallWithSeatsByIdAsync(int hallId)
+        public async Task<HallDetailsResponseDto> GetHallWithSeatsByIdAsync(int hallId)
         {
             try
             {
                 _logger.LogInformation("Getting hall with id: {hallId}", hallId);
                 if (hallId <= 0)
-                {
-                    _logger.LogWarning("Invalid hallId: {hallId}", hallId);
-                    throw new ArgumentException("hallId must be greater than zero.", nameof(hallId));
-                }
-
+                    throw new ArgumentException("Hall ID must be a positive integer.", nameof(hallId));
                 var hall = await _unitOfWork.Halls.GetByIdWithDetailsAsync(hallId);
                 if (hall == null)
-                {
-                    _logger.LogWarning("Hall with id {hallId} not found.", hallId);
-                    return null;
-                }
-                if (hall.Seats == null || !hall.Seats.Any())
-                {
-                    _logger.LogWarning("No seats found for hall with id {hallId}.", hallId);
-                }
-                var hallDetails = new HallDetailsResponseDto
-                {
-                    BranchId = hall.BranchId,
-                    Capacity = hall.Capacity,
-                    HallNumber = hall.HallNumber,
-                    HallStatus = hall.HallStatus.ToString(),
-                    HallType = hall.HallType.ToString(),
-                    Seats = hall.Seats!.Select(seat => new SeatDetailsDto
-                    {
-                        SeatId = seat.Id,
-                        SeatLabel = seat.SeatLabel,
-                        HallId = hall.Id,
-                        HallNumber = hall.HallNumber,
-                        BranchName = (hall.Branch != null) ? hall.Branch.BranchName : string.Empty
-                    }).ToList()
-                };
+                    throw new KeyNotFoundException($"Hall with id {hallId} not found.");
+                var hallDetails = HallMapper.ToHallDetailsResponseDtoWithSeats(hall);
                 _logger.LogInformation("Successfully retrieved hall with id: {hallId}", hallId);
                 return hallDetails;
             }

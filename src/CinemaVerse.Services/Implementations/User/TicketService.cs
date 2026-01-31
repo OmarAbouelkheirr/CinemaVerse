@@ -1,10 +1,14 @@
-using System.Security.Cryptography;
 using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
+using CinemaVerse.Services.Constants;
+using CinemaVerse.Services.DTOs.AdminFlow.AdminTicket.Requests;
+using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.DTOs.Ticket.Response;
 using CinemaVerse.Services.Interfaces.User;
+using CinemaVerse.Services.Mappers;
 using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
 
 
 namespace CinemaVerse.Services.Implementations.User
@@ -32,23 +36,12 @@ namespace CinemaVerse.Services.Implementations.User
                 //Input Validation
                 _logger.LogInformation("Issuing ticket for Booking ID: {BookingId}", BookingId);
                 if (BookingId <= 0)
-                {
-                    _logger.LogWarning("Invalid Booking ID: {BookingId}", BookingId);
-                    throw new ArgumentException("Invalid Booking ID.");
-                }
-
+                    throw new ArgumentException("Booking ID must be a positive integer.", nameof(BookingId));
                 var Booking = await _unitOfWork.Bookings.GetBookingWithDetailsAsync(BookingId);
-
                 if (Booking is null)
-                {
-                    _logger.LogWarning("Booking ID: {BookingId} does not exist", BookingId);
                     throw new KeyNotFoundException("Booking not found.");
-                }
                 if (Booking.Status != BookingStatus.Confirmed)
-                {
-                    _logger.LogWarning("Booking ID: {BookingId} is not confirmed. Current Status: {Status}", BookingId, Booking.Status);
                     throw new InvalidOperationException("Booking is not confirmed.");
-                }
 
                 // for idempotency check - avoid re-issuing tickets for already issued seats
                 var issuedSeatIds = await _unitOfWork.Tickets.GetIssuedSeatIdsAsync(BookingId);
@@ -106,103 +99,113 @@ namespace CinemaVerse.Services.Implementations.User
             string uniquePart = Guid.NewGuid().ToString("N")[..6].ToUpper();
             return $"{Prefix}-{DatePart}-{uniquePart}";
         }
-        public TicketDetailsDto MapToDto(Ticket Ticket)
-        {
-            var Booking = Ticket.Booking;
-            var moviePosterUrl = Booking.MovieShowTime.Movie.MoviePoster ?? string.Empty;
-            return new TicketDetailsDto
-            {
-                TicketId = Ticket.Id,
-                TicketNumber = Ticket.TicketNumber,
-                MovieName = Booking.MovieShowTime.Movie.MovieName,
-                ShowStartTime = Booking.MovieShowTime.ShowStartTime,
-                MovieDuration = Booking.MovieShowTime.Movie.MovieDuration,
-                HallNumber = Booking.MovieShowTime.Hall.HallNumber,
-                HallType = Booking.MovieShowTime.Hall.HallType,
-                SeatLabel = Ticket.Seat.SeatLabel,
-                MoviePoster = moviePosterUrl,
-                MovieAgeRating = Booking.MovieShowTime.Movie.MovieAgeRating,
-                QrToken = Ticket.QrToken,
-                Status = Ticket.Status,
-                Price = Ticket.Price,
-                BranchName = Booking.MovieShowTime.Hall.Branch.BranchName
-            };
-        }
+        public TicketDetailsDto MapToDto(Ticket ticket) => TicketMapper.ToTicketDetailsDto(ticket);
 
-        public async Task<List<TicketListItemDto>> GetUserTicketsAsync(int userId)
+        public async Task<PagedResultDto<TicketDetailsDto>> GetUserTicketsAsync(int userId, AdminTicketFilterDto filter)
         {
             try
             {
-                _logger.LogInformation("Getting tickets list for UserId: {UserId}", userId);
+                _logger.LogInformation("Getting tickets for user {UserId} with filter: {@Filter}", userId, filter);
 
                 if (userId <= 0)
+                    throw new ArgumentException("User ID must be a positive integer.", nameof(userId));
+                var user = await _unitOfWork.Users.GetByIdAsync(userId);
+                if (user == null)
+                    throw new KeyNotFoundException($"User with ID {userId} not found.");
+
+                // Validate pagination
+                if (filter.Page <= 0)
+                    filter.Page = 1;
+
+                if (filter.PageSize <= 0 || filter.PageSize > PaginationConstants.MaxPageSize)
+                    filter.PageSize = PaginationConstants.DefaultPageSize;
+
+                // Build query - get tickets through bookings
+                var query = _unitOfWork.Tickets.GetQueryable()
+                    .Where(t => t.Booking.UserId == userId);
+
+                // Apply filters
+                if (filter.Status.HasValue)
                 {
-                    _logger.LogWarning("Invalid UserId: {UserId}", userId);
-                    throw new ArgumentException("UserId must be greater than zero.", nameof(userId));
+                    query = query.Where(t => t.Status == filter.Status.Value);
                 }
 
-                var tickets = await _unitOfWork.Tickets.GetUserTicketsAsync(userId);
-                var ticketList = tickets.Select(ticket =>
+                if (filter.BookingId.HasValue)
                 {
-                    var booking = ticket.Booking;
-                    var movieShowTime = booking?.MovieShowTime;
-                    var movie = movieShowTime?.Movie;
+                    query = query.Where(t => t.BookingId == filter.BookingId.Value);
+                }
 
-                    return new TicketListItemDto
-                    {
-                        TicketId = ticket.Id,
-                        TicketNumber = ticket.TicketNumber,
-                        MovieName = movie?.MovieName ?? string.Empty,
-                        ShowStartTime = movieShowTime?.ShowStartTime ?? DateTime.MinValue,
-                        SeatLabel = ticket.Seat?.SeatLabel ?? string.Empty,
-                        MoviePoster = movie?.MoviePoster ?? string.Empty,
-                        Status = ticket.Status,
-                        Price = ticket.Price
-                    };
-                }).ToList();
+                if (filter.ShowtimeId.HasValue)
+                {
+                    query = query.Where(t => t.Booking.MovieShowTimeId == filter.ShowtimeId.Value);
+                }
 
-                _logger.LogInformation("Successfully retrieved {Count} tickets for UserId: {UserId}", ticketList.Count, userId);
-                return ticketList;
+                if (!string.IsNullOrWhiteSpace(filter.TicketNumber))
+                {
+                    query = query.Where(t => t.TicketNumber.Contains(filter.TicketNumber));
+                }
+
+                if (filter.StartDate.HasValue)
+                {
+                    query = query.Where(t => t.Booking.MovieShowTime.ShowStartTime >= filter.StartDate.Value);
+                }
+
+                if (filter.EndDate.HasValue)
+                {
+                    query = query.Where(t => t.Booking.MovieShowTime.ShowStartTime <= filter.EndDate.Value);
+                }
+
+                // Get total count
+                var totalCount = await _unitOfWork.Tickets.CountAsync(query);
+
+                // Apply sorting (default by showtime)
+                query = query.OrderByDescending(t => t.Booking.MovieShowTime.ShowStartTime);
+
+                // Get paged results
+                var tickets = await _unitOfWork.Tickets.GetPagedAsync(
+                    query: query,
+                    orderBy: null,
+                    skip: (filter.Page - 1) * filter.PageSize,
+                    take: filter.PageSize,
+                    includeProperties: "Booking.MovieShowTime.Movie,Booking.MovieShowTime.Movie.MovieImages,Booking.MovieShowTime.Hall,Booking.MovieShowTime.Hall.Branch,Seat"
+                );
+
+                // Map to DTOs
+                var ticketDtos = tickets.Select(TicketMapper.ToTicketDetailsDto).ToList();
+
+                _logger.LogInformation("Retrieved {Count} tickets for user {UserId} out of {Total} total",
+                    ticketDtos.Count, userId, totalCount);
+
+                return new PagedResultDto<TicketDetailsDto>
+                {
+                    Items = ticketDtos,
+                    Page = filter.Page,
+                    PageSize = filter.PageSize,
+                    TotalCount = totalCount
+                };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting tickets list for UserId: {UserId}", userId);
+                _logger.LogError(ex, "Error getting tickets for user {UserId}", userId);
                 throw;
             }
         }
 
-        public async Task<TicketDetailsDto?> GetUserTicketByIdAsync(int userId, int ticketId)
+        public async Task<TicketDetailsDto> GetUserTicketByIdAsync(int userId, int ticketId)
         {
             try
             {
                 _logger.LogInformation("Getting ticket details for TicketId: {TicketId}, UserId: {UserId}", ticketId, userId);
 
                 if (userId <= 0)
-                {
-                    _logger.LogWarning("Invalid UserId: {UserId}", userId);
-                    throw new ArgumentException("UserId must be greater than zero.", nameof(userId));
-                }
-
+                    throw new ArgumentException("User ID must be a positive integer.", nameof(userId));
                 if (ticketId <= 0)
-                {
-                    _logger.LogWarning("Invalid TicketId: {TicketId}", ticketId);
-                    throw new ArgumentException("TicketId must be greater than zero.", nameof(ticketId));
-                }
-
+                    throw new ArgumentException("Ticket ID must be a positive integer.", nameof(ticketId));
                 var ticket = await _unitOfWork.Tickets.GetTicketWithDetailsAsync(ticketId);
                 if (ticket == null)
-                {
-                    _logger.LogWarning("Ticket with ID {TicketId} not found", ticketId);
-                    return null;
-                }
-
-                // Verify that the ticket belongs to the user
+                    throw new KeyNotFoundException($"Ticket with ID {ticketId} not found.");
                 if (ticket.Booking?.UserId != userId)
-                {
-                    _logger.LogWarning("Unauthorized ticket access. RequestUserId: {RequestUserId}, TicketUserId: {TicketUserId}, TicketId: {TicketId}",
-                        userId, ticket.Booking?.UserId, ticketId);
                     throw new UnauthorizedAccessException("You are not authorized to access this ticket.");
-                }
 
                 var ticketDto = MapToDto(ticket);
                 _logger.LogInformation("Successfully retrieved ticket details for TicketId: {TicketId}, UserId: {UserId}", ticketId, userId);
