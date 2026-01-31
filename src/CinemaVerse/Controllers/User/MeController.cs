@@ -5,7 +5,6 @@ using CinemaVerse.Services.DTOs.UserFlow.Profile.Responses;
 using CinemaVerse.Services.Interfaces.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace CinemaVerse.API.Controllers.User
 {
@@ -23,21 +22,13 @@ namespace CinemaVerse.API.Controllers.User
             _logger = logger;
         }
 
-        private int? GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
-                return null;
-            return userId;
-        }
-
         [HttpGet]
         [ProducesResponseType(typeof(UserProfileDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetProfile()
         {
-            var userId = GetCurrentUserId();
+            var userId = this.GetCurrentUserId();
             if (userId == null)
                 return Unauthorized(new { error = "Invalid or missing user identity." });
 
@@ -55,10 +46,12 @@ namespace CinemaVerse.API.Controllers.User
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequestDto request)
         {
+            if (request == null)
+                return BadRequest(new { error = "Request body is required." });
             if (!ModelState.IsValid)
                 return this.BadRequestFromValidation(ModelState);
 
-            var userId = GetCurrentUserId();
+            var userId = this.GetCurrentUserId();
             if (userId == null)
                 return Unauthorized(new { error = "Invalid or missing user identity." });
 
@@ -76,10 +69,12 @@ namespace CinemaVerse.API.Controllers.User
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto request)
         {
+            if (request == null)
+                return BadRequest(new { error = "Request body is required." });
             if (!ModelState.IsValid)
                 return this.BadRequestFromValidation(ModelState);
 
-            var userId = GetCurrentUserId();
+            var userId = this.GetCurrentUserId();
             if (userId == null)
                 return Unauthorized(new { error = "Invalid or missing user identity." });
 

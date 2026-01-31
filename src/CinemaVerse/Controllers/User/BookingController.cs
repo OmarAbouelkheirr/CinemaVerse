@@ -25,7 +25,12 @@ namespace CinemaVerse.API.Controllers.User
         [HttpPost]
         public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequestDto createBookingDto)
         {
-            _logger.LogInformation("User: Creating booking: {@CreateBookingDto}", createBookingDto);
+            var currentUserId = this.GetCurrentUserId();
+            if (currentUserId == null)
+                return Unauthorized(new { error = "Invalid or missing user identity." });
+
+            createBookingDto.UserId = currentUserId.Value;
+            _logger.LogInformation("User: Creating booking for UserId {UserId}, MovieShowTimeId {MovieShowTimeId}, SeatCount {SeatCount}", createBookingDto.UserId, createBookingDto.MovieShowTimeId, createBookingDto.SeatIds?.Count ?? 0);
             var result = await _bookingService.CreateBookingAsync(createBookingDto);
             _logger.LogInformation("User: Successfully created booking {BookingId} for UserId: {UserId}",
                 result.BookingId, createBookingDto.UserId);
@@ -41,6 +46,12 @@ namespace CinemaVerse.API.Controllers.User
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetUserBookings([FromRoute] int userId, [FromQuery] AdminBookingFilterDto? filter = null)
         {
+            var currentUserId = this.GetCurrentUserId();
+            if (currentUserId == null)
+                return Unauthorized(new { error = "Invalid or missing user identity." });
+            if (userId != currentUserId)
+                return Forbid();
+
             _logger.LogInformation("User: Getting bookings for UserId: {UserId}", userId);
             var result = await _bookingService.GetUserBookingsAsync(userId, filter ?? new AdminBookingFilterDto());
             _logger.LogInformation("User: Successfully retrieved bookings for UserId: {UserId}", userId);
@@ -53,6 +64,12 @@ namespace CinemaVerse.API.Controllers.User
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetUserBookingById([FromQuery] int userId, [FromRoute] int bookingId)
         {
+            var currentUserId = this.GetCurrentUserId();
+            if (currentUserId == null)
+                return Unauthorized(new { error = "Invalid or missing user identity." });
+            if (userId != currentUserId)
+                return Forbid();
+
             _logger.LogInformation("User: Getting booking details for BookingId: {BookingId} and UserId: {UserId}", bookingId, userId);
             var result = await _bookingService.GetUserBookingByIdAsync(userId, bookingId);
             _logger.LogInformation("User: Successfully retrieved booking details for BookingId: {BookingId} and UserId: {UserId}", bookingId, userId);
@@ -64,6 +81,12 @@ namespace CinemaVerse.API.Controllers.User
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CancelUserBooking([FromQuery] int userId, [FromRoute] int bookingId)
         {
+            var currentUserId = this.GetCurrentUserId();
+            if (currentUserId == null)
+                return Unauthorized(new { error = "Invalid or missing user identity." });
+            if (userId != currentUserId)
+                return Forbid();
+
             _logger.LogInformation("User: Cancelling booking for BookingId: {BookingId} and UserId: {UserId}", bookingId, userId);
             var result = await _bookingService.CancelUserBookingAsync(userId, bookingId);
             _logger.LogInformation("User: Successfully cancelled booking for BookingId: {BookingId} and UserId: {UserId}", bookingId, userId);

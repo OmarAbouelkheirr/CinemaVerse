@@ -30,6 +30,12 @@ namespace CinemaVerse.API.Controllers.User
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CreateReview([FromRoute] int userId, [FromBody] CreateReviewRequestDto dto)
         {
+            var currentUserId = this.GetCurrentUserId();
+            if (currentUserId == null)
+                return Unauthorized(new { error = "Invalid or missing user identity." });
+            if (userId != currentUserId)
+                return Forbid();
+
             _logger.LogInformation("User {UserId}: Creating review for movie {MovieId}", userId, dto.MovieId);
             var result = await _reviewService.CreateReviewAsync(userId, dto);
             _logger.LogInformation("User {UserId}: Successfully created review for movie {MovieId}", userId, dto.MovieId);
@@ -44,6 +50,12 @@ namespace CinemaVerse.API.Controllers.User
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateReview([FromRoute] int userId, [FromRoute] int reviewId, [FromBody] UpdateReviewRequestDto dto)
         {
+            var currentUserId = this.GetCurrentUserId();
+            if (currentUserId == null)
+                return Unauthorized(new { error = "Invalid or missing user identity." });
+            if (userId != currentUserId)
+                return Forbid();
+
             _logger.LogInformation("User {UserId}: Updating review {ReviewId}", userId, reviewId);
             var result = await _reviewService.UpdateReviewAsync(userId, reviewId, dto);
             _logger.LogInformation("User {UserId}: Successfully updated review {ReviewId}", userId, reviewId);
@@ -58,6 +70,12 @@ namespace CinemaVerse.API.Controllers.User
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeleteReview([FromRoute] int userId, [FromRoute] int reviewId)
         {
+            var currentUserId = this.GetCurrentUserId();
+            if (currentUserId == null)
+                return Unauthorized(new { error = "Invalid or missing user identity." });
+            if (userId != currentUserId)
+                return Forbid();
+
             _logger.LogInformation("User {UserId}: Deleting review {ReviewId}", userId, reviewId);
             await _reviewService.DeleteReviewAsync(userId, reviewId);
             _logger.LogInformation("User {UserId}: Successfully deleted review {ReviewId}", userId, reviewId);
@@ -73,7 +91,13 @@ namespace CinemaVerse.API.Controllers.User
             [FromRoute] int userId,
             [FromQuery] ReviewListFilterDto? filter = null)
         {
-            _logger.LogInformation("Getting reviews for user {UserId} with filter: {@Filter}", userId, filter);
+            var currentUserId = this.GetCurrentUserId();
+            if (currentUserId == null)
+                return Unauthorized(new { error = "Invalid or missing user identity." });
+            if (userId != currentUserId)
+                return Forbid();
+
+            _logger.LogInformation("Getting reviews for user {UserId}, Page {Page}, PageSize {PageSize}", userId, filter?.Page ?? 1, filter?.PageSize ?? 20);
             var result = await _reviewService.GetUserReviewsAsync(userId, filter ?? new ReviewListFilterDto());
             _logger.LogInformation("Successfully retrieved {Count} reviews for user {UserId}", result.Items.Count, userId);
             return Ok(result);
@@ -87,7 +111,7 @@ namespace CinemaVerse.API.Controllers.User
             [FromRoute] int movieId,
             [FromQuery] ReviewListFilterDto? filter = null)
         {
-            _logger.LogInformation("Getting reviews for movie {MovieId} with filter: {@Filter}", movieId, filter);
+            _logger.LogInformation("Getting reviews for movie {MovieId}, Page {Page}, PageSize {PageSize}", movieId, filter?.Page ?? 1, filter?.PageSize ?? 20);
             var result = await _reviewService.GetReviewsByMovieIdAsync(movieId, filter ?? new ReviewListFilterDto());
             _logger.LogInformation("Successfully retrieved reviews for movie {MovieId}", movieId);
             return Ok(result);
@@ -100,6 +124,12 @@ namespace CinemaVerse.API.Controllers.User
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetUserReviewForMovie([FromRoute] int userId, [FromRoute] int movieId)
         {
+            var currentUserId = this.GetCurrentUserId();
+            if (currentUserId == null)
+                return Unauthorized(new { error = "Invalid or missing user identity." });
+            if (userId != currentUserId)
+                return Forbid();
+
             _logger.LogInformation("Getting user {UserId} review for movie {MovieId}", userId, movieId);
             var result = await _reviewService.GetUserReviewForMovieAsync(userId, movieId);
             if (result == null)
