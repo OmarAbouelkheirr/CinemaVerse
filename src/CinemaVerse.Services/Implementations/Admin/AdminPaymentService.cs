@@ -4,6 +4,7 @@ using CinemaVerse.Services.DTOs.AdminFlow.AdminPayment.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminPayment.Responses;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.Interfaces.Admin;
+using CinemaVerse.Services.Mappers;
 using Microsoft.Extensions.Logging;
 
 namespace CinemaVerse.Services.Implementations.Admin
@@ -26,10 +27,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogInformation("Getting all payments with filter: {@Filter}", filter);
 
                 if (filter == null)
-                {
-                    _logger.LogWarning("AdminPaymentFilterDto is null.");
-                    throw new ArgumentNullException(nameof(filter), "AdminPaymentFilterDto cannot be null.");
-                }
+                    throw new ArgumentNullException(nameof(filter));
 
                 // Validate pagination
                 if (filter.Page <= 0)
@@ -126,15 +124,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 );
 
                 // Map to DTOs
-                var paymentDtos = payments.Select(payment => new PaymentDetailsResponseDto
-                {
-                    PaymentId = payment.Id,
-                    BookingId = payment.BookingId,
-                    Amount = payment.Amount,
-                    TransactionDate = payment.TransactionDate,
-                    Status = payment.Status,
-                    Currency = payment.Currency
-                }).ToList();
+                var paymentDtos = payments.Select(PaymentMapper.ToPaymentDetailsResponseDto).ToList();
 
                 var pagedResult = new PagedResultDto<PaymentDetailsResponseDto>
                 {
@@ -156,37 +146,22 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
-        public async Task<PaymentDetailsResponseDto?> GetPaymentByIdAsync(int paymentId)
+        public async Task<PaymentDetailsResponseDto> GetPaymentByIdAsync(int paymentId)
         {
             try
             {
                 _logger.LogInformation("Getting payment with Id {PaymentId}", paymentId);
 
                 if (paymentId <= 0)
-                {
-                    _logger.LogWarning("Invalid PaymentId {PaymentId} provided for retrieval", paymentId);
-                    throw new ArgumentException("A valid PaymentId must be provided.", nameof(paymentId));
-                }
+                    throw new ArgumentException("Payment ID must be a positive integer.", nameof(paymentId));
 
                 // Get payment with related entities
                 var payment = await _unitOfWork.BookingPayments.GetByIdAsync(paymentId);
 
                 if (payment == null)
-                {
-                    _logger.LogWarning("Payment {PaymentId} not found", paymentId);
-                    return null;
-                }
+                    throw new KeyNotFoundException($"Payment with ID {paymentId} not found.");
 
-                var paymentDto = new PaymentDetailsResponseDto
-                {
-                    PaymentId = payment.Id,
-                    BookingId = payment.BookingId,
-                    Amount = payment.Amount,
-                    TransactionDate = payment.TransactionDate,
-                    Status = payment.Status,
-                    Currency = payment.Currency
-
-                };
+                var paymentDto = PaymentMapper.ToPaymentDetailsResponseDto(payment);
 
                 _logger.LogInformation("Successfully retrieved payment {PaymentId}", paymentId);
                 return paymentDto;
