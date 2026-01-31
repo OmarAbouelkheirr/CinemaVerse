@@ -38,6 +38,9 @@ namespace CinemaVerse.Services.Implementations.User
 
         public async Task<bool> UpdateProfileAsync(int userId, UpdateProfileRequestDto request)
         {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
             if (userId <= 0)
             {
                 _logger.LogWarning("UpdateProfileAsync: invalid userId {UserId}", userId);
@@ -86,6 +89,12 @@ namespace CinemaVerse.Services.Implementations.User
             {
                 _logger.LogWarning("ChangePasswordAsync: invalid current password for userId {UserId}", userId);
                 return false;
+            }
+
+            if (BCrypt.Net.BCrypt.Verify(newPassword, user.PasswordHash))
+            {
+                _logger.LogWarning("ChangePasswordAsync: new password same as current for userId {UserId}", userId);
+                throw new InvalidOperationException("New password must be different from current password.");
             }
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
