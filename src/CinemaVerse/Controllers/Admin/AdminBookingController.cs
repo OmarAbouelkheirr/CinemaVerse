@@ -2,10 +2,12 @@ using CinemaVerse.Extensions;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminBooking.Requests;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.Interfaces.Admin;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaVerse.API.Controllers.Admin
 {
+    [Authorize(Roles = "Admin")]
     [Route("api/admin/bookings")]
     [ApiController]
     public class AdminBookingController : ControllerBase
@@ -25,7 +27,7 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAllBookings([FromQuery] AdminBookingFilterDto filter)
         {
-            _logger.LogInformation("Admin: Getting all Bookings with filter: {@Filter}", filter);
+            _logger.LogInformation("Admin: Getting all Bookings, Page {Page}, PageSize {PageSize}", filter?.Page ?? 1, filter?.PageSize ?? 10);
             var result = await _adminBookingService.GetAllBookingsAsync(filter);
             return Ok(result);
         }
@@ -48,7 +50,10 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequestDto createBookingDto)
         {
-            _logger.LogInformation("Admin: Creating a new Booking: {@CreateBookingDto}", createBookingDto);
+            if (createBookingDto == null)
+                return BadRequest(new { error = "Request body is required." });
+
+            _logger.LogInformation("Admin: Creating booking for UserId {UserId}, MovieShowTimeId {MovieShowTimeId}, SeatCount {SeatCount}", createBookingDto.UserId, createBookingDto.MovieShowTimeId, createBookingDto.SeatIds?.Count ?? 0);
             var bookingId = await _adminBookingService.CreateBookingAsync(createBookingDto);
             _logger.LogInformation("Booking created successfully with ID: {BookingId}", bookingId);
             var result = await _adminBookingService.GetBookingByIdAsync(bookingId);
@@ -62,6 +67,9 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> EditBooking([FromRoute] int id, [FromBody] UpdateBookingRequestDto updateBookingDto)
         {
+            if (updateBookingDto == null)
+                return BadRequest(new { error = "Request body is required." });
+
             _logger.LogInformation("Admin: Updating Booking with ID: {BookingId}", id);
             await _adminBookingService.UpdateBookingStatusAsync(id, updateBookingDto.NewStatus);
             _logger.LogInformation("Booking with ID {BookingId} updated successfully", id);
