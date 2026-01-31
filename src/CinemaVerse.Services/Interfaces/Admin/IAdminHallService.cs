@@ -10,6 +10,6 @@ namespace CinemaVerse.Services.Interfaces.Admin
         public Task<int> EditHallAsync(int hallId, UpdateHallRequestDto request);
         public Task DeleteHallAsync(int hallId);
         public Task<PagedResultDto<HallDetailsResponseDto>> GetAllHallsAsync(AdminHallFilterDto filter);
-        public Task<HallDetailsResponseDto?> GetHallWithSeatsByIdAsync(int hallId);
+        public Task<HallDetailsResponseDto> GetHallWithSeatsByIdAsync(int hallId);
     }
 }

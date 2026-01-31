@@ -10,7 +10,7 @@ namespace CinemaVerse.Services.Interfaces.Admin
         Task<int> EditMovieAsync(int movieId, UpdateMovieRequestDto request);
         Task DeleteMovieAsync(int movieId);
 
-        Task<MovieDetailsDto?> GetMovieAsync(int movieId);
+        Task<MovieDetailsDto> GetMovieAsync(int movieId);
         Task<PagedResultDto<MovieDetailsDto>> GetAllMoviesAsync(AdminMovieFilterDto filter);
     }
 }

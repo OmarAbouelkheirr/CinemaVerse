@@ -9,7 +9,7 @@ namespace CinemaVerse.Services.Interfaces.Admin
         Task<int> CreateGenreAsync(CreateGenreRequestDto request);
         Task<int> UpdateGenreAsync(int genreId, UpdateGenreRequestDto request);
         Task DeleteGenreAsync(int genreId);
-        Task<GenreDetailsDto?> GetGenreAsync(int genreId);
+        Task<GenreDetailsDto> GetGenreAsync(int genreId);
         Task<PagedResultDto<GenreDetailsDto>> GetAllGenresAsync(AdminGenreFilterDto filter);
     }
 }

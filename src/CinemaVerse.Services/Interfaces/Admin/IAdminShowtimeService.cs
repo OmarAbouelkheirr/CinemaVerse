@@ -9,7 +9,7 @@ namespace CinemaVerse.Services.Interfaces.Admin
         Task<int> CreateShowtimeAsync(CreateShowtimeRequestDto request);
         Task<int> UpdateShowtimeAsync(int showtimeId, UpdateShowtimeRequestDto request);
         Task<bool> DeleteShowtimeAsync(int showtimeId);
-        Task<ShowtimeDetailsDto?> GetShowtimeByIdAsync(int showtimeId);
+        Task<ShowtimeDetailsDto> GetShowtimeByIdAsync(int showtimeId);
         Task<PagedResultDto<ShowtimeDetailsDto>> GetAllShowtimesAsync(AdminShowtimeFilterDto filter);
     }
 }

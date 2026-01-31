@@ -9,7 +9,7 @@ namespace CinemaVerse.Services.Interfaces.Admin
         public Task<int> CreateBookingAsync(CreateBookingRequestDto request);
         public Task<int> UpdateBookingStatusAsync(int bookingId, BookingStatus newStatus);
         public Task DeleteBookingAsync(int bookingId);
-        public Task<BookingDetailsDto?> GetBookingByIdAsync(int bookingId);
+        public Task<BookingDetailsDto> GetBookingByIdAsync(int bookingId);
         public Task<PagedResultDto<BookingDetailsDto>> GetAllBookingsAsync(AdminBookingFilterDto filter);
     }
 }

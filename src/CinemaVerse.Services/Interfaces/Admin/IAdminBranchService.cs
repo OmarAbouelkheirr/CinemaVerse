@@ -10,6 +10,6 @@ namespace CinemaVerse.Services.Interfaces.Admin
         public Task<int> EditBranchAsync(int branchId, UpdateBranchRequestDto request);
         public Task DeleteBranchAsync(int branchId);
         public Task<PagedResultDto<BranchDetailsResponseDto>> GetAllBranchesAsync(AdminBranchFilterDto filter);
-        public Task<BranchDetailsResponseDto?> GetBranchByIdAsync(int branchId);
+        public Task<BranchDetailsResponseDto> GetBranchByIdAsync(int branchId);
     }
 }
