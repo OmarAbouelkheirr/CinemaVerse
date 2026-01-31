@@ -16,6 +16,8 @@ namespace CinemaVerse.Services.Implementations
 {
     public class AuthService : IAuthService
     {
+        private const string EmailVerificationPurpose = "email_verification";
+        private const string PasswordResetPurpose = "password_reset";
         private readonly ILogger<AuthService> _logger;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailService _emailService;
@@ -29,6 +31,136 @@ namespace CinemaVerse.Services.Implementations
             _configuration = configuration;
         }
 
+        private string GenerateEmailVerificationToken(int userId, string email)
+        {
+            var secret = _configuration["Jwt:Secret"] ?? throw new InvalidOperationException("Jwt:Secret is not configured.");
+            var issuer = _configuration["Jwt:Issuer"];
+            var expirationHours = _configuration.GetValue<int>("EmailVerification:ExpirationHours", 24);
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Email, email),
+                new Claim("purpose", EmailVerificationPurpose)
+            };
+
+            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(secret));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var expiresAt = DateTime.UtcNow.AddHours(expirationHours);
+
+            var token = new JwtSecurityToken(
+                issuer: issuer,
+                audience: "CinemaVerseEmailVerification",
+                claims: claims,
+                expires: expiresAt,
+                signingCredentials: creds);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private (int UserId, string Email)? ValidateEmailVerificationToken(string token)
+        {
+            if (string.IsNullOrWhiteSpace(token)) return null;
+
+            var secret = _configuration["Jwt:Secret"];
+            if (string.IsNullOrEmpty(secret)) return null;
+
+            var handler = new JwtSecurityTokenHandler();
+            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(secret));
+
+            try
+            {
+                var principal = handler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = key,
+                    ValidateIssuer = true,
+                    ValidIssuer = _configuration["Jwt:Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = "CinemaVerseEmailVerification",
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                }, out var validatedToken);
+
+                var purpose = principal.FindFirst("purpose")?.Value;
+                if (purpose != EmailVerificationPurpose) return null;
+
+                var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var emailClaim = principal.FindFirst(ClaimTypes.Email)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId)) return null;
+
+                return (userId, emailClaim ?? string.Empty);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private string GeneratePasswordResetToken(int userId, string email)
+        {
+            var secret = _configuration["Jwt:Secret"] ?? throw new InvalidOperationException("Jwt:Secret is not configured.");
+            var expirationHours = _configuration.GetValue<int>("PasswordReset:ExpirationHours", 1);
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Email, email),
+                new Claim("purpose", PasswordResetPurpose)
+            };
+
+            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(secret));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var expiresAt = DateTime.UtcNow.AddHours(expirationHours);
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: "CinemaVersePasswordReset",
+                claims: claims,
+                expires: expiresAt,
+                signingCredentials: creds);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private (int UserId, string Email)? ValidatePasswordResetToken(string token)
+        {
+            if (string.IsNullOrWhiteSpace(token)) return null;
+
+            var secret = _configuration["Jwt:Secret"];
+            if (string.IsNullOrEmpty(secret)) return null;
+
+            var handler = new JwtSecurityTokenHandler();
+            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(secret));
+
+            try
+            {
+                var principal = handler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = key,
+                    ValidateIssuer = true,
+                    ValidIssuer = _configuration["Jwt:Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = "CinemaVersePasswordReset",
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                }, out _);
+
+                var purpose = principal.FindFirst("purpose")?.Value;
+                if (purpose != PasswordResetPurpose) return null;
+
+                var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var emailClaim = principal.FindFirst(ClaimTypes.Email)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId)) return null;
+
+                return (userId, emailClaim ?? string.Empty);
+            }
+            catch
+            {
+                return null;
+            }
+        }
 
         public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request)
         {
@@ -118,7 +250,171 @@ namespace CinemaVerse.Services.Implementations
                 _logger.LogError(emailEx, "Failed to send welcome email to {Email}, but user was created", user.Email);
             }
 
+            try
+            {
+                var verificationToken = GenerateEmailVerificationToken(user.Id, user.Email);
+                var baseUrl = _configuration["EmailVerification:VerificationLinkBaseUrl"]?.TrimEnd('/') ?? "https://localhost:7001";
+                var verificationLink = $"{baseUrl}/api/auth/verify-email?token={Uri.EscapeDataString(verificationToken)}";
+                var expirationHours = _configuration.GetValue<int>("EmailVerification:ExpirationHours", 24);
+                var verificationEmail = new EmailVerificationEmailDto
+                {
+                    To = user.Email,
+                    FullName = user.FullName,
+                    Subject = "Confirm Your Email - CinemaVerse",
+                    VerificationLink = verificationLink,
+                    ExpirationTime = DateTime.UtcNow.AddHours(expirationHours)
+                };
+                await _emailService.SendEmailVerificationEmailAsync(verificationEmail);
+                _logger.LogInformation("Verification email sent to {Email} for UserId {UserId}", user.Email, user.Id);
+            }
+            catch (Exception emailEx)
+            {
+                _logger.LogError(emailEx, "Failed to send verification email to {Email}, but user was created", user.Email);
+            }
+
             return user.Id;
+        }
+
+        public async Task<bool> VerifyEmailAsync(string token)
+        {
+            var payload = ValidateEmailVerificationToken(token);
+            if (payload == null)
+            {
+                _logger.LogWarning("Invalid or expired email verification token");
+                return false;
+            }
+
+            var user = await _unitOfWork.Users.GetByIdAsync(payload.Value.UserId);
+            if (user == null)
+            {
+                _logger.LogWarning("User {UserId} not found for email verification", payload.Value.UserId);
+                return false;
+            }
+
+            if (user.IsEmailConfirmed)
+            {
+                _logger.LogInformation("User {UserId} email already confirmed", user.Id);
+                return true;
+            }
+
+            user.IsEmailConfirmed = true;
+            user.LastUpdatedAt = DateTime.UtcNow;
+            await _unitOfWork.Users.UpdateAsync(user);
+            await _unitOfWork.SaveChangesAsync();
+            _logger.LogInformation("Email verified for UserId {UserId}", user.Id);
+            return true;
+        }
+
+        public async Task<bool> ResendEmailVerificationAsync(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                _logger.LogWarning("Resend verification: email is empty");
+                return false;
+            }
+
+            var user = await _unitOfWork.Users.GetByEmailAsync(email.Trim());
+            if (user == null)
+            {
+                _logger.LogWarning("Resend verification: user not found for email {Email}", email);
+                return false;
+            }
+
+            if (user.IsEmailConfirmed)
+            {
+                _logger.LogInformation("Resend verification: email already confirmed for {Email}", email);
+                return true;
+            }
+
+            try
+            {
+                var verificationToken = GenerateEmailVerificationToken(user.Id, user.Email);
+                var baseUrl = _configuration["EmailVerification:VerificationLinkBaseUrl"]?.TrimEnd('/') ?? "https://localhost:7001";
+                var verificationLink = $"{baseUrl}/api/auth/verify-email?token={Uri.EscapeDataString(verificationToken)}";
+                var expirationHours = _configuration.GetValue<int>("EmailVerification:ExpirationHours", 24);
+                var verificationEmail = new EmailVerificationEmailDto
+                {
+                    To = user.Email,
+                    FullName = user.FullName,
+                    Subject = "Confirm Your Email - CinemaVerse",
+                    VerificationLink = verificationLink,
+                    ExpirationTime = DateTime.UtcNow.AddHours(expirationHours)
+                };
+                await _emailService.SendEmailVerificationEmailAsync(verificationEmail);
+                _logger.LogInformation("Verification email resent to {Email} for UserId {UserId}", user.Email, user.Id);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to resend verification email to {Email}", user.Email);
+                return false;
+            }
+        }
+
+        public async Task<bool> RequestPasswordResetAsync(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                _logger.LogWarning("RequestPasswordReset: email is empty");
+                return false;
+            }
+
+            var user = await _unitOfWork.Users.GetByEmailAsync(email.Trim());
+            if (user == null)
+            {
+                _logger.LogWarning("RequestPasswordReset: user not found for email {Email}", email);
+                return true;
+            }
+
+            try
+            {
+                var resetToken = GeneratePasswordResetToken(user.Id, user.Email);
+                var baseUrl = _configuration["PasswordReset:ResetLinkBaseUrl"]?.TrimEnd('/')
+                    ?? _configuration["EmailVerification:VerificationLinkBaseUrl"]?.TrimEnd('/')
+                    ?? "https://localhost:7001";
+                var resetLink = $"{baseUrl}/api/auth/reset-password?token={Uri.EscapeDataString(resetToken)}";
+                var expirationHours = _configuration.GetValue<int>("PasswordReset:ExpirationHours", 1);
+                var resetEmail = new PasswordResetEmailDto
+                {
+                    To = user.Email,
+                    Subject = "Reset Your Password - CinemaVerse",
+                    ResetToken = resetToken,
+                    ResetLink = resetLink,
+                    ExpirationTime = DateTime.UtcNow.AddHours(expirationHours)
+                };
+                await _emailService.SendPasswordResetEmailAsync(resetEmail);
+                _logger.LogInformation("Password reset email sent to {Email} for UserId {UserId}", user.Email, user.Id);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send password reset email to {Email}", user.Email);
+                return false;
+            }
+        }
+
+        public async Task<bool> ResetPasswordAsync(string token, string newPassword)
+        {
+            var payload = ValidatePasswordResetToken(token);
+            if (payload == null)
+            {
+                _logger.LogWarning("Invalid or expired password reset token");
+                return false;
+            }
+
+            var user = await _unitOfWork.Users.GetByIdAsync(payload.Value.UserId);
+            if (user == null)
+            {
+                _logger.LogWarning("User {UserId} not found for password reset", payload.Value.UserId);
+                return false;
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            user.LastUpdatedAt = DateTime.UtcNow;
+            await _unitOfWork.Users.UpdateAsync(user);
+            await _unitOfWork.SaveChangesAsync();
+            _logger.LogInformation("Password reset completed for UserId {UserId}", user.Id);
+            return true;
         }
     }
 }

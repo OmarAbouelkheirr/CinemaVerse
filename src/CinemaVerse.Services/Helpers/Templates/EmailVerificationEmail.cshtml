@@ -1,0 +1,96 @@
+@model CinemaVerse.Services.DTOs.Email.Requests.EmailVerificationEmailDto
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Your Email - CinemaVerse</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1A122E;
+            color: #F5F5F5;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #2C253D;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .header {
+            background: linear-gradient(135deg, #8A2BE2 0%, #6A1BB2 100%);
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .logo { font-size: 32px; font-weight: bold; color: #FFFFFF; letter-spacing: 2px; }
+        .content { padding: 40px 30px; }
+        .title { font-size: 28px; font-weight: 600; color: #FFFFFF; margin-bottom: 20px; text-align: center; }
+        .message { font-size: 16px; color: #E0E0E0; margin-bottom: 30px; text-align: center; }
+        .verify-box {
+            background-color: #352A4A;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        .verify-link {
+            display: inline-block;
+            background-color: #8A2BE2;
+            color: #FFFFFF;
+            padding: 16px 40px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px 0;
+            transition: background-color 0.3s;
+        }
+        .verify-link:hover { background-color: #6A1BB2; }
+        .expiry-notice {
+            background-color: #4A3A5A;
+            border-left: 4px solid #8A2BE2;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #E0E0E0;
+        }
+        .footer {
+            background-color: #1A122E;
+            padding: 30px;
+            text-align: center;
+            color: #A0A0A0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="logo">CinemaVerse</div>
+        </div>
+        <div class="content">
+            <h1 class="title">Confirm Your Email ✉️</h1>
+            <p class="message">
+                Hi @Model.FullName, please click the button below to verify your email address and activate your account.
+            </p>
+            <div class="verify-box">
+                <a href="@Model.VerificationLink" class="verify-link">Verify Email →</a>
+            </div>
+            <div class="expiry-notice">
+                <strong>⏰ This link expires on:</strong><br>
+                @Model.ExpirationTime.ToString("MMMM dd, yyyy 'at' HH:mm") UTC
+            </div>
+        </div>
+        <div class="footer">
+            <p>If you didn't create an account, you can safely ignore this email.</p>
+            <p style="margin-top: 20px; font-size: 12px;">© @DateTime.Now.Year CinemaVerse. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

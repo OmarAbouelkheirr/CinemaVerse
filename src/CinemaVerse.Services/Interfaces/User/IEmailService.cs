@@ -12,5 +12,6 @@ namespace CinemaVerse.Services.Interfaces.User
         Task SendBookingReminderEmailAsync(BookingReminderEmailDto emailDto);
         Task SendPaymentConfirmationEmailAsync(PaymentConfirmationEmailDto emailDto);
         Task SendBookingCancellationEmailAsync(BookingCancellationEmailDto emailDto);
+        Task SendEmailVerificationEmailAsync(EmailVerificationEmailDto emailDto);
     }
 }

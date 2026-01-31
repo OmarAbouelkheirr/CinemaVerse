@@ -239,5 +239,31 @@ namespace CinemaVerse.Services.Implementations.User
                 throw;
             }
         }
+
+        public async Task SendEmailVerificationEmailAsync(EmailVerificationEmailDto emailDto)
+        {
+            if (emailDto == null)
+            {
+                _logger.LogWarning("EmailVerificationEmailDto is null");
+                throw new ArgumentNullException(nameof(emailDto));
+            }
+
+            try
+            {
+                _logger.LogInformation("Sending email verification to {Email}", emailDto.To);
+                string htmlBody = await _razorEngine.CompileRenderAsync($"{_assemblyName}.Helpers.Templates.EmailVerificationEmail.cshtml", emailDto);
+                await SendEmailAsync(new SendEmailDto
+                {
+                    To = emailDto.To,
+                    Subject = "Confirm Your Email - CinemaVerse",
+                    Body = htmlBody
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending email verification to {Email}", emailDto.To);
+                throw;
+            }
+        }
     }
 }
