@@ -1,6 +1,7 @@
 using System.Text;
 using CinemaVerse.Data.Data;
 using CinemaVerse.Data.Repositories;
+using CinemaVerse.Filters;
 using CinemaVerse.Middleware;
 using CinemaVerse.Services.Implementations;
 using CinemaVerse.Services.Implementations.Admin;
@@ -58,7 +59,11 @@ builder.Services.AddHostedService<ExpirePendingBookingsBackgroundService>();
 builder.Services.AddScoped<IShowReminderService, ShowReminderService>();
 builder.Services.AddHostedService<ShowReminderBackgroundService>();
 
-builder.Services.AddControllers()
+builder.Services.AddScoped<ModelStateValidationFilter>();
+builder.Services.AddControllers(options =>
+    {
+        options.Filters.Add<ModelStateValidationFilter>();
+    })
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(
