@@ -1,11 +1,12 @@
 using CinemaVerse.Models;
 using CinemaVerse.Services.DTOs.UserFlow.Auth;
 using CinemaVerse.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaVerse.API.Controllers
 {
+    [AllowAnonymous]
     [Route("api/auth")]
     [ApiController]
     public class AuthController : ControllerBase
@@ -25,6 +26,9 @@ namespace CinemaVerse.API.Controllers
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
         {
+            if (request == null)
+                return BadRequest(new { error = "Request body is required." });
+
             var userId = await _authService.RegisterAsync(request);
             _logger.LogInformation("User registered successfully with Id {UserId}", userId);
             return StatusCode(StatusCodes.Status201Created, new { userId });
@@ -36,6 +40,9 @@ namespace CinemaVerse.API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
         {
+            if (request == null)
+                return BadRequest(new { error = "Request body is required." });
+
             var result = await _authService.LoginAsync(request);
             _logger.LogInformation("User logged in successfully with Id {UserId}", result.UserId);
             return Ok(result);
@@ -61,13 +68,10 @@ namespace CinemaVerse.API.Controllers
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationRequestDto request)
         {
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
+            if (request == null)
+                return BadRequest(new { error = "Request body is required." });
 
-            var success = await _authService.ResendEmailVerificationAsync(request.Email);
-            if (!success)
-                return BadRequest(new { error = "Could not resend verification. Check that the email is registered and not already verified." });
-
+            await _authService.ResendEmailVerificationAsync(request.Email);
             return Ok(new { message = "If the email is registered and not yet verified, a new verification link has been sent." });
         }
 
@@ -76,8 +80,8 @@ namespace CinemaVerse.API.Controllers
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto request)
         {
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
+            if (request == null)
+                return BadRequest(new { error = "Request body is required." });
 
             await _authService.RequestPasswordResetAsync(request.Email);
             return Ok(new { message = "If an account exists with this email, a password reset link has been sent." });
@@ -88,8 +92,8 @@ namespace CinemaVerse.API.Controllers
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto request)
         {
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
+            if (request == null)
+                return BadRequest(new { error = "Request body is required." });
 
             var success = await _authService.ResetPasswordAsync(request.Token, request.NewPassword);
             if (!success)

@@ -164,11 +164,21 @@ namespace CinemaVerse.Services.Implementations
 
         public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request)
         {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
             var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
             if (user == null)
                 throw new UnauthorizedAccessException("Invalid credentials");
             bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
             if (!isPasswordValid)
+                throw new UnauthorizedAccessException("Invalid credentials.");
+
+            if (!user.IsActive)
+                throw new UnauthorizedAccessException("Invalid credentials.");
+
+            var requireEmailVerification = _configuration.GetValue<bool>("Auth:RequireEmailVerificationBeforeLogin", false);
+            if (requireEmailVerification && !user.IsEmailConfirmed)
                 throw new UnauthorizedAccessException("Invalid credentials.");
 
             var claims = new[]
@@ -210,9 +220,12 @@ namespace CinemaVerse.Services.Implementations
 
         public async Task<int> RegisterAsync(RegisterRequestDto request)
         {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
             var existingUser = await _unitOfWork.Users.GetByEmailAsync(request.Email);
             if (existingUser != null)
-                throw new InvalidOperationException($"User with email '{request.Email}' already exists.");
+                throw new InvalidOperationException("An account with this email already exists.");
 
             var passwordHashed = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
@@ -371,8 +384,10 @@ namespace CinemaVerse.Services.Implementations
                 var resetToken = GeneratePasswordResetToken(user.Id, user.Email);
                 var baseUrl = _configuration["PasswordReset:ResetLinkBaseUrl"]?.TrimEnd('/')
                     ?? _configuration["EmailVerification:VerificationLinkBaseUrl"]?.TrimEnd('/')
-                    ?? "https://localhost:7001";
-                var resetLink = $"{baseUrl}/api/auth/reset-password?token={Uri.EscapeDataString(resetToken)}";
+                    ?? "https://localhost:7227";
+                var resetPagePath = _configuration["PasswordReset:ResetPagePath"]?.TrimStart('/').TrimEnd('/');
+                var path = string.IsNullOrEmpty(resetPagePath) ? "reset-password" : resetPagePath.TrimStart('/');
+                var resetLink = $"{baseUrl}/{path}?token={Uri.EscapeDataString(resetToken)}";
                 var expirationHours = _configuration.GetValue<int>("PasswordReset:ExpirationHours", 1);
                 var resetEmail = new PasswordResetEmailDto
                 {
