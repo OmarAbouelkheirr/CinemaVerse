@@ -1,3 +1,5 @@
+using CinemaVerse.Services.DTOs.AdminFlow.AdminTicket.Requests;
+using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.DTOs.Ticket.Response;
 using CinemaVerse.Services.Interfaces.User;
 using Microsoft.AspNetCore.Authorization;
@@ -20,15 +22,15 @@ namespace CinemaVerse.API.Controllers.User
         }
 
         [HttpGet("user/{userId:int}")]
-        [ProducesResponseType(typeof(List<TicketListItemDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PagedResultDto<TicketDetailsDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetUserTickets([FromRoute] int userId)
+        public async Task<IActionResult> GetUserTickets([FromRoute] int userId, [FromQuery] AdminTicketFilterDto? filter = null)
         {
             _logger.LogInformation("User: Getting tickets list for UserId: {UserId}", userId);
-            var result = await _ticketService.GetUserTicketsAsync(userId);
-            _logger.LogInformation("User: Successfully retrieved {Count} tickets for UserId: {UserId}", result.Count, userId);
+            var result = await _ticketService.GetUserTicketsAsync(userId, filter ?? new AdminTicketFilterDto());
+            _logger.LogInformation("User: Successfully retrieved {Count} tickets for UserId: {UserId}", result.Items.Count, userId);
             return Ok(result);
         }
 
@@ -42,8 +44,6 @@ namespace CinemaVerse.API.Controllers.User
         {
             _logger.LogInformation("User: Getting ticket details for TicketId: {TicketId}, UserId: {UserId}", ticketId, userId);
             var result = await _ticketService.GetUserTicketByIdAsync(userId, ticketId);
-            if (result == null)
-                return NotFound(new { error = "Ticket not found." });
             _logger.LogInformation("User: Successfully retrieved ticket details for TicketId: {TicketId}, UserId: {UserId}", ticketId, userId);
             return Ok(result);
         }

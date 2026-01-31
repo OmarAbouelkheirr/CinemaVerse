@@ -1,4 +1,5 @@
 using CinemaVerse.Extensions;
+using CinemaVerse.Services.DTOs.AdminFlow.AdminBooking.Requests;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.Interfaces.User;
 using Microsoft.AspNetCore.Authorization;
@@ -25,8 +26,6 @@ namespace CinemaVerse.API.Controllers.User
         public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequestDto createBookingDto)
         {
             _logger.LogInformation("User: Creating booking: {@CreateBookingDto}", createBookingDto);
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
             var result = await _bookingService.CreateBookingAsync(createBookingDto);
             _logger.LogInformation("User: Successfully created booking {BookingId} for UserId: {UserId}",
                 result.BookingId, createBookingDto.UserId);
@@ -36,27 +35,15 @@ namespace CinemaVerse.API.Controllers.User
                 result);
         }
 
-        [HttpGet]
-        [ProducesResponseType(typeof(List<BookingListDto>), StatusCodes.Status200OK)]
+        [HttpGet("user/{userId:int}")]
+        [ProducesResponseType(typeof(PagedResultDto<BookingDetailsDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetUserBookings([FromQuery] int userId)
+        public async Task<IActionResult> GetUserBookings([FromRoute] int userId, [FromQuery] AdminBookingFilterDto? filter = null)
         {
             _logger.LogInformation("User: Getting bookings for UserId: {UserId}", userId);
-            var result = await _bookingService.GetUserBookingsAsync(userId);
+            var result = await _bookingService.GetUserBookingsAsync(userId, filter ?? new AdminBookingFilterDto());
             _logger.LogInformation("User: Successfully retrieved bookings for UserId: {UserId}", userId);
-            return Ok(result);
-        }
-
-        [HttpGet("user/{userId:int}")]
-        [ProducesResponseType(typeof(List<BookingListDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetUserBookingsByUserId([FromRoute] int userId)
-        {
-            _logger.LogInformation("User: Getting bookings for UserId (route): {UserId}", userId);
-            var result = await _bookingService.GetUserBookingsAsync(userId);
-            _logger.LogInformation("User: Successfully retrieved bookings for UserId (route): {UserId}", userId);
             return Ok(result);
         }
 
