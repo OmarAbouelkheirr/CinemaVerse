@@ -35,14 +35,23 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+// --- Data / Infrastructure ---
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// --- Auth & Email ---
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+// --- User Services ---
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<IHallSeatService, HallSeatService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
-builder.Services.AddScoped<IEmailService, EmailService>();
+
+// --- Admin Services ---
 builder.Services.AddScoped<IAdminBookingService, AdminBookingService>();
 builder.Services.AddScoped<IAdminBranchService, AdminBranchService>();
 builder.Services.AddScoped<IAdminGenreService, AdminGenreService>();
@@ -53,7 +62,8 @@ builder.Services.AddScoped<IAdminSeatService, AdminSeatService>();
 builder.Services.AddScoped<IAdminShowtimeService, AdminShowtimeService>();
 builder.Services.AddScoped<IAdminTicketService, AdminTicketService>();
 builder.Services.AddScoped<IAdminUserService, AdminUserService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
+
+// --- Background Services ---
 builder.Services.AddScoped<IExpirePendingBookingsService, ExpirePendingBookingsService>();
 builder.Services.AddHostedService<ExpirePendingBookingsBackgroundService>();
 builder.Services.AddScoped<IShowReminderService, ShowReminderService>();
@@ -70,6 +80,7 @@ builder.Services.AddControllers(options =>
             new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
