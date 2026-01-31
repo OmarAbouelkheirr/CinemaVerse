@@ -223,8 +223,7 @@ namespace CinemaVerse.Services.Implementations
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            var existingUser = await _unitOfWork.Users.GetByEmailAsync(request.Email);
-            if (existingUser != null)
+            if (await _unitOfWork.Users.IsEmailExistsAsync(request.Email))
                 throw new InvalidOperationException("An account with this email already exists.");
 
             var passwordHashed = BCrypt.Net.BCrypt.HashPassword(request.Password);

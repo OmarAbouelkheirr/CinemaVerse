@@ -13,8 +13,6 @@ namespace CinemaVerse.Data.Repositories.Interfaces
         Task <IEnumerable<Seat>> GetAvailableSeatsAsync(int MovieShowTimeId);
         Task <List<Seat>> GetReservedSeatsAsync(int MovieShowTimeId);
         Task<List<int>> GetReservedSeatIdsAsync(int MovieShowTimeId);
-
-        Task<IEnumerable<Ticket>> GetReservedTicketsAsync(int MovieShowTimeId);
         Task<bool> IsSeatReservedAsync(int movieShowTimeId, int seatId);
     }
 }

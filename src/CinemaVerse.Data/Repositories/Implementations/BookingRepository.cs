@@ -52,33 +52,6 @@ namespace CinemaVerse.Data.Repositories.Implementations
             }
         }
 
-        public async Task<IEnumerable<Booking>> GetBookingsByStatusAsync(BookingStatus Status)
-        {
-            try
-            {
-                _logger.LogInformation("Getting bookings by status {Status}", Status);
-                var Result = await _dbSet
-                    .AsNoTracking()
-                    .Where(b => b.Status == Status)
-                    .Include(b => b.User)
-                    .Include(b => b.Tickets)
-                    .Include(b => b.MovieShowTime)
-                        .ThenInclude(m => m.Movie)
-                    .Include(b => b.BookingPayments)
-                    .Include(b => b.BookingSeats)
-                    .OrderByDescending(b => b.CreatedAt)
-                    .ToListAsync();
-
-                _logger.LogDebug("Retrieved {Count} bookings with status {Status}", Result.Count, Status);
-                return Result;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting bookings by status {Status}", Status);
-                throw;
-            }
-        }
-
         public async Task<Booking?> GetBookingWithDetailsAsync(int BookingId)
         {
             try
@@ -113,34 +86,6 @@ namespace CinemaVerse.Data.Repositories.Implementations
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting booking {BookingId} with details", BookingId);
-                throw;
-            }
-        }
-
-        public async Task<IEnumerable<Booking>> GetUserBookingsAsync(int userId)
-        {
-            try
-            {
-                _logger.LogInformation("Getting bookings for user: {UserId}", userId);
-
-                var Result = await _dbSet
-                    .AsNoTracking()
-                    .Where(b => b.UserId == userId)
-                    .Include(b => b.User)
-                    .Include(b => b.Tickets)
-                    .Include(b => b.MovieShowTime)
-                        .ThenInclude(m => m.Movie)
-                    .Include(b => b.BookingPayments)
-                    .OrderByDescending(b => b.CreatedAt)
-                    .ToListAsync();
-
-                _logger.LogDebug("Retrieved {Count} bookings for user {UserId}", Result.Count, userId);
-                return Result;
-
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting bookings for user {UserId}", userId);
                 throw;
             }
         }

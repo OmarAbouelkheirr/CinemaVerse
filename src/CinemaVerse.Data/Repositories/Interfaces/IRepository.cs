@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 
 namespace CinemaVerse.Data.Repositories.Interfaces
 {
@@ -6,7 +6,6 @@ namespace CinemaVerse.Data.Repositories.Interfaces
     {
         Task<IEnumerable<T>> GetAllAsync();
         Task<T?> GetByIdAsync(int Id);
-        Task<T?> GetByIdAsync(string Id);
         Task AddAsync(T entity);
         Task UpdateAsync(T entity);
         Task DeleteAsync(T entity);

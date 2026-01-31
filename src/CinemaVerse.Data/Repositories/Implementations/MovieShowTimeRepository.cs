@@ -123,31 +123,6 @@ namespace CinemaVerse.Data.Repositories.Implementations
             }
         }
 
-        public async Task<IEnumerable<Ticket>> GetReservedTicketsAsync(int movieShowTimeId)
-        {
-            try
-            {
-                _logger.LogInformation("Getting Reserved Tickets for movie show time {MovieShowTimeId}", movieShowTimeId);
-
-                var tickets = await _context.Tickets
-                    .AsNoTracking()
-                    .Where(t => t.Booking.MovieShowTimeId == movieShowTimeId)
-                    .Include(t => t.Booking)
-                        .ThenInclude(b => b.User)
-                    .Include(t => t.Seat)
-                    .OrderBy(t => t.CreatedAt)
-                    .ToListAsync();
-
-                _logger.LogInformation("Retrieved {Count} reserved tickets for movie show time {MovieShowTimeId}", tickets.Count, movieShowTimeId);
-
-                return tickets;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting Reserved Tickets for movie show time {MovieShowTimeId}", movieShowTimeId);
-                throw;
-            }
-        }
         public async Task<bool> IsSeatReservedAsync(int movieShowTimeId, int seatId)
         {
             try

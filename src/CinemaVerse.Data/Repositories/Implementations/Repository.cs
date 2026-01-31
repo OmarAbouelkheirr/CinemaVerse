@@ -177,29 +177,6 @@ namespace CinemaVerse.Data.Repositories.Implementations
             }
         }
 
-        public async Task<T?> GetByIdAsync(string Id)
-        {
-            try
-            {
-                _logger.LogDebug("Getting {EntityType} by ID: {Id}", typeof(T).Name, Id);
-                var Result = await _dbSet.FindAsync(Id);
-                if (Result == null)
-                {
-                    _logger.LogWarning("{EntityType} with ID: {Id} not found", typeof(T).Name, Id);
-                }
-                else
-                {
-                    _logger.LogDebug("{EntityType} with ID: {Id} retrieved successfully", typeof(T).Name, Id);
-                }
-                return Result;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting {EntityType} by ID: {Id}", typeof(T).Name, Id);
-                throw;
-            }
-        }
-
         public async Task UpdateAsync(T entity)
         {
             try
@@ -245,12 +222,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
             }
         }
 
-        public async Task<List<T>> GetPagedAsync(
-            IQueryable<T> query,
-            Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy,
-            int skip,
-            int take,
-            string? includeProperties = null)
+        public async Task<List<T>> GetPagedAsync(IQueryable<T> query,Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy,int skip,int take,string? includeProperties = null)
         {
             try
             {

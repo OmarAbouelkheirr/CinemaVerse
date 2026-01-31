@@ -1,25 +1,19 @@
-using CinemaVerse.Data.Enums;
-using CinemaVerse.Data.Models;
-using CinemaVerse.Data.Models.Users;
 using CinemaVerse.Data.Repositories;
-using UserEntity = CinemaVerse.Data.Models.Users.User;
 using CinemaVerse.Services.Constants;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminBooking.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminPayment.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminPayment.Responses;
-using CinemaVerse.Services.DTOs.AdminFlow.AdminTicket.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminUser.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminUser.Responses;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.DTOs.Email.Requests;
-using CinemaVerse.Services.DTOs.Ticket.Response;
 using CinemaVerse.Services.Interfaces.Admin;
 using CinemaVerse.Services.Interfaces.User;
+using CinemaVerse.Services.Mappers;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 using System.Text;
-using CinemaVerse.Services.DTOs.UserFlow.Booking.Helpers;
-using CinemaVerse.Services.Mappers;
+using UserEntity = CinemaVerse.Data.Models.Users.User;
 
 namespace CinemaVerse.Services.Implementations.Admin
 {
@@ -44,8 +38,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogInformation("Admin: Creating new user");
 
                 // Check if email already exists (business rule)
-                var existingUser = await _unitOfWork.Users.GetByEmailAsync(request.Email);
-                if (existingUser != null)
+                if (await _unitOfWork.Users.IsEmailExistsAsync(request.Email))
                     throw new InvalidOperationException($"User with email '{request.Email}' already exists.");
 
                 // Hash password
@@ -428,237 +421,6 @@ namespace CinemaVerse.Services.Implementations.Admin
             {
                 await _unitOfWork.RollbackTransactionAsync();
                 _logger.LogError(ex, "Error deactivating user with ID: {UserId}", userId);
-                throw;
-            }
-        }
-
-
-
-        public async Task<PagedResultDto<BookingDetailsDto>> GetUserBookingsAsync(int userId, AdminBookingFilterDto filter)
-        {
-            try
-            {
-                _logger.LogInformation("Getting bookings for user {UserId} with filter: {@Filter}", userId, filter);
-
-                if (userId <= 0)
-                    throw new ArgumentException("User ID must be a positive integer.", nameof(userId));
-                var user = await _unitOfWork.Users.GetByIdAsync(userId);
-                if (user == null)
-                    throw new KeyNotFoundException($"User with ID {userId} not found.");
-
-                // Validate pagination
-                if (filter.Page <= 0)
-                    filter.Page = 1;
-
-                if (filter.PageSize <= 0 || filter.PageSize > PaginationConstants.MaxPageSize)
-                    filter.PageSize = PaginationConstants.DefaultPageSize;
-
-                // Build query - filter by userId
-                var query = _unitOfWork.Bookings.GetQueryable()
-                    .Where(b => b.UserId == userId);
-
-                // Apply additional filters
-                if (filter.Status.HasValue)
-                {
-                    query = query.Where(b => b.Status == filter.Status.Value);
-                }
-
-                if (filter.MovieShowTimeId.HasValue)
-                {
-                    query = query.Where(b => b.MovieShowTimeId == filter.MovieShowTimeId.Value);
-                }
-
-                if (filter.CreatedFrom.HasValue)
-                {
-                    query = query.Where(b => b.CreatedAt >= filter.CreatedFrom.Value);
-                }
-
-                if (filter.CreatedTo.HasValue)
-                {
-                    query = query.Where(b => b.CreatedAt <= filter.CreatedTo.Value);
-                }
-
-                if (filter.MinAmount.HasValue)
-                {
-                    query = query.Where(b => b.TotalAmount >= filter.MinAmount.Value);
-                }
-
-                if (filter.MaxAmount.HasValue)
-                {
-                    query = query.Where(b => b.TotalAmount <= filter.MaxAmount.Value);
-                }
-
-                // Get total count
-                var totalCount = await _unitOfWork.Bookings.CountAsync(query);
-
-                // Apply sorting
-                string sortBy = filter.SortBy?.ToLower() ?? "createdat";
-                string sortOrder = filter.SortOrder?.ToLower() ?? "desc";
-
-                if (sortBy == "createdat")
-                {
-                    query = sortOrder == "asc"
-                        ? query.OrderBy(b => b.CreatedAt)
-                        : query.OrderByDescending(b => b.CreatedAt);
-                }
-                else if (sortBy == "totalamount")
-                {
-                    query = sortOrder == "asc"
-                        ? query.OrderBy(b => b.TotalAmount)
-                        : query.OrderByDescending(b => b.TotalAmount);
-                }
-                else if (sortBy == "status")
-                {
-                    query = sortOrder == "asc"
-                        ? query.OrderBy(b => b.Status)
-                        : query.OrderByDescending(b => b.Status);
-                }
-                else
-                {
-                    query = query.OrderByDescending(b => b.CreatedAt);
-                }
-
-                // Get paged results with related entities
-                var bookings = await _unitOfWork.Bookings.GetPagedAsync(
-                    query: query,
-                    orderBy: null,
-                    skip: (filter.Page - 1) * filter.PageSize,
-                    take: filter.PageSize,
-                    includeProperties: "User,MovieShowTime.Movie.MovieImages,BookingSeats.Seat,Tickets"
-                );
-
-                // Map to DTOs
-                var bookingDtos = bookings.Select(b => BookingMapper.ToDetailsDto(b)).ToList();
-
-                _logger.LogInformation("Retrieved {Count} bookings for user {UserId} out of {Total} total",
-                    bookingDtos.Count, userId, totalCount);
-
-                return new PagedResultDto<BookingDetailsDto>
-                {
-                    Items = bookingDtos,
-                    Page = filter.Page,
-                    PageSize = filter.PageSize,
-                    TotalCount = totalCount
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting bookings for user {UserId}", userId);
-                throw;
-            }
-        }
-
-
-        public async Task<PagedResultDto<PaymentDetailsResponseDto>> GetUserPaymentsAsync(int userId, AdminPaymentFilterDto filter)
-        {
-            try
-            {
-                _logger.LogInformation("Getting payments for user {UserId} with filter: {@Filter}", userId, filter);
-
-                if (userId <= 0)
-                    throw new ArgumentException("User ID must be a positive integer.", nameof(userId));
-                var user = await _unitOfWork.Users.GetByIdAsync(userId);
-                if (user == null)
-                    throw new KeyNotFoundException($"User with ID {userId} not found.");
-
-                // Validate pagination
-                if (filter.Page <= 0)
-                    filter.Page = 1;
-
-                if (filter.PageSize <= 0 || filter.PageSize > PaginationConstants.MaxPageSize)
-                    filter.PageSize = PaginationConstants.DefaultPageSize;
-
-                // Build query - get payments through bookings
-                var query = _unitOfWork.BookingPayments.GetQueryable()
-                    .Where(p => p.Booking.UserId == userId);
-
-                // Apply filters
-                if (filter.Status.HasValue)
-                {
-                    query = query.Where(p => p.Status == filter.Status.Value);
-                }
-
-                if (filter.BookingId.HasValue)
-                {
-                    query = query.Where(p => p.BookingId == filter.BookingId.Value);
-                }
-
-                if (filter.PaymentDateFrom.HasValue)
-                {
-                    query = query.Where(p => p.TransactionDate >= filter.PaymentDateFrom.Value);
-                }
-
-                if (filter.PaymentDateTo.HasValue)
-                {
-                    query = query.Where(p => p.TransactionDate <= filter.PaymentDateTo.Value);
-                }
-
-                if (filter.MinAmount.HasValue)
-                {
-                    query = query.Where(p => p.Amount >= filter.MinAmount.Value);
-                }
-
-                if (filter.MaxAmount.HasValue)
-                {
-                    query = query.Where(p => p.Amount <= filter.MaxAmount.Value);
-                }
-
-                // Get total count
-                var totalCount = await _unitOfWork.BookingPayments.CountAsync(query);
-
-                // Apply sorting
-                string sortBy = filter.SortBy?.ToLower() ?? "paymentdate";
-                string sortOrder = filter.SortOrder?.ToLower() ?? "desc";
-
-                if (sortBy == "paymentdate")
-                {
-                    query = sortOrder == "asc"
-                        ? query.OrderBy(p => p.TransactionDate)
-                        : query.OrderByDescending(p => p.TransactionDate);
-                }
-                else if (sortBy == "amount")
-                {
-                    query = sortOrder == "asc"
-                        ? query.OrderBy(p => p.Amount)
-                        : query.OrderByDescending(p => p.Amount);
-                }
-                else if (sortBy == "status")
-                {
-                    query = sortOrder == "asc"
-                        ? query.OrderBy(p => p.Status)
-                        : query.OrderByDescending(p => p.Status);
-                }
-                else
-                {
-                    query = query.OrderByDescending(p => p.TransactionDate);
-                }
-
-                // Get paged results
-                var payments = await _unitOfWork.BookingPayments.GetPagedAsync(
-                    query: query,
-                    orderBy: null,
-                    skip: (filter.Page - 1) * filter.PageSize,
-                    take: filter.PageSize,
-                    includeProperties: "Booking"
-                );
-
-                // Map to DTOs
-                var paymentDtos = payments.Select(PaymentMapper.ToPaymentDetailsResponseDto).ToList();
-
-                _logger.LogInformation("Retrieved {Count} payments for user {UserId} out of {Total} total",
-                    paymentDtos.Count, userId, totalCount);
-
-                return new PagedResultDto<PaymentDetailsResponseDto>
-                {
-                    Items = paymentDtos,
-                    Page = filter.Page,
-                    PageSize = filter.PageSize,
-                    TotalCount = totalCount
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting payments for user {UserId}", userId);
                 throw;
             }
         }

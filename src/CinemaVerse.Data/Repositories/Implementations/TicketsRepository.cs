@@ -42,37 +42,6 @@ namespace CinemaVerse.Data.Repositories.Implementations
             }
             
         }
-        public async Task<Ticket?> GetByTicketNumberAsync(string TicketNumber)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(TicketNumber))
-                {
-                    _logger.LogWarning("Invalid TicketNumber provided: {TicketNumber}", TicketNumber);
-                    throw new ArgumentException("TicketNumber cannot be null or empty", nameof(TicketNumber));
-                }
-                _logger.LogInformation("Getting ticket by ticket number {TicketNumber}", TicketNumber);
-                var Result = await _dbSet
-                .Include(t => t.Seat)
-                .Include(t => t.Booking)
-                .FirstOrDefaultAsync(t => t.TicketNumber == TicketNumber);
-                if (Result == null)
-                {
-                    _logger.LogWarning("Ticket with ticket number {TicketNumber} not found", TicketNumber);
-                }
-                else
-                {
-                    _logger.LogInformation("Ticket with ticket number {TicketNumber} retrieved successfully", TicketNumber);
-                }
-                return Result;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex,"Error getting ticket by ticket number {TicketNumber}", TicketNumber);
-                throw;
-            }
-        }
-
         public async Task<Ticket?> GetTicketWithDetailsAsync(int TicketId)
         {
             try

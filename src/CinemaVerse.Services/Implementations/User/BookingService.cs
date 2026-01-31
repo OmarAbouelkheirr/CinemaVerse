@@ -4,10 +4,8 @@ using CinemaVerse.Data.Repositories;
 using CinemaVerse.Services.Constants;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminBooking.Requests;
 using CinemaVerse.Services.DTOs.Common;
-using CinemaVerse.Services.DTOs.Email.Requests;
 using CinemaVerse.Services.DTOs.Payment.Requests;
 using CinemaVerse.Services.DTOs.Ticket.Response;
-using CinemaVerse.Services.DTOs.UserFlow.Booking.Helpers;
 using CinemaVerse.Services.Interfaces.User;
 using CinemaVerse.Services.Mappers;
 using Microsoft.Data.SqlClient;
@@ -213,7 +211,7 @@ namespace CinemaVerse.Services.Implementations.User
             }
         }
 
-        public async Task<BookingDetailsDto> CreateBookingAsync( CreateBookingRequestDto request)
+        public async Task<BookingDetailsDto> CreateBookingAsync(CreateBookingRequestDto request)
         {
             await _unitOfWork.BeginTransactionAsync(IsolationLevel.Serializable);
             try
@@ -238,12 +236,11 @@ namespace CinemaVerse.Services.Implementations.User
                 if (duplicateSeats.Any())
                     throw new ArgumentException($"Duplicate SeatIds found: {string.Join(", ", duplicateSeats)}");
 
-                foreach (var seatId in request.SeatIds)
-                {
-                    bool seatReserved = await _unitOfWork.MovieShowTimes.IsSeatReservedAsync(request.MovieShowTimeId, seatId);
-                    if (seatReserved)
-                        throw new InvalidOperationException($"SeatId {seatId} is already reserved for the selected showtime.");
-                }
+                var reservedSeatIds = await _unitOfWork.MovieShowTimes.GetReservedSeatIdsAsync(request.MovieShowTimeId);
+                var reservedSet = reservedSeatIds.ToHashSet();
+                var alreadyReserved = request.SeatIds.Where(seatId => reservedSet.Contains(seatId)).ToList();
+                if (alreadyReserved.Any())
+                    throw new InvalidOperationException($"SeatId {string.Join(", ", alreadyReserved)} is already reserved for the selected showtime.");
 
                 var totalAmount = (movieShowTime.Price * request.SeatIds.Count) * 1.14m;
 

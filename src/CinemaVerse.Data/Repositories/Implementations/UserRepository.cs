@@ -50,46 +50,6 @@ namespace CinemaVerse.Data.Repositories.Implementations
             }
         }
 
-        public async Task<User?> GetUserWithBookingsAsync(int userId)
-        {
-            try
-            {
-                _logger.LogInformation("Getting user {UserId} with bookings", userId);
-
-                if (userId <= 0)
-                {
-                    _logger.LogWarning("Invalid UserId: {UserId}", userId);
-                    throw new ArgumentException("UserId must be greater than zero.", nameof(userId));
-                }
-
-                var user = await _dbSet
-                    .AsNoTracking()
-                    .Include(u => u.Bookings)
-                        .ThenInclude(b => b.MovieShowTime)
-                            .ThenInclude(mst => mst.Movie)
-                    .Include(u => u.Bookings)
-                        .ThenInclude(b => b.Tickets)
-                    .FirstOrDefaultAsync(u => u.Id == userId);
-
-                if (user == null)
-                {
-                    _logger.LogWarning("User with Id {UserId} not found", userId);
-                }
-                else
-                {
-                    _logger.LogInformation("Successfully retrieved user {UserId} with {BookingCount} bookings", 
-                        userId, user.Bookings.Count);
-                }
-
-                return user;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting user {UserId} with bookings", userId);
-                throw;
-            }
-        }
-
         public async Task<bool> IsEmailExistsAsync(string email)
         {
             try
