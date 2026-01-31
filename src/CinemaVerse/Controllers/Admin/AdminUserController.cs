@@ -40,7 +40,9 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAllUsers([FromQuery] AdminUserFilterDto filter)
         {
-            _logger.LogInformation("Admin: Getting all users, Page {Page}, PageSize {PageSize}", filter?.Page ?? 1, filter?.PageSize ?? 20);
+            if (filter == null)
+                filter = new AdminUserFilterDto();
+            _logger.LogInformation("Admin: Getting all users, Page {Page}, PageSize {PageSize}", filter.Page, filter.PageSize);
             var result = await _adminUserService.GetAllUsersAsync(filter);
             return Ok(result);
         }
@@ -140,7 +142,9 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetUserBookings(int id, [FromQuery] AdminBookingFilterDto filter)
         {
-            _logger.LogInformation("Admin: Getting bookings for user {UserId}, Page {Page}, PageSize {PageSize}", id, filter?.Page ?? 1, filter?.PageSize ?? 10);
+            if (filter == null)
+                filter = new AdminBookingFilterDto();
+            _logger.LogInformation("Admin: Getting bookings for user {UserId}, Page {Page}, PageSize {PageSize}", id, filter.Page, filter.PageSize);
             var result = await _bookingService.GetUserBookingsAsync(id, filter);
             return Ok(result);
         }
@@ -153,7 +157,9 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetUserTickets(int id, [FromQuery] AdminTicketFilterDto filter)
         {
-            _logger.LogInformation("Admin: Getting tickets for user {UserId}, Page {Page}, PageSize {PageSize}", id, filter?.Page ?? 1, filter?.PageSize ?? 10);
+            if (filter == null)
+                filter = new AdminTicketFilterDto();
+            _logger.LogInformation("Admin: Getting tickets for user {UserId}, Page {Page}, PageSize {PageSize}", id, filter.Page, filter.PageSize);
             var result = await _ticketService.GetUserTicketsAsync(id, filter);
             return Ok(result);
         }
@@ -165,7 +171,9 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetUserPayments(int id, [FromQuery] AdminPaymentFilterDto filter)
         {
-            _logger.LogInformation("Admin: Getting payments for user {UserId}, Page {Page}, PageSize {PageSize}", id, filter?.Page ?? 1, filter?.PageSize ?? 10);
+            if (filter == null)
+                filter = new AdminPaymentFilterDto();
+            _logger.LogInformation("Admin: Getting payments for user {UserId}, Page {Page}, PageSize {PageSize}", id, filter.Page, filter.PageSize);
             var result = await _paymentService.GetUserPaymentsAsync(id, filter);
             return Ok(result);
         }

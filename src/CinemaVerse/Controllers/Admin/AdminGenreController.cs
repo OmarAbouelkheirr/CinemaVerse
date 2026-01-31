@@ -28,7 +28,9 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAllGenres([FromQuery] AdminGenreFilterDto filter)
         {
-            _logger.LogInformation("Admin: Getting all genres, Page {Page}, PageSize {PageSize}", filter?.Page ?? 1, filter?.PageSize ?? 20);
+            if (filter == null)
+                filter = new AdminGenreFilterDto();
+            _logger.LogInformation("Admin: Getting all genres, Page {Page}, PageSize {PageSize}", filter.Page, filter.PageSize);
             var result = await _adminGenreService.GetAllGenresAsync(filter);
             return Ok(result);
         }

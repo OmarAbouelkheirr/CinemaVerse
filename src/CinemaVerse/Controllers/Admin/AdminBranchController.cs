@@ -28,7 +28,9 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAllBranches([FromQuery] AdminBranchFilterDto filter)
         {
-            _logger.LogInformation("Admin: Getting all branches, Page {Page}, PageSize {PageSize}", filter?.Page ?? 1, filter?.PageSize ?? 20);
+            if (filter == null)
+                filter = new AdminBranchFilterDto();
+            _logger.LogInformation("Admin: Getting all branches, Page {Page}, PageSize {PageSize}", filter.Page, filter.PageSize);
             var result = await _adminBranchService.GetAllBranchesAsync(filter);
             return Ok(result);
         }

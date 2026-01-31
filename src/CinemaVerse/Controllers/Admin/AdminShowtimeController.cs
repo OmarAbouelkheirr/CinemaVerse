@@ -28,7 +28,9 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetShowtimes([FromQuery] AdminShowtimeFilterDto adminShowtimeFilterDto)
         {
-            _logger.LogInformation("Admin: Getting all showtimes, Page {Page}, PageSize {PageSize}", adminShowtimeFilterDto?.Page ?? 1, adminShowtimeFilterDto?.PageSize ?? 20);
+            if (adminShowtimeFilterDto == null)
+                adminShowtimeFilterDto = new AdminShowtimeFilterDto();
+            _logger.LogInformation("Admin: Getting all showtimes, Page {Page}, PageSize {PageSize}", adminShowtimeFilterDto.Page, adminShowtimeFilterDto.PageSize);
             var result = await _adminShowtimeService.GetAllShowtimesAsync(adminShowtimeFilterDto);
             return Ok(result);
         }

@@ -27,7 +27,9 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAllPayments([FromQuery] AdminPaymentFilterDto filter)
         {
-            _logger.LogInformation("Admin: Getting all Payments, Page {Page}, PageSize {PageSize}", filter?.Page ?? 1, filter?.PageSize ?? 10);
+            if (filter == null)
+                filter = new AdminPaymentFilterDto();
+            _logger.LogInformation("Admin: Getting all Payments, Page {Page}, PageSize {PageSize}", filter.Page, filter.PageSize);
             var result = await _adminPaymentService.GetAllPaymentsAsync(filter);
             return Ok(result);
         }

@@ -27,7 +27,9 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAllBookings([FromQuery] AdminBookingFilterDto filter)
         {
-            _logger.LogInformation("Admin: Getting all Bookings, Page {Page}, PageSize {PageSize}", filter?.Page ?? 1, filter?.PageSize ?? 10);
+            if (filter == null)
+                filter = new AdminBookingFilterDto();
+            _logger.LogInformation("Admin: Getting all Bookings, Page {Page}, PageSize {PageSize}", filter.Page, filter.PageSize);
             var result = await _adminBookingService.GetAllBookingsAsync(filter);
             return Ok(result);
         }

@@ -1,4 +1,3 @@
-using CinemaVerse.Extensions;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminHall.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminHall.Response;
 using CinemaVerse.Services.DTOs.Common;
@@ -28,7 +27,9 @@ namespace CinemaVerse.API.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAllHalls([FromQuery] AdminHallFilterDto filter)
         {
-            _logger.LogInformation("Admin: Getting all Halls, Page {Page}, PageSize {PageSize}", filter?.Page ?? 1, filter?.PageSize ?? 20);
+            if (filter == null)
+                filter = new AdminHallFilterDto();
+            _logger.LogInformation("Admin: Getting all Halls, Page {Page}, PageSize {PageSize}", filter.Page, filter.PageSize);
             var result = await _adminHallService.GetAllHallsAsync(filter);
             return Ok(result);
         }
