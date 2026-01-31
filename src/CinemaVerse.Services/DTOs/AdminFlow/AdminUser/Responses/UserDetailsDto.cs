@@ -1,4 +1,4 @@
-﻿using CinemaVerse.Data.Enums;
+using CinemaVerse.Data.Enums;
 
 namespace CinemaVerse.Services.DTOs.AdminFlow.AdminUser.Responses
 {
@@ -15,6 +15,7 @@ namespace CinemaVerse.Services.DTOs.AdminFlow.AdminUser.Responses
         public bool IsActive { get; set; }
         public bool IsEmailConfirmed { get; set; }
         public Genders Gender { get; set; }
+        public UserRole Role { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }

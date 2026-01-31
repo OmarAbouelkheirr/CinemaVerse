@@ -33,5 +33,8 @@ namespace CinemaVerse.Services.DTOs.AdminFlow.AdminUser.Requests
 
         [EnumDataType(typeof(Genders), ErrorMessage = "Invalid gender")]
         public Genders? Gender { get; set; }
+
+        [EnumDataType(typeof(UserRole), ErrorMessage = "Invalid role")]
+        public UserRole? Role { get; set; }
     }
 }

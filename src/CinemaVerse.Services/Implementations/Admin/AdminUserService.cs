@@ -153,6 +153,9 @@ namespace CinemaVerse.Services.Implementations.Admin
                 if (request.IsEmailConfirmed.HasValue)
                     user.IsEmailConfirmed = request.IsEmailConfirmed.Value;
 
+                if (request.Role.HasValue)
+                    user.Role = request.Role.Value;
+
                 user.LastUpdatedAt = DateTime.UtcNow;
 
                 await _unitOfWork.Users.UpdateAsync(user);
