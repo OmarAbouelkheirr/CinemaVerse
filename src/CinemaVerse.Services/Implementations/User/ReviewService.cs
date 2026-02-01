@@ -201,5 +201,5 @@ namespace CinemaVerse.Services.Implementations.User
             _logger.LogInformation("Updated movie {MovieId} rating to {Rating}", movieId, movie.MovieRating);
         }
 
-            }
+    }
 }

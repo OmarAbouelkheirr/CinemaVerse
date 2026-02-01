@@ -1,22 +1,14 @@
 using System.Text;
 using CinemaVerse.Data.Data;
 using CinemaVerse.Data.Repositories;
+using CinemaVerse.Extensions;
 using CinemaVerse.Filters;
 using CinemaVerse.Middleware;
-using CinemaVerse.Services.Implementations;
-using CinemaVerse.Services.Implementations.Admin;
-using CinemaVerse.Services.Implementations.User;
-using CinemaVerse.Services.Interfaces;
-using CinemaVerse.Services.Interfaces.Admin;
-using CinemaVerse.Services.Interfaces.User;
-using CinemaVerse.BackgroundServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
-using CinemaVerse.Services.Interfaces.Background;
-using CinemaVerse.Services.Implementations.Background;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,36 +30,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // --- Data / Infrastructure ---
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-// --- Auth & Email ---
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IEmailService, EmailService>();
-
-// --- User Services ---
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IMovieService, MovieService>();
-builder.Services.AddScoped<ITicketService, TicketService>();
-builder.Services.AddScoped<IHallSeatService, HallSeatService>();
-builder.Services.AddScoped<IBookingService, BookingService>();
-builder.Services.AddScoped<IPaymentService, PaymentService>();
-builder.Services.AddScoped<IReviewService, ReviewService>();
-
-// --- Admin Services ---
-builder.Services.AddScoped<IAdminBookingService, AdminBookingService>();
-builder.Services.AddScoped<IAdminBranchService, AdminBranchService>();
-builder.Services.AddScoped<IAdminGenreService, AdminGenreService>();
-builder.Services.AddScoped<IAdminHallService, AdminHallService>();
-builder.Services.AddScoped<IAdminMovieService, AdminMovieService>();
-builder.Services.AddScoped<IAdminPaymentService, AdminPaymentService>();
-builder.Services.AddScoped<IAdminSeatService, AdminSeatService>();
-builder.Services.AddScoped<IAdminShowtimeService, AdminShowtimeService>();
-builder.Services.AddScoped<IAdminTicketService, AdminTicketService>();
-builder.Services.AddScoped<IAdminUserService, AdminUserService>();
-
-// --- Background Services ---
-builder.Services.AddScoped<IExpirePendingBookingsService, ExpirePendingBookingsService>();
-builder.Services.AddHostedService<ExpirePendingBookingsBackgroundService>();
-builder.Services.AddScoped<IShowReminderService, ShowReminderService>();
-builder.Services.AddHostedService<ShowReminderBackgroundService>();
+// --- Application Services (Auth, User, Admin, Background) ---
+builder.Services.AddUserServices();
+builder.Services.AddAdminServices();
+builder.Services.AddBackgroundServices();
 
 builder.Services.AddScoped<ModelStateValidationFilter>();
 builder.Services.AddControllers(options =>

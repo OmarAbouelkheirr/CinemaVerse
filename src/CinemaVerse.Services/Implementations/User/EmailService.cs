@@ -40,7 +40,7 @@ namespace CinemaVerse.Services.Implementations.User
                 _logger.LogInformation("Sending booking cancellation email to {Email} for BookingId: {BookingId}",
                     emailDto.To, emailDto.BookingId);
 
-                // ✅ Render Razor template
+ 
                 string htmlBody = await _razorEngine.CompileRenderAsync($"{_assemblyName}.Helpers.Templates.BookingCancellationEmail.cshtml", emailDto);
 
                 await SendEmailAsync(new SendEmailDto
@@ -67,7 +67,7 @@ namespace CinemaVerse.Services.Implementations.User
                 _logger.LogInformation("Sending booking confirmation email to {Email} for BookingId: {BookingId}",
                     emailDto.To, emailDto.BookingId);
 
-                // ✅ Render Razor template
+ 
                 string htmlBody = await _razorEngine.CompileRenderAsync($"{_assemblyName}.Helpers.Templates.BookingConfirmationEmail.cshtml", emailDto);
 
                 await SendEmailAsync(new SendEmailDto
@@ -198,7 +198,7 @@ namespace CinemaVerse.Services.Implementations.User
                 _logger.LogInformation("Sending payment confirmation email to {Email} for BookingId: {BookingId}",
                     emailDto.To, emailDto.BookingId);
 
-                // ✅ Render Razor template
+ 
                 string htmlBody = await _razorEngine.CompileRenderAsync($"{_assemblyName}.Helpers.Templates.PaymentConfirmationEmail.cshtml", emailDto);
 
                 await SendEmailAsync(new SendEmailDto

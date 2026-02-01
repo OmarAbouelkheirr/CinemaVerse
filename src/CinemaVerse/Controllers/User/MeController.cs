@@ -48,8 +48,6 @@ namespace CinemaVerse.API.Controllers.User
         {
             if (request == null)
                 return BadRequest(new { error = "Request body is required." });
-            if (!ModelState.IsValid)
-                return this.BadRequestFromValidation(ModelState);
 
             var userId = this.GetCurrentUserId();
             if (userId == null)

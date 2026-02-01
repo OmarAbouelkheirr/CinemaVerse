@@ -4,7 +4,6 @@ using CinemaVerse.Data.Repositories;
 using CinemaVerse.Services.Constants;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminHall.Requests;
 using CinemaVerse.Services.DTOs.AdminFlow.AdminHall.Response;
-using CinemaVerse.Services.DTOs.AdminFlow.AdminSeat.Response;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.Interfaces.Admin;
 using CinemaVerse.Services.Mappers;
@@ -21,6 +20,7 @@ namespace CinemaVerse.Services.Implementations.Admin
             _logger = logger;
             _unitOfWork = unitOfWork;
         }
+
         public async Task<int> CreateHallAsync(CreateHallRequestDto request)
         {
             await _unitOfWork.BeginTransactionAsync();
@@ -184,31 +184,6 @@ namespace CinemaVerse.Services.Implementations.Admin
             return seats;
         }
 
-        private sealed class SeatLayoutConfig
-        {
-            public int SeatsPerRow { get; set; }
-
-            public List<int> SeatColumns { get; set; } = new();
-
-            public int NumberOfRows { get; set; } = 5;
-
-            public SeatLayoutConfig WithRowCountFromCapacity(int capacity)
-            {
-                int seatsPerRow = SeatColumns.Count;
-                if (seatsPerRow <= 0 || capacity <= 0)
-                {
-                    NumberOfRows = 0;
-                }
-                else
-                {
-                    NumberOfRows = Math.Max(NumberOfRows,
-                        (int)Math.Ceiling(capacity / (double)seatsPerRow));
-                }
-
-                return this;
-            }
-        }
-
         public async Task DeleteHallAsync(int hallId)
         {
             try
@@ -289,7 +264,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
                 {
                     var searchLower = filter.SearchTerm.ToLower();
-                    query = query.Where(h =>h.HallNumber.ToLower().Contains(searchLower));
+                    query = query.Where(h => h.HallNumber.ToLower().Contains(searchLower));
                 }
 
                 var totalCount = await _unitOfWork.Halls.CountAsync(query);
@@ -371,6 +346,32 @@ namespace CinemaVerse.Services.Implementations.Admin
             {
                 _logger.LogError(ex, "Error occurred while getting hall with id {hallId}.", hallId);
                 throw;
+            }
+        }
+
+
+        private sealed class SeatLayoutConfig
+        {
+            public int SeatsPerRow { get; set; }
+
+            public List<int> SeatColumns { get; set; } = new();
+
+            public int NumberOfRows { get; set; } = 5;
+
+            public SeatLayoutConfig WithRowCountFromCapacity(int capacity)
+            {
+                int seatsPerRow = SeatColumns.Count;
+                if (seatsPerRow <= 0 || capacity <= 0)
+                {
+                    NumberOfRows = 0;
+                }
+                else
+                {
+                    NumberOfRows = Math.Max(NumberOfRows,
+                        (int)Math.Ceiling(capacity / (double)seatsPerRow));
+                }
+
+                return this;
             }
         }
     }
