@@ -13,6 +13,8 @@ namespace CinemaVerse.Services.DTOs.Movie.Requests
         public DateOnly? ReleaseDateFrom { get; set; }
         public DateOnly? ReleaseDateTo { get; set; }
         public MovieStatus? Status { get; set; }
+        [StringLength(100, ErrorMessage = "Language must not exceed 100 characters")]
+        public string? Language { get; set; }
 
         [StringLength(50, ErrorMessage = "Sort by must not exceed 50 characters")]
         public string SortBy { get; set; } = "ReleaseDate";

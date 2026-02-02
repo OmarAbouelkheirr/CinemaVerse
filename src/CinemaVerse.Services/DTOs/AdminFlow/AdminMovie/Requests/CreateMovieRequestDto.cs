@@ -45,6 +45,9 @@ namespace CinemaVerse.Services.DTOs.AdminFlow.AdminMovie.Requests
         [MinLength(1, ErrorMessage = "At least one image is required")]
         public List<string> ImageUrls { get; set; } = new();
 
+        [StringLength(100, ErrorMessage = "Language must not exceed 100 characters")]
+        public string? Language { get; set; }
+
         [EnumDataType(typeof(MovieStatus), ErrorMessage = "Invalid movie status")]
         public MovieStatus Status { get; set; } = MovieStatus.Active;
     }

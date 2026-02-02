@@ -13,6 +13,7 @@ namespace CinemaVerse.Data.Models
         public DateOnly ReleaseDate { get; set; }
         public string TrailerUrl { get; set; } = string.Empty;
         public string MoviePoster { get; set; } = string.Empty;
+        public string Language { get; set; } = string.Empty;
         public MovieStatus Status { get; set; } = MovieStatus.Active;
 
         // Navigation Properties

@@ -18,6 +18,7 @@ namespace CinemaVerse.Services.Mappers
                 MovieRating = movie.MovieRating,
                 TrailerUrl = movie.TrailerUrl ?? string.Empty,
                 MoviePoster = movie.MoviePoster ?? string.Empty,
+                Language = movie.Language ?? string.Empty,
                 Status = movie.Status,
                 CastMembers = movie.CastMembers?
                     .OrderBy(c => c.DisplayOrder)
@@ -59,6 +60,7 @@ namespace CinemaVerse.Services.Mappers
                 MoviePosterImageUrl = movie.MoviePoster ?? string.Empty,
                 MovieDuration = movie.MovieDuration.ToString(@"hh\:mm"),
                 Genres = movie.MovieGenres?.Select(mg => mg.Genre?.GenreName ?? string.Empty).Where(s => !string.IsNullOrEmpty(s)).ToList() ?? new List<string>(),
+                Language = movie.Language,
                 MovieRating = movie.MovieRating
             };
         }

@@ -52,6 +52,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                     MovieRating = 0,
                     TrailerUrl = request.TrailerUrl!,
                     MoviePoster = request.MoviePoster ?? string.Empty,
+                    Language = request.Language ?? string.Empty,
                     Status = request.Status
                 };
                 await _unitOfWork.Movies.AddAsync(movie);
@@ -198,6 +199,9 @@ namespace CinemaVerse.Services.Implementations.Admin
                 if (request.MoviePoster != null)
                     movie.MoviePoster = request.MoviePoster;
 
+                if (request.Language != null)
+                    movie.Language = request.Language;
+
                 // MovieRating is driven by user reviews only - do not update from Admin
 
                 if (request.Status.HasValue)
@@ -322,6 +326,11 @@ namespace CinemaVerse.Services.Implementations.Admin
                 if (filter.Status.HasValue)
                 {
                     query = query.Where(m => m.Status == filter.Status.Value);
+                }
+
+                if (!string.IsNullOrWhiteSpace(filter.Language))
+                {
+                    query = query.Where(m => m.Language == filter.Language);
                 }
 
                 // Get total count before pagination

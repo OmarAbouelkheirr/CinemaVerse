@@ -81,6 +81,11 @@ namespace CinemaVerse.Services.Implementations.User
                     query = query.Where(m => m.Status == browseDto.Status.Value);
                 }
 
+                if (!string.IsNullOrWhiteSpace(browseDto.Language))
+                {
+                    query = query.Where(m => m.Language == browseDto.Language);
+                }
+
                 // Get total count before pagination
                 var totalCount = await _unitOfWork.Movies.CountAsync(query);
 
