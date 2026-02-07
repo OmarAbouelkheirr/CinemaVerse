@@ -1,4 +1,4 @@
-﻿using CinemaVerse.Data.Enums;
+using CinemaVerse.Data.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace CinemaVerse.Services.DTOs.AdminFlow.AdminHall.Requests
@@ -8,10 +8,6 @@ namespace CinemaVerse.Services.DTOs.AdminFlow.AdminHall.Requests
         [Required(ErrorMessage = "Branch ID is required")]
         [Range(1, int.MaxValue, ErrorMessage = "Branch ID must be greater than 0")]
         public int BranchId { get; set; }
-
-        [Required(ErrorMessage = "Capacity is required")]
-        [Range(10, 1000, ErrorMessage = "Capacity must be between 10 and 1000 seats")]
-        public int Capacity { get; set; }
 
         [Required(ErrorMessage = "Hall number is required")]
         [StringLength(20, MinimumLength = 1, ErrorMessage = "Hall number must be between 1 and 20 characters")]

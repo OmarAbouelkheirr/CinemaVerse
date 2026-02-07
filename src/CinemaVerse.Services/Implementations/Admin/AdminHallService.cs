@@ -36,10 +36,11 @@ namespace CinemaVerse.Services.Implementations.Admin
                 if (hallNumberExists)
                     throw new InvalidOperationException($"A hall with number {request.HallNumber} already exists in this branch.");
 
+                var capacity = HallTypeLayoutConfig.GetCapacity(request.HallType);
                 var newHall = new Hall
                 {
                     BranchId = request.BranchId,
-                    Capacity = request.Capacity,
+                    Capacity = capacity,
                     HallNumber = request.HallNumber,
                     HallStatus = request.HallStatus,
                     HallType = request.HallType
@@ -49,8 +50,8 @@ namespace CinemaVerse.Services.Implementations.Admin
                 await _unitOfWork.Halls.AddAsync(newHall);
                 await _unitOfWork.SaveChangesAsync(); // Needed to get Hall.Id
 
-                // 2) Generate seats for this hall based on HallType
-                var seats = GenerateSeatsForHall(newHall.Id, newHall.HallType, newHall.Capacity);
+                // 2) Generate seats for this hall based on HallType (fixed layout, full rows only)
+                var seats = GenerateSeatsForHall(newHall.Id, newHall.HallType);
 
                 foreach (var seat in seats)
                 {
@@ -74,110 +75,30 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
-        private List<Seat> GenerateSeatsForHall(int hallId, HallType hallType, int capacity)
+        private List<Seat> GenerateSeatsForHall(int hallId, HallType hallType)
         {
-            // Decide layout configuration per hall type
-            SeatLayoutConfig layout = hallType switch
-            {
-                HallType.VIP => GetVipHallLayout(capacity),
-                HallType.IMAX => GetImaxHallLayout(capacity),
-                HallType.ScreenX => GetScreenXHallLayout(capacity),
-                HallType.ThreeD => GetThreeDHallLayout(capacity),
-                _ => GetStandardHallLayout(capacity) // TwoD & default
-            };
-
-            return GenerateSeatsFromLayout(hallId, layout, capacity);
+            var layout = HallTypeLayoutConfig.GetLayout(hallType);
+            return GenerateSeatsFromLayout(hallId, layout);
         }
 
-        private SeatLayoutConfig GetStandardHallLayout(int capacity)
-        {
-            return new SeatLayoutConfig
-            {
-                SeatsPerRow = 10,
-                SeatColumns = Enumerable.Range(1, 10).Where(c => c is <= 4 or >= 7).ToList()
-                // 8 seats per row, small gap (5-6) in middle
-            }.WithRowCountFromCapacity(capacity);
-        }
-
-        private SeatLayoutConfig GetThreeDHallLayout(int capacity)
-        {
-            return new SeatLayoutConfig
-            {
-                SeatsPerRow = 12,
-                SeatColumns = Enumerable.Range(1, 12).Where(c => c is <= 4 or >= 9).ToList()
-                // 8 seats per row, wider gap (5-8) in middle for more privacy
-            }.WithRowCountFromCapacity(capacity);
-        }
-
-        private SeatLayoutConfig GetImaxHallLayout(int capacity)
-        {
-            return new SeatLayoutConfig
-            {
-                SeatsPerRow = 14,
-                SeatColumns = Enumerable.Range(1, 14).Where(c => c is <= 5 or >= 11).ToList()
-                // 9 seats per row, very wide gap (6-10) in middle for premium experience
-            }.WithRowCountFromCapacity(capacity);
-        }
-
-        private SeatLayoutConfig GetScreenXHallLayout(int capacity)
-        {
-            return new SeatLayoutConfig
-            {
-                SeatsPerRow = 14,
-                SeatColumns = Enumerable.Range(1, 14).Where(c => (c >= 2 && c <= 5) || (c >= 10 && c <= 13)).ToList()
-                // 8 seats per row, large gaps on sides (1, 14) and middle (6-9) for curved screen experience
-            }.WithRowCountFromCapacity(capacity);
-        }
-
-        private SeatLayoutConfig GetVipHallLayout(int capacity)
-        {
-            return new SeatLayoutConfig
-            {
-                SeatsPerRow = 10,
-                SeatColumns = Enumerable.Range(1, 10).Where(c => c is <= 2 or >= 9).ToList()
-                // Only 4 seats per row! Huge gap (3-8) in middle for maximum privacy and luxury
-            }.WithRowCountFromCapacity(capacity);
-        }
-
-        private List<Seat> GenerateSeatsFromLayout(int hallId, SeatLayoutConfig layout, int capacity)
+        private static List<Seat> GenerateSeatsFromLayout(int hallId, HallLayoutInfo layout)
         {
             var seats = new List<Seat>();
-
-            // Maximum seats per row (physical seats, excluding gaps)
-            int seatsPerPhysicalRow = layout.SeatColumns.Count;
-
-            if (seatsPerPhysicalRow == 0 || capacity <= 0)
-            {
+            if (layout.NumberOfRows <= 0 || layout.SeatColumns.Count == 0)
                 return seats;
-            }
-
-            // Calculate how many rows we need to reach (or slightly exceed) the requested capacity
-            int neededRows = (int)Math.Ceiling(capacity / (double)seatsPerPhysicalRow);
-            int rowsToGenerate = Math.Max(layout.NumberOfRows, neededRows);
 
             char rowLetter = 'A';
-            int createdSeats = 0;
-
-            for (int row = 0; row < rowsToGenerate && createdSeats < capacity; row++)
+            for (int row = 0; row < layout.NumberOfRows; row++)
             {
                 foreach (var col in layout.SeatColumns)
                 {
-                    if (createdSeats >= capacity)
-                    {
-                        break;
-                    }
-
                     string seatLabel = $"{rowLetter}{col}";
-
                     seats.Add(new Seat
                     {
                         HallId = hallId,
                         SeatLabel = seatLabel
                     });
-
-                    createdSeats++;
                 }
-
                 rowLetter++;
             }
 
@@ -215,6 +136,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 var hall = await _unitOfWork.Halls.GetByIdAsync(hallId);
                 if (hall == null)
                     throw new KeyNotFoundException($"Hall with id {hallId} not found.");
+
                 if (request.BranchId.HasValue && request.BranchId.Value != hall.BranchId)
                 {
                     var branch = await _unitOfWork.Branches.GetByIdAsync(request.BranchId.Value);
@@ -223,23 +145,49 @@ namespace CinemaVerse.Services.Implementations.Admin
                     hall.BranchId = request.BranchId.Value;
                 }
 
-                if (request.Capacity.HasValue)
-                    hall.Capacity = request.Capacity.Value;
-
                 if (!string.IsNullOrWhiteSpace(request.HallNumber))
                     hall.HallNumber = request.HallNumber;
 
                 if (request.HallStatus.HasValue)
                     hall.HallStatus = request.HallStatus.Value;
 
+                var hallTypeChanged = request.HallType.HasValue && request.HallType.Value != hall.HallType;
                 if (request.HallType.HasValue)
                     hall.HallType = request.HallType.Value;
 
-                await _unitOfWork.Halls.UpdateAsync(hall);
-                var result = await _unitOfWork.SaveChangesAsync();
-                _logger.LogInformation("Successfully edited hall with id: {hallId}", hallId);
+                if (hallTypeChanged)
+                {
+                    await _unitOfWork.BeginTransactionAsync();
+                    try
+                    {
+                        hall.Capacity = HallTypeLayoutConfig.GetCapacity(hall.HallType);
+                        var existingSeats = (await _unitOfWork.Seats.FindAllAsync(s => s.HallId == hallId)).ToList();
+                        foreach (var seat in existingSeats)
+                            await _unitOfWork.Seats.DeleteAsync(seat);
+                        await _unitOfWork.SaveChangesAsync();
 
-                return result;
+                        var newSeats = GenerateSeatsForHall(hallId, hall.HallType);
+                        foreach (var seat in newSeats)
+                            await _unitOfWork.Seats.AddAsync(seat);
+
+                        await _unitOfWork.Halls.UpdateAsync(hall);
+                        var result = await _unitOfWork.SaveChangesAsync();
+                        await _unitOfWork.CommitTransactionAsync();
+                        _logger.LogInformation("Successfully edited hall with id: {hallId}, hall type changed; regenerated {SeatCount} seats.", hallId, newSeats.Count);
+                        return result;
+                    }
+                    catch (Exception ex)
+                    {
+                        await _unitOfWork.RollbackTransactionAsync();
+                        _logger.LogError(ex, "Error while updating hall type and regenerating seats for hall {hallId}.", hallId);
+                        throw;
+                    }
+                }
+
+                await _unitOfWork.Halls.UpdateAsync(hall);
+                var saveResult = await _unitOfWork.SaveChangesAsync();
+                _logger.LogInformation("Successfully edited hall with id: {hallId}", hallId);
+                return saveResult;
             }
             catch (Exception ex)
             {
@@ -346,32 +294,6 @@ namespace CinemaVerse.Services.Implementations.Admin
             {
                 _logger.LogError(ex, "Error occurred while getting hall with id {hallId}.", hallId);
                 throw;
-            }
-        }
-
-
-        private sealed class SeatLayoutConfig
-        {
-            public int SeatsPerRow { get; set; }
-
-            public List<int> SeatColumns { get; set; } = new();
-
-            public int NumberOfRows { get; set; } = 5;
-
-            public SeatLayoutConfig WithRowCountFromCapacity(int capacity)
-            {
-                int seatsPerRow = SeatColumns.Count;
-                if (seatsPerRow <= 0 || capacity <= 0)
-                {
-                    NumberOfRows = 0;
-                }
-                else
-                {
-                    NumberOfRows = Math.Max(NumberOfRows,
-                        (int)Math.Ceiling(capacity / (double)seatsPerRow));
-                }
-
-                return this;
             }
         }
     }
