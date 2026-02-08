@@ -6,6 +6,7 @@ using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.DTOs.UserFlow.Movie.Flow;
 using CinemaVerse.Services.Interfaces.Admin;
 using CinemaVerse.Services.Mappers;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace CinemaVerse.Services.Implementations.Admin
@@ -14,10 +15,13 @@ namespace CinemaVerse.Services.Implementations.Admin
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<AdminMovieService> _logger;
-        public AdminMovieService(IUnitOfWork unitOfWork, ILogger<AdminMovieService> logger)
+        private readonly IMemoryCache _cache;
+
+        public AdminMovieService(IUnitOfWork unitOfWork, ILogger<AdminMovieService> logger, IMemoryCache cache)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
+            _cache = cache;
         }
         public async Task<int> CreateMovieAsync(CreateMovieRequestDto request)
         {
@@ -96,6 +100,7 @@ namespace CinemaVerse.Services.Implementations.Admin
                 await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.CommitTransactionAsync();
 
+                _cache.Remove(CacheKeys.AllMovies);
                 _logger.LogInformation("Successfully created movie {MovieId}: {MovieName}", movie.Id, request.MovieName);
                 return movie.Id;
             }
@@ -119,6 +124,8 @@ namespace CinemaVerse.Services.Implementations.Admin
                     throw new KeyNotFoundException($"Movie with ID {movieId} not found.");
                 await _unitOfWork.Movies.DeleteAsync(movie);
                 await _unitOfWork.SaveChangesAsync();
+                _cache.Remove(CacheKeys.AllMovies);
+                _cache.Remove(CacheKeys.MovieById(movieId));
             }
             catch (Exception ex)
             {
@@ -261,6 +268,8 @@ namespace CinemaVerse.Services.Implementations.Admin
                 var result = await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.CommitTransactionAsync();
 
+                _cache.Remove(CacheKeys.AllMovies);
+                _cache.Remove(CacheKeys.MovieById(movieId));
                 _logger.LogInformation("Successfully updated movie {MovieId}", movieId);
                 return result;
             }

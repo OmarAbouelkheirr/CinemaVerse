@@ -5,6 +5,8 @@ using CinemaVerse.Extensions;
 using CinemaVerse.Filters;
 using CinemaVerse.Infrastructure;
 using CinemaVerse.Middleware;
+using CinemaVerse.Services.Constants;
+using Microsoft.Extensions.Caching.Memory;
 using Hangfire;
 using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -45,6 +47,9 @@ builder.Services.AddHangfireServer();
 
 // --- Data / Infrastructure ---
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+builder.Services.Configure<CachingOptions>(builder.Configuration.GetSection(CachingOptions.SectionName));
+builder.Services.AddMemoryCache();
 
 // --- Application Services (Auth, User, Admin, Background) ---
 builder.Services.AddUserServices();

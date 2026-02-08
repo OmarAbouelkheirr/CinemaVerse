@@ -1,13 +1,15 @@
+using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories;
 using CinemaVerse.Services.Constants;
-using CinemaVerse.Services.DTOs.UserFlow.Movie.Flow;
 using CinemaVerse.Services.DTOs.Movie.Requests;
+using CinemaVerse.Services.DTOs.UserFlow.Movie.Flow;
 using CinemaVerse.Services.DTOs.UserFlow.Movie.Response;
 using CinemaVerse.Services.Interfaces.User;
 using CinemaVerse.Services.Mappers;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using CinemaVerse.Data.Enums;
+using Microsoft.Extensions.Options;
 
 namespace CinemaVerse.Services.Implementations.User
 {
@@ -15,11 +17,15 @@ namespace CinemaVerse.Services.Implementations.User
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<MovieService> _logger;
+        private readonly IMemoryCache _cache;
+        private readonly CachingOptions _cachingOptions;
 
-        public MovieService(IUnitOfWork unitOfWork, ILogger<MovieService> logger)
+        public MovieService(IUnitOfWork unitOfWork, ILogger<MovieService> logger, IMemoryCache cache, IOptions<CachingOptions> cachingOptions)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
+            _cache = cache;
+            _cachingOptions = cachingOptions.Value;
         }
 
         public async  Task<BrowseMoviesResponseDto> BrowseMoviesAsync(BrowseMoviesFilterDto browseDto)
@@ -149,16 +155,32 @@ namespace CinemaVerse.Services.Implementations.User
         {
             try
             {
-                _logger.LogInformation("Getting movie details for id: {movieId}", movieId);
-
                 if (movieId <= 0)
                     throw new ArgumentException("Movie ID must be a positive integer.", nameof(movieId));
-                var movie = await _unitOfWork.Movies.GetMovieWithDetailsByIdAsync(movieId);
-                if (movie == null)
-                    throw new KeyNotFoundException($"Movie with ID {movieId} not found.");
 
+                if (!_cachingOptions.EnableCaching)
+                {
+                    var movie = await _unitOfWork.Movies.GetMovieWithDetailsByIdAsync(movieId);
+                    if (movie == null)
+                        throw new KeyNotFoundException($"Movie with ID {movieId} not found.");
+                    return MovieMapper.ToMovieDetailsDto(movie);
+                }
+
+                var result = await _cache.GetOrCreateAsync(CacheKeys.MovieById(movieId), async entry =>
+                {
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_cachingOptions.Minutes);
+                    var movie = await _unitOfWork.Movies.GetMovieWithDetailsByIdAsync(movieId);
+                    return movie == null ? null : MovieMapper.ToMovieDetailsDto(movie);
+                });
+
+                if (result == null)
+                    throw new KeyNotFoundException($"Movie with ID {movieId} not found.");
                 _logger.LogInformation("Successfully retrieved details for movie ID {movieId}", movieId);
-                return MovieMapper.ToMovieDetailsDto(movie);
+                return result;
+            }
+            catch (KeyNotFoundException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -171,5 +193,5 @@ namespace CinemaVerse.Services.Implementations.User
 
 
 
-            }
+    }
 }

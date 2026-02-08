@@ -9,7 +9,9 @@
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.0" />
+<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
+<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.0" />
     <PackageReference Include="Stripe.net" Version="50.2.0" />
     <PackageReference Include="RazorLight" Version="2.2.0" />
