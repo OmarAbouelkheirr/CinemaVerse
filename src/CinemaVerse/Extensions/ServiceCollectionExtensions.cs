@@ -40,6 +40,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAdminShowtimeService, AdminShowtimeService>();
         services.AddScoped<IAdminTicketService, AdminTicketService>();
         services.AddScoped<IAdminUserService, AdminUserService>();
+        services.AddScoped<IAdminDashboard, AdminDashboardService>();
         return services;
     }
 

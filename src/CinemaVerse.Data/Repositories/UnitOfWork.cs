@@ -28,6 +28,7 @@ namespace CinemaVerse.Data.Repositories
         private IRepository<BookingSeat>? _bookingSeats;
         private IUserRepository? _users;
         private IRepository<Review>? _reviews;
+        private IDashboardRepository? _dashboard;
 
         private readonly AppDbContext _context;
         private IDbContextTransaction? _transaction;
@@ -55,6 +56,7 @@ namespace CinemaVerse.Data.Repositories
         public IRepository<BookingSeat> BookingSeat => _bookingSeats ??= new Repository<BookingSeat>(_context, _loggerFactory.CreateLogger<BookingSeat>());
         public IUserRepository Users => _users ??= new UserRepository(_context, _loggerFactory.CreateLogger<User>());
         public IRepository<Review> Reviews => _reviews ??= new Repository<Review>(_context, _loggerFactory.CreateLogger<Review>());
+        public IDashboardRepository Dashboard => _dashboard ??= new DashboardRepository(_context, _loggerFactory.CreateLogger<DashboardRepository>());
 
         public async Task BeginTransactionAsync()
         {

@@ -21,6 +21,7 @@ namespace CinemaVerse.Data.Repositories
         IRepository<BookingSeat> BookingSeat { get; }
         IUserRepository Users { get; }
         IRepository<Review> Reviews { get; }
+        IDashboardRepository Dashboard { get; }
 
         Task<int> SaveChangesAsync();
         Task BeginTransactionAsync();
