@@ -1,3 +1,4 @@
+using CinemaVerse.Services.DTOs.AdminFlow.AdminDashboard.Response;
 using CinemaVerse.Services.Interfaces.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,25 +27,8 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> GetSummary()
         {
             _logger.LogInformation("Admin: Getting dashboard summary.");
-            var totalRevenueTask = _adminDashboard.GetTotalRevenue();
-            var totalBookingsTask = _adminDashboard.GetTotalBookings();
-            var activeUsersTask = _adminDashboard.GetActiveUsers();
-            var occupancyRateTask = _adminDashboard.CalculateOccupancyRate();
-            var monthlyRevenueTask = _adminDashboard.GetMonthlyRevenue();
-            var weeklyBookingsTask = _adminDashboard.GetWeeklyBookings();
-
-            await Task.WhenAll(totalRevenueTask, totalBookingsTask, activeUsersTask, occupancyRateTask, monthlyRevenueTask, weeklyBookingsTask);
-
-            var summary = new
-            {
-                totalRevenue = await totalRevenueTask,
-                totalBookings = await totalBookingsTask,
-                activeUsers = await activeUsersTask,
-                occupancyRate = await occupancyRateTask,
-                monthlyRevenue = await monthlyRevenueTask,
-                weeklyBookings = await weeklyBookingsTask
-            };
-            return Ok(summary);
+            var summary = await _adminDashboard.GetDashboardSummaryAsync();
+            return Ok(DashboardSummaryResponseDto.From(summary));
         }
 
         [HttpGet("total-revenue")]

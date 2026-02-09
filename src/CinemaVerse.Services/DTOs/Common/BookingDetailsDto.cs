@@ -13,6 +13,8 @@ namespace CinemaVerse.Services.DTOs.Common
         public DateTime CreatedAt { get; set; }
         public DateTime? ExpiresAt { get; set; }
 
+        public string? CustomerName { get; set; }
+
         public ShowtimeDto Showtime { get; set; } = new();
         public List<SeatDto> BookedSeats { get; set; } = new();
         public List<TicketDetailsDto> Tickets { get; set; } = new();

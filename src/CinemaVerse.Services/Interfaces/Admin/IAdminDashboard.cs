@@ -1,14 +1,15 @@
+using CinemaVerse.Services.DTOs.AdminFlow.AdminDashboard.Response;
+
 namespace CinemaVerse.Services.Interfaces.Admin
 {
     public interface IAdminDashboard
     {
-        public Task<decimal> GetTotalRevenue();
-        public Task<decimal> GetTotalBookings();
-        public Task<decimal> GetActiveUsers();
-        public Task<decimal> CalculateOccupancyRate();
-        public Task<Dictionary<string, decimal>> GetMonthlyRevenue();
-        public Task<Dictionary<string, decimal>> GetWeeklyBookings();
-
-
+        Task<DashboardSummaryDto> GetDashboardSummaryAsync();
+        Task<decimal> GetTotalRevenue();
+        Task<decimal> GetTotalBookings();
+        Task<decimal> GetActiveUsers();
+        Task<decimal> CalculateOccupancyRate();
+        Task<Dictionary<string, decimal>> GetMonthlyRevenue();
+        Task<Dictionary<string, decimal>> GetWeeklyBookings();
     }
 }

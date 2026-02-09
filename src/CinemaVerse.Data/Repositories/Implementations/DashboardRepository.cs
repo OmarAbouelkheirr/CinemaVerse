@@ -152,5 +152,53 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 throw;
             }
         }
+
+        public async Task<decimal> GetTotalRevenueForPeriodAsync(DateTime from, DateTime to)
+        {
+            var totalRevenue = await _context.Bookings
+                .Where(b => b.Status == BookingStatus.Confirmed && b.CreatedAt >= from && b.CreatedAt < to)
+                .SumAsync(b => (decimal?)b.TotalAmount) ?? 0m;
+            return totalRevenue;
+        }
+
+        public async Task<decimal> GetTotalBookingsForPeriodAsync(DateTime from, DateTime to)
+        {
+            var count = await _context.Bookings
+                .CountAsync(b => b.Status == BookingStatus.Confirmed && b.CreatedAt >= from && b.CreatedAt < to);
+            return count;
+        }
+
+        public async Task<decimal> GetActiveUsersForPeriodAsync(DateTime from, DateTime to)
+        {
+            var count = await _context.Users.CountAsync(u =>
+                u.IsActive &&
+                u.Bookings.Any(b => b.Status == BookingStatus.Confirmed && b.CreatedAt >= from && b.CreatedAt < to));
+            return count;
+        }
+
+        public async Task<decimal> GetOccupancyRateForPeriodAsync(DateTime from, DateTime to)
+        {
+            var showTimeIdsInPeriod = await _context.MovieShowTimes
+                .Where(ms => ms.ShowStartTime >= from && ms.ShowStartTime < to)
+                .Select(ms => ms.Id)
+                .ToListAsync();
+            if (showTimeIdsInPeriod.Count == 0)
+                return 0m;
+            var rates = await _context.Bookings
+                .Where(b => b.Status == BookingStatus.Confirmed && showTimeIdsInPeriod.Contains(b.MovieShowTimeId))
+                .GroupBy(b => b.MovieShowTimeId)
+                .Select(g => new
+                {
+                    ShowTimeId = g.Key,
+                    OccupiedSeats = g.Sum(b => b.BookingSeats.Count),
+                    TotalSeats = _context.MovieShowTimes
+                        .Where(ms => ms.Id == g.Key)
+                        .SelectMany(ms => ms.Hall.Seats)
+                        .Count()
+                })
+                .Select(x => x.TotalSeats > 0 ? (decimal)x.OccupiedSeats / x.TotalSeats * 100 : 0m)
+                .ToListAsync();
+            return rates.Count > 0 ? rates.Average() : 0m;
+        }
     }
 }
