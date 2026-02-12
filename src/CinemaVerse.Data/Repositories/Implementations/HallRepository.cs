@@ -1,6 +1,5 @@
 
 using CinemaVerse.Data.Data;
-using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +14,7 @@ namespace CinemaVerse.Data.Repositories.Implementations
         public HallRepository(AppDbContext context, ILogger<Hall> logger)
     : base(context, logger)
         {
-            _context = context??throw new ArgumentNullException(nameof(context));
+            _context = context ?? throw new ArgumentNullException(nameof(context));
 
         }
 
@@ -29,7 +28,6 @@ namespace CinemaVerse.Data.Repositories.Implementations
                     .Include(h => h.Branch)
                     .Include(h => h.Seats)
                      .Include(h => h.MovieShowTimes)
-                    //.Include(h => h.MovieShowTimes.Where(st => st.ShowStartTime > DateTime.UtcNow))
                     .FirstOrDefaultAsync(h => h.Id == id);
 
                 if (hall == null)
