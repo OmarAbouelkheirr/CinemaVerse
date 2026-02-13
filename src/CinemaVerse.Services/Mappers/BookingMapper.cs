@@ -37,6 +37,7 @@ namespace CinemaVerse.Services.Mappers
                 TotalAmount = booking.TotalAmount,
                 CreatedAt = booking.CreatedAt,
                 ExpiresAt = booking.ExpiresAt,
+                CustomerName = booking.User?.FullName,
                 Showtime = new ShowtimeDto
                 {
                     MovieShowTimeId = booking.MovieShowTime?.Id ?? 0,

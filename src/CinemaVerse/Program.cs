@@ -3,7 +3,12 @@ using CinemaVerse.Data.Data;
 using CinemaVerse.Data.Repositories;
 using CinemaVerse.Extensions;
 using CinemaVerse.Filters;
+using CinemaVerse.Infrastructure;
 using CinemaVerse.Middleware;
+using CinemaVerse.Services.Constants;
+using Microsoft.Extensions.Caching.Memory;
+using Hangfire;
+using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -28,8 +33,24 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+// --- Hangfire (Background Jobs) ---
+builder.Services.AddHangfire(configuration =>
+{
+    configuration
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UseSqlServerStorage(connectionString, new SqlServerStorageOptions
+        {
+            PrepareSchemaIfNecessary = true
+        });
+});
+builder.Services.AddHangfireServer();
+
 // --- Data / Infrastructure ---
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+builder.Services.Configure<CachingOptions>(builder.Configuration.GetSection(CachingOptions.SectionName));
+builder.Services.AddMemoryCache();
 
 // --- Application Services (Auth, User, Admin, Background) ---
 builder.Services.AddUserServices();
@@ -129,7 +150,13 @@ app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Hangfire Dashboard (consider securing with authorization later)
+app.UseHangfireDashboard("/hangfire");
+
 app.MapControllers();
+
+// Configure Hangfire recurring jobs
+HangfireJobsConfigurator.ConfigureRecurringJobs();
 
 try
 {

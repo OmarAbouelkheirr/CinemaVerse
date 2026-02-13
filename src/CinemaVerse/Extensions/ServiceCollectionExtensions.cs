@@ -1,4 +1,3 @@
-using CinemaVerse.BackgroundServices;
 using CinemaVerse.Services.Implementations;
 using CinemaVerse.Services.Implementations.Admin;
 using CinemaVerse.Services.Implementations.Background;
@@ -41,15 +40,14 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAdminShowtimeService, AdminShowtimeService>();
         services.AddScoped<IAdminTicketService, AdminTicketService>();
         services.AddScoped<IAdminUserService, AdminUserService>();
+        services.AddScoped<IAdminDashboard, AdminDashboardService>();
         return services;
     }
 
     public static IServiceCollection AddBackgroundServices(this IServiceCollection services)
     {
         services.AddScoped<IExpirePendingBookingsService, ExpirePendingBookingsService>();
-        services.AddHostedService<ExpirePendingBookingsBackgroundService>();
         services.AddScoped<IShowReminderService, ShowReminderService>();
-        services.AddHostedService<ShowReminderBackgroundService>();
         return services;
     }
 }
