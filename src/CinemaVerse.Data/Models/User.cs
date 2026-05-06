@@ -22,6 +22,10 @@ namespace CinemaVerse.Data.Models.Users
         public DateTime LastUpdatedAt { get; set; }
 
         public UserRole Role { get; set; }
+        public string? RefreshTokenHash { get; set; }
+        public DateTime? RefreshTokenExpiresAt { get; set; }
+        public DateTime? RefreshTokenRevokedAt { get; set; }
+
 
         // Navigation Properties
         public ICollection<Booking> Bookings { get; set; } = new List<Booking>();

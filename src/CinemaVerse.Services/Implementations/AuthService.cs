@@ -1,16 +1,17 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
 using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Repositories;
 using CinemaVerse.Services.DTOs.Email.Requests;
 using CinemaVerse.Services.DTOs.UserFlow.Auth;
 using CinemaVerse.Services.Interfaces;
-using CinemaVerse.Services.Mappers;
 using CinemaVerse.Services.Interfaces.User;
+using CinemaVerse.Services.Mappers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using UserEntity = CinemaVerse.Data.Models.Users.User; // علشان بيحصل مشكله في الاسماء
-using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
+using UserEntity = CinemaVerse.Data.Models.Users.User;
 
 namespace CinemaVerse.Services.Implementations
 {
@@ -204,6 +205,16 @@ namespace CinemaVerse.Services.Implementations
                 expires: expiresAt,
                 signingCredentials: creds);
 
+            var refreshToken = GenerateRefreshToken();
+
+            user.RefreshTokenHash = BCrypt.Net.BCrypt.HashPassword(refreshToken);
+            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(7);
+            user.RefreshTokenRevokedAt = null;
+            user.LastUpdatedAt = DateTime.UtcNow;
+
+            await _unitOfWork.Users.UpdateAsync(user);  
+            await _unitOfWork.SaveChangesAsync();
+
             _logger.LogInformation("User {UserId} with email {Email} logged in successfully", user.Id, user.Email);
 
             string tokenString = new JwtSecurityTokenHandler().WriteToken(token);
@@ -214,7 +225,8 @@ namespace CinemaVerse.Services.Implementations
                 ExpiresAt = expiresAt,
                 UserId = user.Id,
                 Email = user.Email,
-                Role = user.Role
+                Role = user.Role,
+                RefreshToken = refreshToken
             };
         }
 
@@ -428,6 +440,111 @@ namespace CinemaVerse.Services.Implementations
             await _unitOfWork.Users.UpdateAsync(user);
             await _unitOfWork.SaveChangesAsync();
             _logger.LogInformation("Password reset completed for UserId {UserId}", user.Id);
+            return true;
+        }
+
+
+        private static string GenerateRefreshToken()
+        {
+            var bytes = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(bytes);
+            return Convert.ToBase64String(bytes);
+        }
+
+        public async Task<RefreshTokenResponseDto> RefreshTokenAsync(RefreshRequestDto request)
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.RefreshToken))
+                throw new UnauthorizedAccessException("Invalid refresh token request.");
+
+            var user = await _unitOfWork.Users.GetByEmailAsync(request.Email.Trim());
+            if (user == null)
+                throw new UnauthorizedAccessException("Invalid refresh token.");
+
+            if (string.IsNullOrWhiteSpace(user.RefreshTokenHash))
+                throw new UnauthorizedAccessException("Invalid refresh token.");
+
+            if (user.RefreshTokenRevokedAt.HasValue)
+                throw new UnauthorizedAccessException("Refresh token has been revoked.");
+
+            if (!user.RefreshTokenExpiresAt.HasValue || user.RefreshTokenExpiresAt.Value <= DateTime.UtcNow)
+                throw new UnauthorizedAccessException("Refresh token has expired.");
+
+            var isRefreshTokenValid = BCrypt.Net.BCrypt.Verify(request.RefreshToken, user.RefreshTokenHash);
+            if (!isRefreshTokenValid)
+                throw new UnauthorizedAccessException("Invalid refresh token.");
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role.ToString())
+            };
+
+            var secret = _configuration["Jwt:Secret"] ?? throw new InvalidOperationException("Jwt:Secret is not configured.");
+            var issuer = _configuration["Jwt:Issuer"];
+            var audience = _configuration["Jwt:Audience"];
+            var expirationMinutes = _configuration.GetValue<int>("Jwt:ExpirationMinutes", 60);
+
+            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(secret));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var accessTokenExpiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes);
+            var accessToken = new JwtSecurityToken(
+                issuer: issuer,
+                audience: audience,
+                claims: claims,
+                expires: accessTokenExpiresAt,
+                signingCredentials: creds);
+
+            var newRefreshToken = GenerateRefreshToken();
+            user.RefreshTokenHash = BCrypt.Net.BCrypt.HashPassword(newRefreshToken);
+            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(7);
+            user.RefreshTokenRevokedAt = null;
+            user.LastUpdatedAt = DateTime.UtcNow;
+
+            await _unitOfWork.Users.UpdateAsync(user);
+            await _unitOfWork.SaveChangesAsync();
+
+            var accessTokenString = new JwtSecurityTokenHandler().WriteToken(accessToken);
+
+            _logger.LogInformation("Refresh token rotated successfully for UserId {UserId}", user.Id);
+
+            return new RefreshTokenResponseDto
+            {
+                AccessToken = accessTokenString,
+                RefreshToken = newRefreshToken
+            };
+        }
+
+        public async Task<bool> LogoutAsync(RefreshRequestDto request)
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.RefreshToken))
+                return false;
+
+            var user = await _unitOfWork.Users.GetByEmailAsync(request.Email.Trim());
+            if (user == null || string.IsNullOrWhiteSpace(user.RefreshTokenHash))
+                return false;
+
+            var isRefreshTokenValid = BCrypt.Net.BCrypt.Verify(request.RefreshToken, user.RefreshTokenHash);
+            if (!isRefreshTokenValid)
+                return false;
+
+            user.RefreshTokenRevokedAt = DateTime.UtcNow;
+            user.RefreshTokenExpiresAt = DateTime.UtcNow;
+            user.LastUpdatedAt = DateTime.UtcNow;
+
+            await _unitOfWork.Users.UpdateAsync(user);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("User {UserId} logged out successfully", user.Id);
+
             return true;
         }
     }

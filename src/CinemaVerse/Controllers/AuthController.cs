@@ -3,6 +3,7 @@ using CinemaVerse.Services.DTOs.UserFlow.Auth;
 using CinemaVerse.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace CinemaVerse.API.Controllers
 {
@@ -35,6 +36,7 @@ namespace CinemaVerse.API.Controllers
         }
 
         [HttpPost("login")]
+        [EnableRateLimiting("AuthLimiter")]
         [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -46,6 +48,37 @@ namespace CinemaVerse.API.Controllers
             var result = await _authService.LoginAsync(request);
             _logger.LogInformation("User logged in successfully with Id {UserId}", result.UserId);
             return Ok(result);
+        }
+
+        [HttpPost("refresh-token")]
+        [EnableRateLimiting("AuthLimiter")]
+        [ProducesResponseType(typeof(RefreshTokenResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshRequestDto request)
+        {
+            if (request == null)
+                return BadRequest(new { error = "Request body is required." });
+
+            var result = await _authService.RefreshTokenAsync(request);
+            return Ok(result);
+        }
+
+        [HttpPost("logout")]
+        [EnableRateLimiting("AuthLimiter")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> Logout([FromBody] RefreshRequestDto request)
+        {
+            if (request == null)
+                return BadRequest(new { error = "Request body is required." });
+
+            var success = await _authService.LogoutAsync(request);
+            if (!success)
+                return Unauthorized(new { error = "Invalid logout request." });
+
+            return Ok(new { message = "Logged out successfully." });
         }
 
         [HttpGet("verify-email")]
