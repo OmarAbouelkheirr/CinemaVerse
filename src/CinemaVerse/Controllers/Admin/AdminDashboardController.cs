@@ -80,7 +80,7 @@ namespace CinemaVerse.API.Controllers.Admin
         }
 
         [HttpGet("monthly-revenue")]
-        [ProducesResponseType(typeof(Dictionary<string, decimal>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ChartDataDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -88,11 +88,16 @@ namespace CinemaVerse.API.Controllers.Admin
         {
             _logger.LogInformation("Admin: Getting monthly revenue.");
             var result = await _adminDashboard.GetMonthlyRevenue();
-            return Ok(result);
+            var chartData = new ChartDataDto
+            {
+                Labels = result.Keys.ToList(),
+                Data = result.Values.ToList()
+            };
+            return Ok(chartData);
         }
 
         [HttpGet("weekly-bookings")]
-        [ProducesResponseType(typeof(Dictionary<string, decimal>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ChartDataDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -100,7 +105,12 @@ namespace CinemaVerse.API.Controllers.Admin
         {
             _logger.LogInformation("Admin: Getting weekly bookings.");
             var result = await _adminDashboard.GetWeeklyBookings();
-            return Ok(result);
+            var chartData = new ChartDataDto
+            {
+                Labels = result.Keys.ToList(),
+                Data = result.Values.ToList()
+            };
+            return Ok(chartData);
         }
     }
 }

@@ -43,7 +43,7 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> CreateShowtime([FromBody] CreateShowtimeRequestDto createShowtimeDto)
         {
             if (createShowtimeDto == null)
-                return BadRequest(new { error = "Request body is required." });
+                return BadRequest(new { error = new CinemaVerse.Models.ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
 
             _logger.LogInformation("Admin: Creating showtime for MovieId {MovieId}, HallId {HallId}", createShowtimeDto.MovieId, createShowtimeDto.HallId);
             var showtimeId = await _adminShowtimeService.CreateShowtimeAsync(createShowtimeDto);
@@ -73,7 +73,7 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> UpdateShowtime([FromRoute] int id, [FromBody] UpdateShowtimeRequestDto updateShowtimeDto)
         {
             if (updateShowtimeDto == null)
-                return BadRequest(new { error = "Request body is required." });
+                return BadRequest(new { error = new CinemaVerse.Models.ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
 
             _logger.LogInformation("Admin: Updating showtime with ID: {ShowtimeId}", id);
             await _adminShowtimeService.UpdateShowtimeAsync(id, updateShowtimeDto);
@@ -91,7 +91,7 @@ namespace CinemaVerse.API.Controllers.Admin
             _logger.LogInformation("Admin: Deleting showtime with ID: {ShowtimeId}", id);
             var deleted = await _adminShowtimeService.DeleteShowtimeAsync(id);
             if (!deleted)
-                return NotFound(new { error = "Showtime not found" });
+                return NotFound(new { error = new CinemaVerse.Models.ErrorResponse { Message = "Showtime not found.", Code = "NOT_FOUND" } });
             _logger.LogInformation("Showtime deleted successfully: {ShowtimeId}", id);
             return NoContent();
         }

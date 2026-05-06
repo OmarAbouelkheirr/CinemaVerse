@@ -6,8 +6,8 @@ namespace CinemaVerse.Services.Interfaces.Admin
 {
     public interface IAdminPaymentService
     {
-        public Task<PagedResultDto<PaymentDetailsResponseDto>> GetAllPaymentsAsync(AdminPaymentFilterDto filter);
-        public Task<PaymentDetailsResponseDto> GetPaymentByIdAsync(int paymentId);
-
+        Task<PagedResultDto<PaymentDetailsResponseDto>> GetAllPaymentsAsync(AdminPaymentFilterDto filter);
+        Task<PaymentDetailsResponseDto> GetPaymentByIdAsync(int paymentId);
+        Task<PaymentSummaryDto> GetPaymentSummaryAsync();
     }
 }

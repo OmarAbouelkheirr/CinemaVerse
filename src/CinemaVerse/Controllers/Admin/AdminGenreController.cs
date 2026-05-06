@@ -54,7 +54,7 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> CreateGenre([FromBody] CreateGenreRequestDto createGenreDto)
         {
             if (createGenreDto == null)
-                return BadRequest(new { error = "Request body is required." });
+                return BadRequest(new { error = new CinemaVerse.Models.ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
 
             _logger.LogInformation("Admin: Creating new genre");
             var genreId = await _adminGenreService.CreateGenreAsync(createGenreDto);
@@ -71,7 +71,7 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> EditGenre([FromRoute] int id, [FromBody] UpdateGenreRequestDto updateGenreDto)
         {
             if (updateGenreDto == null)
-                return BadRequest(new { error = "Request body is required." });
+                return BadRequest(new { error = new CinemaVerse.Models.ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
 
             _logger.LogInformation("Admin: Updating genre with ID: {GenreId}", id);
             await _adminGenreService.UpdateGenreAsync(id, updateGenreDto);

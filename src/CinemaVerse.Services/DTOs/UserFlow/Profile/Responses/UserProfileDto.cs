@@ -15,5 +15,9 @@ namespace CinemaVerse.Services.DTOs.UserFlow.Profile.Responses
         public bool IsEmailConfirmed { get; set; }
         public Genders Gender { get; set; }
         public DateTime CreatedAt { get; set; }
+
+        // Extra fields added for admin panel /api/me compatibility
+        public int Id => UserId;
+        public UserRole Role { get; set; }
     }
 }

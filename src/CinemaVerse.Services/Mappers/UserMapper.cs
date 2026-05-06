@@ -21,7 +21,8 @@ namespace CinemaVerse.Services.Mappers
                 DateOfBirth = user.DateOfBirth,
                 IsEmailConfirmed = user.IsEmailConfirmed,
                 Gender = user.Gender,
-                CreatedAt = user.CreatedAt
+                CreatedAt = user.CreatedAt,
+                Role = user.Role
             };
         }
 

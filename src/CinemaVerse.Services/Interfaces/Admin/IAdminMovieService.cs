@@ -1,4 +1,5 @@
 using CinemaVerse.Services.DTOs.AdminFlow.AdminMovie.Requests;
+using CinemaVerse.Services.DTOs.AdminFlow.AdminMovie.Response;
 using CinemaVerse.Services.DTOs.Common;
 using CinemaVerse.Services.DTOs.UserFlow.Movie.Flow;
 
@@ -12,5 +13,6 @@ namespace CinemaVerse.Services.Interfaces.Admin
 
         Task<MovieDetailsDto> GetMovieAsync(int movieId);
         Task<PagedResultDto<MovieDetailsDto>> GetAllMoviesAsync(AdminMovieFilterDto filter);
+        Task<MovieSummaryDto> GetMovieSummaryAsync();
     }
 }

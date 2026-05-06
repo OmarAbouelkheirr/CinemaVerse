@@ -144,7 +144,8 @@ namespace CinemaVerse.Services.Implementations.Admin
                     query: query,
                     orderBy: null,
                     skip: (filter.Page - 1) * filter.PageSize,
-                    take: filter.PageSize
+                    take: filter.PageSize,
+                    includeProperties: "Halls.MovieShowTimes"
                     );
                 var branchDtos = branches.Select(BranchMapper.ToDetailsResponseDto).ToList();
                 var pagedResult = new PagedResultDto<BranchDetailsResponseDto>
@@ -171,9 +172,19 @@ namespace CinemaVerse.Services.Implementations.Admin
                 _logger.LogInformation("Getting Branch with branch Id {branchId}", branchId);
                 if (branchId <= 0)
                     throw new ArgumentException("Branch ID must be a positive integer.", nameof(branchId));
-                var branch = await _unitOfWork.Branches.GetByIdAsync(branchId);
+
+                // Use GetPagedAsync to eagerly load Halls and their ShowTimes for aggregate computation
+                var results = await _unitOfWork.Branches.GetPagedAsync(
+                    query: _unitOfWork.Branches.GetQueryable().Where(b => b.Id == branchId),
+                    orderBy: null,
+                    skip: 0,
+                    take: 1,
+                    includeProperties: "Halls.MovieShowTimes"
+                );
+                var branch = results.FirstOrDefault();
                 if (branch == null)
                     throw new KeyNotFoundException($"Branch with Id {branchId} not found.");
+
                 var response = BranchMapper.ToDetailsResponseDto(branch);
                 _logger.LogInformation("Branch with Id {branchId} retrieved successfully", branchId);
                 return response;
@@ -181,6 +192,35 @@ namespace CinemaVerse.Services.Implementations.Admin
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting branch with branch Id {branchId}", branchId);
+                throw;
+            }
+        }
+
+        public async Task<BranchSummaryDto> GetBranchSummaryAsync()
+        {
+            try
+            {
+                _logger.LogInformation("Getting branch summary");
+
+                var branches = await _unitOfWork.Branches.GetPagedAsync(
+                    query: _unitOfWork.Branches.GetQueryable(),
+                    orderBy: null,
+                    skip: 0,
+                    take: int.MaxValue,
+                    includeProperties: "Halls.MovieShowTimes"
+                );
+
+                return new BranchSummaryDto
+                {
+                    TotalBranches = branches.Count,
+                    TotalHalls = branches.Sum(b => b.Halls?.Count ?? 0),
+                    TotalCapacity = branches.Sum(b => b.Halls?.Sum(h => h.Capacity) ?? 0),
+                    TotalShowtimes = branches.Sum(b => b.Halls?.Sum(h => h.MovieShowTimes?.Count ?? 0) ?? 0)
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting branch summary");
                 throw;
             }
         }

@@ -42,6 +42,12 @@ namespace CinemaVerse.Services.Mappers
 
         public static ShowtimeDetailsDto ToShowtimeDetailsDto(MovieShowTime movieShowTime)
         {
+            var totalSeats = movieShowTime.Hall?.Capacity ?? 0;
+            var bookedSeats = movieShowTime.Bookings?
+                .Where(b => b.Status == Data.Enums.BookingStatus.Confirmed || b.Status == Data.Enums.BookingStatus.Pending)
+                .SelectMany(b => b.BookingSeats ?? Enumerable.Empty<BookingSeat>())
+                .Count() ?? 0;
+
             return new ShowtimeDetailsDto
             {
                 Id = movieShowTime.Id,
@@ -56,7 +62,9 @@ namespace CinemaVerse.Services.Mappers
                 Price = movieShowTime.Price,
                 CreatedAt = movieShowTime.CreatedAt,
                 TotalBookings = movieShowTime.Bookings?.Count ?? 0,
-                TotalTickets = movieShowTime.Bookings?.SelectMany(b => b.Tickets ?? Enumerable.Empty<Ticket>()).Count() ?? 0
+                TotalTickets = movieShowTime.Bookings?.SelectMany(b => b.Tickets ?? Enumerable.Empty<Ticket>()).Count() ?? 0,
+                TotalSeats = totalSeats,
+                AvailableSeats = Math.Max(0, totalSeats - bookedSeats)
             };
         }
     }

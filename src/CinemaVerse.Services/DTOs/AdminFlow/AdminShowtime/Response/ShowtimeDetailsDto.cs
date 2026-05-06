@@ -15,5 +15,7 @@ namespace CinemaVerse.Services.DTOs.AdminFlow.AdminShowtime.Response
         public DateTime CreatedAt { get; set; }
         public int TotalBookings { get; set; }
         public int TotalTickets { get; set; }
+        public int TotalSeats { get; set; }
+        public int AvailableSeats { get; set; }
     }
 }

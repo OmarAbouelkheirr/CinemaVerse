@@ -143,15 +143,20 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
+app.UseStaticFiles(); // Added to serve uploaded images
 app.UseCors("CinemaVerseApiCorsPolicy");
+
 
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Hangfire Dashboard (consider securing with authorization later)
-app.UseHangfireDashboard("/hangfire");
+// Hangfire Dashboard (secured with Admin authorization)
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new HangfireAuthorizationFilter() }
+});
 
 app.MapControllers();
 

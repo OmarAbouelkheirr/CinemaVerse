@@ -56,7 +56,7 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> CreateMovie([FromBody] CreateMovieRequestDto request)
         {
             if (request == null)
-                return BadRequest(new { error = "Request body is required." });
+                return BadRequest(new { error = new CinemaVerse.Models.ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
 
             _logger.LogInformation("Admin: Creating new movie");
             var movieId = await _adminMovieService.CreateMovieAsync(request);
@@ -73,7 +73,7 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> UpdateMovie(int id, [FromBody] UpdateMovieRequestDto request)
         {
             if (request == null)
-                return BadRequest(new { error = "Request body is required." });
+                return BadRequest(new { error = new CinemaVerse.Models.ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
 
             _logger.LogInformation("Admin: Updating movie with ID: {MovieId}", id);
             await _adminMovieService.EditMovieAsync(id, request);
@@ -93,5 +93,16 @@ namespace CinemaVerse.API.Controllers.Admin
             _logger.LogInformation("Admin: Successfully deleted movie with ID: {MovieId}", id);
             return NoContent();
         }
+
+        [HttpGet("summary")]
+        [ProducesResponseType(typeof(Services.DTOs.AdminFlow.AdminMovie.Response.MovieSummaryDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetMovieSummary()
+        {
+            _logger.LogInformation("Admin: Getting movie summary");
+            var summary = await _adminMovieService.GetMovieSummaryAsync();
+            return Ok(summary);
+        }
     }
 }
+

@@ -17,5 +17,6 @@ namespace CinemaVerse.Services.DTOs.AdminFlow.AdminUser.Responses
         public Genders Gender { get; set; }
         public UserRole Role { get; set; }
         public DateTime CreatedAt { get; set; }
+        public decimal AverageSpend { get; set; }
     }
 }

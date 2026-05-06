@@ -9,9 +9,10 @@ namespace CinemaVerse.Services.Interfaces.Admin
         Task<PagedResultDto<AdminTicketListItemDto>> GetAllTicketsAsync(AdminTicketFilterDto filter);
         Task<AdminTicketDetailsDto> GetTicketByIdAsync(int ticketId);
         Task<TicketCheckResultDto> CheckTicketByQrTokenAsync(string qrToken);
-        //Task<bool> CancelTicketAsync(int ticketId); // مش دلوقتي
         Task<List<AdminTicketDetailsDto>> GetTicketsByBookingIdAsync(int bookingId);
         Task<List<AdminTicketDetailsDto>> GetTicketsByShowtimeIdAsync(int showtimeId);
         Task<TicketCheckInResultDto> MarkTicketAsUsedAsync(string qrToken);
+        Task DeleteTicketAsync(int ticketId);
+        Task<TicketSummaryDto> GetTicketSummaryAsync();
     }
 }

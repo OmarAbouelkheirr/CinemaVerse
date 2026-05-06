@@ -215,6 +215,11 @@ namespace CinemaVerse.Services.Implementations.Admin
                     query = query.Where(h => h.HallNumber.ToLower().Contains(searchLower));
                 }
 
+                if (filter.BranchId.HasValue)
+                {
+                    query = query.Where(h => h.BranchId == filter.BranchId.Value);
+                }
+
                 var totalCount = await _unitOfWork.Halls.CountAsync(query);
 
                 string sortBy = filter.SortBy?.ToLower() ?? "hallnumber";

@@ -69,7 +69,7 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> CreateUser([FromBody] CreateUserRequestDto request)
         {
             if (request == null)
-                return BadRequest(new { error = "Request body is required." });
+                return BadRequest(new { error = new CinemaVerse.Models.ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
 
             _logger.LogInformation("Admin: Creating new user");
             var userId = await _adminUserService.CreateUserAsync(request);
@@ -87,7 +87,7 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequestDto request)
         {
             if (request == null)
-                return BadRequest(new { error = "Request body is required." });
+                return BadRequest(new { error = new CinemaVerse.Models.ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
 
             _logger.LogInformation("Admin: Updating user with ID: {UserId}", id);
             await _adminUserService.UpdateUserAsync(id, request);
@@ -177,5 +177,31 @@ namespace CinemaVerse.API.Controllers.Admin
             var result = await _paymentService.GetUserPaymentsAsync(id, filter);
             return Ok(result);
         }
+
+        [HttpGet("export")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ExportUsers([FromQuery] AdminUserFilterDto filter)
+        {
+            if (filter == null) filter = new AdminUserFilterDto();
+            filter.Page = 1;
+            filter.PageSize = 10000; // max export size
+            
+            _logger.LogInformation("Admin: Exporting users to CSV");
+            var result = await _adminUserService.GetAllUsersAsync(filter);
+            
+            var builder = new System.Text.StringBuilder();
+            builder.AppendLine("ID,FullName,Email,PhoneNumber,City,Role,IsActive,IsEmailConfirmed");
+            
+            foreach (var user in result.Items)
+            {
+                var fullName = $"{user.FirstName} {user.LastName}";
+                builder.AppendLine($"{user.UserId},\"{fullName.Replace("\"", "\"\"")}\",\"{user.Email}\",\"{user.PhoneNumber}\",\"{user.City}\",\"{user.Role}\",{user.IsActive},{user.IsEmailConfirmed}");
+            }
+            
+            var bytes = System.Text.Encoding.UTF8.GetBytes(builder.ToString());
+            return File(bytes, "text/csv", $"users_export_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv");
+        }
     }
 }
+

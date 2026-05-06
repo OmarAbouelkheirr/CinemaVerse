@@ -155,9 +155,16 @@ namespace CinemaVerse.Services.Implementations.Admin
                 if (paymentId <= 0)
                     throw new ArgumentException("Payment ID must be a positive integer.", nameof(paymentId));
 
-                // Get payment with related entities
-                var payment = await _unitOfWork.BookingPayments.GetByIdAsync(paymentId);
+                // Use GetPagedAsync to load navigation properties needed by the enriched mapper
+                var results = await _unitOfWork.BookingPayments.GetPagedAsync(
+                    query: _unitOfWork.BookingPayments.GetQueryable().Where(p => p.Id == paymentId),
+                    orderBy: null,
+                    skip: 0,
+                    take: 1,
+                    includeProperties: "Booking.User,Booking.MovieShowTime.Movie"
+                );
 
+                var payment = results.FirstOrDefault();
                 if (payment == null)
                     throw new KeyNotFoundException($"Payment with ID {paymentId} not found.");
 
@@ -169,6 +176,41 @@ namespace CinemaVerse.Services.Implementations.Admin
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while getting payment with Id {PaymentId}", paymentId);
+                throw;
+            }
+        }
+
+        public async Task<PaymentSummaryDto> GetPaymentSummaryAsync()
+        {
+            try
+            {
+                _logger.LogInformation("Getting payment summary");
+
+                var query = _unitOfWork.BookingPayments.GetQueryable();
+
+                var allPayments = await _unitOfWork.BookingPayments.GetPagedAsync(
+                    query: query,
+                    orderBy: null,
+                    skip: 0,
+                    take: int.MaxValue,
+                    includeProperties: null
+                );
+
+                var summary = new PaymentSummaryDto
+                {
+                    TotalPayments = allPayments.Count,
+                    CompletedPayments = allPayments.Count(p => p.Status == Data.Enums.PaymentStatus.Completed),
+                    PendingPayments = allPayments.Count(p => p.Status == Data.Enums.PaymentStatus.Pending),
+                    FailedPayments = allPayments.Count(p => p.Status == Data.Enums.PaymentStatus.Failed),
+                    TotalRevenue = allPayments.Where(p => p.Status == Data.Enums.PaymentStatus.Completed).Sum(p => p.Amount)
+                };
+
+                _logger.LogInformation("Payment summary retrieved: Total={Total}, Revenue={Revenue}", summary.TotalPayments, summary.TotalRevenue);
+                return summary;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting payment summary");
                 throw;
             }
         }

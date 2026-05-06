@@ -14,7 +14,11 @@ namespace CinemaVerse.Services.Mappers
                 Amount = payment.Amount,
                 Currency = payment.Currency ?? "EGP",
                 TransactionDate = payment.TransactionDate,
-                Status = payment.Status
+                Status = payment.Status,
+                PaymentIntentId = payment.PaymentIntentId ?? string.Empty,
+                UserEmail = payment.Booking?.User?.Email ?? string.Empty,
+                UserFullName = payment.Booking?.User?.FullName ?? string.Empty,
+                MovieName = payment.Booking?.MovieShowTime?.Movie?.MovieName ?? string.Empty
             };
         }
     }

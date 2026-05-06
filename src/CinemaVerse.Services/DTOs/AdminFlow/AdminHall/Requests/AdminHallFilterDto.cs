@@ -6,6 +6,7 @@ namespace CinemaVerse.Services.DTOs.AdminFlow.AdminHall.Requests
     {
         [StringLength(200, ErrorMessage = "Search term must not exceed 200 characters")]
         public string? SearchTerm { get; set; }
+        public int? BranchId { get; set; }
         [StringLength(20, ErrorMessage = "Hall number must not exceed 20 characters")]
         public string? HallNumber { get; set; }
         [StringLength(20, ErrorMessage = "Capacity filter must not exceed 20 characters")]

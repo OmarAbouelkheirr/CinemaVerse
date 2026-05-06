@@ -70,11 +70,27 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> EditBooking([FromRoute] int id, [FromBody] UpdateBookingRequestDto updateBookingDto)
         {
             if (updateBookingDto == null)
-                return BadRequest(new { error = "Request body is required." });
+                return BadRequest(new { error = new CinemaVerse.Models.ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
 
             _logger.LogInformation("Admin: Updating Booking with ID: {BookingId}", id);
             await _adminBookingService.UpdateBookingStatusAsync(id, updateBookingDto.NewStatus);
             _logger.LogInformation("Booking with ID {BookingId} updated successfully", id);
+            return NoContent();
+        }
+
+        [HttpPatch("{id}/status")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdateBookingStatus([FromRoute] int id, [FromBody] CinemaVerse.Services.DTOs.AdminFlow.AdminBooking.Requests.UpdateBookingStatusRequestDto updateBookingDto)
+        {
+            if (updateBookingDto == null)
+                return BadRequest(new { error = new CinemaVerse.Models.ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
+
+            _logger.LogInformation("Admin: Patching Booking Status for ID: {BookingId}", id);
+            await _adminBookingService.UpdateBookingStatusAsync(id, updateBookingDto.Status);
+            _logger.LogInformation("Booking status with ID {BookingId} updated successfully", id);
             return NoContent();
         }
 
@@ -89,6 +105,30 @@ namespace CinemaVerse.API.Controllers.Admin
             await _adminBookingService.DeleteBookingAsync(id);
             _logger.LogInformation("Booking with ID {BookingId} deleted successfully", id);
             return NoContent();
+        }
+
+        [HttpGet("export")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ExportBookings([FromQuery] AdminBookingFilterDto filter)
+        {
+            if (filter == null) filter = new AdminBookingFilterDto();
+            filter.Page = 1;
+            filter.PageSize = 10000; // max export size
+            
+            _logger.LogInformation("Admin: Exporting bookings to CSV");
+            var result = await _adminBookingService.GetAllBookingsAsync(filter);
+            
+            var builder = new System.Text.StringBuilder();
+            builder.AppendLine("ID,CustomerName,BookingTime,TotalAmount,Status,SeatCount");
+            
+            foreach (var booking in result.Items)
+            {
+                builder.AppendLine($"{booking.BookingId},\"{booking.CustomerName}\",\"{booking.CreatedAt:yyyy-MM-dd HH:mm:ss}\",{booking.TotalAmount},\"{booking.Status}\",{booking.BookedSeats.Count}");
+            }
+            
+            var bytes = System.Text.Encoding.UTF8.GetBytes(builder.ToString());
+            return File(bytes, "text/csv", $"bookings_export_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv");
         }
     }
 }

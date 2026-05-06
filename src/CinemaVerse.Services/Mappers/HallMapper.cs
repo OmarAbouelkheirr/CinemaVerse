@@ -10,6 +10,7 @@ namespace CinemaVerse.Services.Mappers
         {
             return new HallDetailsResponseDto
             {
+                Id = hall.Id,
                 BranchId = hall.BranchId,
                 Capacity = hall.Capacity,
                 HallNumber = hall.HallNumber,

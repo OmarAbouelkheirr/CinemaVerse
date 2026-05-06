@@ -53,7 +53,7 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> CreateHall([FromBody] CreateHallRequestDto createHallDto)
         {
             if (createHallDto == null)
-                return BadRequest(new { error = "Request body is required." });
+                return BadRequest(new { error = new CinemaVerse.Models.ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
 
             _logger.LogInformation("Admin: Creating hall for BranchId {BranchId}", createHallDto.BranchId);
             var hallId = await _adminHallService.CreateHallAsync(createHallDto);
@@ -70,7 +70,7 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> EditHall([FromRoute] int id, [FromBody] UpdateHallRequestDto updateHallDto)
         {
             if (updateHallDto == null)
-                return BadRequest(new { error = "Request body is required." });
+                return BadRequest(new { error = new CinemaVerse.Models.ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
 
             _logger.LogInformation("Admin: Updating Hall with ID: {HallId}", id);
             await _adminHallService.EditHallAsync(id, updateHallDto);

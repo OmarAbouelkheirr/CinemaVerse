@@ -45,5 +45,15 @@ namespace CinemaVerse.API.Controllers.Admin
             var result = await _adminPaymentService.GetPaymentByIdAsync(id);
             return Ok(result);
         }
+
+        [HttpGet("summary")]
+        [ProducesResponseType(typeof(PaymentSummaryDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetPaymentSummary()
+        {
+            _logger.LogInformation("Admin: Getting payment summary");
+            var result = await _adminPaymentService.GetPaymentSummaryAsync();
+            return Ok(result);
+        }
     }
 }

@@ -409,5 +409,30 @@ namespace CinemaVerse.Services.Implementations.Admin
                 throw;
             }
         }
+
+        public async Task<Services.DTOs.AdminFlow.AdminMovie.Response.MovieSummaryDto> GetMovieSummaryAsync()
+        {
+            try
+            {
+                _logger.LogInformation("Getting movie summary");
+                
+                var totalMovies = await _unitOfWork.Movies.CountAsync();
+                var nowShowing = await _unitOfWork.Movies.CountAsync(m => m.Status == Data.Enums.MovieStatus.Active);
+                var comingSoon = await _unitOfWork.Movies.CountAsync(m => m.Status == Data.Enums.MovieStatus.ComingSoon);
+
+                return new Services.DTOs.AdminFlow.AdminMovie.Response.MovieSummaryDto
+                {
+                    TotalMovies = totalMovies,
+                    NowShowingCount = nowShowing,
+                    ComingSoonCount = comingSoon
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting movie summary");
+                throw;
+            }
+        }
     }
 }
+

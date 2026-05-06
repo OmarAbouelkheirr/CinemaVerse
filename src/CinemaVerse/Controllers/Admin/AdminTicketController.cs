@@ -87,5 +87,27 @@ namespace CinemaVerse.API.Controllers.Admin
             var result = await _adminTicketService.MarkTicketAsUsedAsync(qrToken);
             return Ok(result);
         }
+
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> DeleteTicket([FromRoute] int id)
+        {
+            _logger.LogInformation("Admin: Deleting ticket with ID: {TicketId}", id);
+            await _adminTicketService.DeleteTicketAsync(id);
+            return NoContent();
+        }
+
+        [HttpGet("summary")]
+        [ProducesResponseType(typeof(TicketSummaryDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetTicketSummary()
+        {
+            _logger.LogInformation("Admin: Getting ticket summary");
+            var result = await _adminTicketService.GetTicketSummaryAsync();
+            return Ok(result);
+        }
     }
 }

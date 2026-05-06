@@ -10,6 +10,9 @@ namespace CinemaVerse.Services.DTOs.AdminFlow.AdminUser.Requests
         [StringLength(256, ErrorMessage = "Email must not exceed 256 characters")]
         public string Email { get; set; } = string.Empty;
 
+        [StringLength(50, ErrorMessage = "Title must not exceed 50 characters")]
+        public string? Title { get; set; }
+
         [Required(ErrorMessage = "Password is required")]
         [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
         [StringLength(100, ErrorMessage = "Password must not exceed 100 characters")]

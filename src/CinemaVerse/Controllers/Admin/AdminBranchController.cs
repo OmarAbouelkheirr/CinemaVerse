@@ -15,10 +15,12 @@ namespace CinemaVerse.API.Controllers.Admin
     {
         private readonly ILogger<AdminBranchController> _logger;
         private readonly IAdminBranchService _adminBranchService;
+        private readonly IAdminHallService _adminHallService;
 
-        public AdminBranchController(IAdminBranchService adminBranchService, ILogger<AdminBranchController> logger)
+        public AdminBranchController(IAdminBranchService adminBranchService, IAdminHallService adminHallService, ILogger<AdminBranchController> logger)
         {
             _adminBranchService = adminBranchService;
+            _adminHallService = adminHallService;
             _logger = logger;
         }
 
@@ -47,6 +49,18 @@ namespace CinemaVerse.API.Controllers.Admin
             return Ok(result);
         }
 
+        [HttpGet("{id}/halls")]
+        [ProducesResponseType(typeof(PagedResultDto<CinemaVerse.Services.DTOs.AdminFlow.AdminHall.Response.HallDetailsResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetHallsByBranchId([FromRoute] int id)
+        {
+            _logger.LogInformation("Admin: Getting halls for branch ID: {BranchId}", id);
+            var filter = new CinemaVerse.Services.DTOs.AdminFlow.AdminHall.Requests.AdminHallFilterDto { BranchId = id, PageSize = int.MaxValue };
+            var result = await _adminHallService.GetAllHallsAsync(filter);
+            return Ok(result);
+        }
+
         [HttpPost]
         [ProducesResponseType(typeof(BranchDetailsResponseDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -54,7 +68,7 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> CreateBranch([FromBody] CreateBranchRequestDto createBranchDto)
         {
             if (createBranchDto == null)
-                return BadRequest(new { error = "Request body is required." });
+                return BadRequest(new { error = new CinemaVerse.Models.ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
 
             _logger.LogInformation("Admin: Creating new branch");
             var branchId = await _adminBranchService.CreateBranchAsync(createBranchDto);
@@ -71,7 +85,7 @@ namespace CinemaVerse.API.Controllers.Admin
         public async Task<IActionResult> EditBranch([FromRoute] int id, [FromBody] UpdateBranchRequestDto updateBranchDto)
         {
             if (updateBranchDto == null)
-                return BadRequest(new { error = "Request body is required." });
+                return BadRequest(new { error = new CinemaVerse.Models.ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
 
             _logger.LogInformation("Admin: Updating branch with ID: {BranchId}", id);
             await _adminBranchService.EditBranchAsync(id, updateBranchDto);
@@ -90,6 +104,16 @@ namespace CinemaVerse.API.Controllers.Admin
             await _adminBranchService.DeleteBranchAsync(id);
             _logger.LogInformation("Branch with ID {BranchId} deleted successfully", id);
             return NoContent();
+        }
+
+        [HttpGet("summary")]
+        [ProducesResponseType(typeof(BranchSummaryDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetBranchSummary()
+        {
+            _logger.LogInformation("Admin: Getting branch summary stats");
+            var result = await _adminBranchService.GetBranchSummaryAsync();
+            return Ok(result);
         }
     }
 }

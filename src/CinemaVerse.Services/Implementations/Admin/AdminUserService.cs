@@ -11,8 +11,7 @@ using CinemaVerse.Services.Interfaces.Admin;
 using CinemaVerse.Services.Interfaces.User;
 using CinemaVerse.Services.Mappers;
 using Microsoft.Extensions.Logging;
-using System.Security.Cryptography;
-using System.Text;
+
 using UserEntity = CinemaVerse.Data.Models.Users.User;
 
 namespace CinemaVerse.Services.Implementations.Admin
@@ -214,6 +213,13 @@ namespace CinemaVerse.Services.Implementations.Admin
                 throw new KeyNotFoundException($"User with ID {userId} not found.");
 
             var dto = UserMapper.ToUserDetailsDto(user);
+            
+            var userBookings = await _unitOfWork.Bookings.GetPagedAsync(
+                query: _unitOfWork.Bookings.GetQueryable().Where(b => b.UserId == userId),
+                orderBy: null, skip: 0, take: int.MaxValue);
+            
+            dto.AverageSpend = userBookings.Any() ? userBookings.Average(b => b.TotalAmount) : 0;
+
             _logger.LogInformation("Successfully retrieved user {UserId}: {Email}", userId, user.Email);
             return dto;
         }
@@ -425,13 +431,9 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
-        private string HashPassword(string password)
+        private static string HashPassword(string password)
         {
-            using (var sha256 = SHA256.Create())
-            {
-                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-                return Convert.ToBase64String(hashedBytes);
-            }
+            return BCrypt.Net.BCrypt.HashPassword(password);
         }
     }
 }

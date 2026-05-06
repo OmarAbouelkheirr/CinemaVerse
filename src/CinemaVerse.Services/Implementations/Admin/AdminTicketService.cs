@@ -349,5 +349,63 @@ namespace CinemaVerse.Services.Implementations.Admin
             }
         }
 
+        public async Task DeleteTicketAsync(int ticketId)
+        {
+            try
+            {
+                _logger.LogInformation("Deleting ticket with ID {TicketId}", ticketId);
+
+                if (ticketId <= 0)
+                    throw new ArgumentException("Ticket ID must be a positive integer.", nameof(ticketId));
+
+                var ticket = await _unitOfWork.Tickets.GetTicketWithDetailsAsync(ticketId);
+                if (ticket == null)
+                    throw new KeyNotFoundException($"Ticket with ID {ticketId} not found.");
+
+                if (ticket.Status == Data.Enums.TicketStatus.Used)
+                    throw new InvalidOperationException($"Cannot delete ticket {ticketId} because it has already been used.");
+
+                await _unitOfWork.Tickets.DeleteAsync(ticket);
+                await _unitOfWork.SaveChangesAsync();
+
+                _logger.LogInformation("Successfully deleted ticket {TicketId}", ticketId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting ticket with ID {TicketId}", ticketId);
+                throw;
+            }
+        }
+
+        public async Task<TicketSummaryDto> GetTicketSummaryAsync()
+        {
+            try
+            {
+                _logger.LogInformation("Getting ticket summary");
+                var totalTickets = await _unitOfWork.Tickets.CountAsync();
+                var activeTickets = await _unitOfWork.Tickets.CountAsync(t => t.Status == Data.Enums.TicketStatus.Active);
+                var usedTickets = await _unitOfWork.Tickets.CountAsync(t => t.Status == Data.Enums.TicketStatus.Used);
+                var cancelledTickets = await _unitOfWork.Tickets.CountAsync(t => t.Status == Data.Enums.TicketStatus.Cancelled);
+
+                var allTickets = await _unitOfWork.Tickets.GetPagedAsync(
+                    query: _unitOfWork.Tickets.GetQueryable(),
+                    orderBy: null, skip: 0, take: int.MaxValue);
+                var totalRevenue = allTickets.Sum(t => t.Price);
+
+                return new TicketSummaryDto
+                {
+                    TotalTickets = totalTickets,
+                    ActiveTickets = activeTickets,
+                    UsedTickets = usedTickets,
+                    CancelledTickets = cancelledTickets,
+                    TotalRevenue = totalRevenue
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting ticket summary");
+                throw;
+            }
+        }
     }
 }

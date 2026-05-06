@@ -27,7 +27,7 @@ namespace CinemaVerse.API.Controllers
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
         {
             if (request == null)
-                return BadRequest(new { error = "Request body is required." });
+                return BadRequest(new { error = new ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
 
             var userId = await _authService.RegisterAsync(request);
             _logger.LogInformation("User registered successfully with Id {UserId}", userId);
@@ -41,7 +41,7 @@ namespace CinemaVerse.API.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
         {
             if (request == null)
-                return BadRequest(new { error = "Request body is required." });
+                return BadRequest(new { error = new ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
 
             var result = await _authService.LoginAsync(request);
             _logger.LogInformation("User logged in successfully with Id {UserId}", result.UserId);
@@ -54,11 +54,11 @@ namespace CinemaVerse.API.Controllers
         public async Task<IActionResult> VerifyEmail([FromQuery] string token)
         {
             if (string.IsNullOrWhiteSpace(token))
-                return BadRequest(new { error = "Verification token is required." });
+                return BadRequest(new { error = new ErrorResponse { Message = "Verification token is required.", Code = "VALIDATION_ERROR" } });
 
             var success = await _authService.VerifyEmailAsync(token);
             if (!success)
-                return BadRequest(new { error = "Invalid or expired verification token." });
+                return BadRequest(new { error = new ErrorResponse { Message = "Invalid or expired verification token.", Code = "VALIDATION_ERROR" } });
 
             return Ok(new { message = "Email verified successfully." });
         }
@@ -69,7 +69,7 @@ namespace CinemaVerse.API.Controllers
         public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationRequestDto request)
         {
             if (request == null)
-                return BadRequest(new { error = "Request body is required." });
+                return BadRequest(new { error = new ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
 
             await _authService.ResendEmailVerificationAsync(request.Email);
             return Ok(new { message = "If the email is registered and not yet verified, a new verification link has been sent." });
@@ -81,7 +81,7 @@ namespace CinemaVerse.API.Controllers
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto request)
         {
             if (request == null)
-                return BadRequest(new { error = "Request body is required." });
+                return BadRequest(new { error = new ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
 
             await _authService.RequestPasswordResetAsync(request.Email);
             return Ok(new { message = "If an account exists with this email, a password reset link has been sent." });
@@ -93,11 +93,11 @@ namespace CinemaVerse.API.Controllers
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto request)
         {
             if (request == null)
-                return BadRequest(new { error = "Request body is required." });
+                return BadRequest(new { error = new ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
 
             var success = await _authService.ResetPasswordAsync(request.Token, request.NewPassword);
             if (!success)
-                return BadRequest(new { error = "Invalid or expired reset token." });
+                return BadRequest(new { error = new ErrorResponse { Message = "Invalid or expired reset token.", Code = "VALIDATION_ERROR" } });
 
             return Ok(new { message = "Password has been reset successfully." });
         }
