@@ -45,6 +45,9 @@ namespace CinemaVerse.Data.Data.Configurations
                 .HasDefaultValue(UserRole.User)
                 .IsRequired();
 
+            builder.Property(u => u.RefreshTokenHash)
+                .HasMaxLength(512);
+
             //relationships configured here 
 
         }

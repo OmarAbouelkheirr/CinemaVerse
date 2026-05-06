@@ -14,6 +14,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -125,6 +127,25 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy("AuthLimiter", httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: ip,
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            });
+    });
+});
+
 var app = builder.Build();
 
 // Ensure database is migrated/created on startup (uses current connection string)
@@ -146,6 +167,18 @@ app.UseHttpsRedirection();
 app.UseCors("CinemaVerseApiCorsPolicy");
 
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+
+app.UseRateLimiter();
+
+app.Use(async (context, next) =>
+{
+    await next();
+
+    if (context.Response.StatusCode == StatusCodes.Status429TooManyRequests)
+    {
+        await context.Response.WriteAsync("Too many authentication attempts. Please try again later.");
+    }
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
