@@ -84,4 +84,15 @@ bld/
 appsettings.*.json
 !appsettings.json
 !appsettings.Development.json
-`n# Deployment artifacts (never commit these)`npublish_output/`n**/publish_output/`nCinemaVerse_Deployment.zip`n
+
+# Deployment artifacts (never commit these)
+publish_output/
+**/publish_output/
+*.zip
+!*.zip.license
+
+# Publish profiles (often include usernames/targets)
+**/Properties/PublishProfiles/
+
+# Local tooling/config
+**/.config/

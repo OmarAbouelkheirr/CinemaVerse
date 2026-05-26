@@ -17,6 +17,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using Serilog;
+using CinemaVerse.Options;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +55,9 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.Configure<CachingOptions>(builder.Configuration.GetSection(CachingOptions.SectionName));
 builder.Services.AddMemoryCache();
+
+builder.Services.Configure<SeedDataOptions>(builder.Configuration.GetSection(SeedDataOptions.SectionName));
+builder.Services.AddScoped<DatabaseSeeder>();
 
 // --- Application Services (Auth, User, Admin, Background) ---
 builder.Services.AddUserServices();
@@ -153,6 +158,14 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+
+    var seedOptions = scope.ServiceProvider.GetRequiredService<IOptions<SeedDataOptions>>().Value;
+    var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+    if (seedOptions.Enabled && (env.IsDevelopment() || seedOptions.AllowInProduction))
+    {
+        var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+        await seeder.SeedAsync(CancellationToken.None);
+    }
 }
 
 app.UseSerilogRequestLogging(options =>
