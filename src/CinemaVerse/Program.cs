@@ -1,24 +1,21 @@
-using System.Text;
 using CinemaVerse.Data.Data;
 using CinemaVerse.Data.Repositories;
 using CinemaVerse.Extensions;
 using CinemaVerse.Filters;
 using CinemaVerse.Infrastructure;
 using CinemaVerse.Middleware;
+using CinemaVerse.Options;
 using CinemaVerse.Services.Constants;
-using Microsoft.Extensions.Caching.Memory;
 using Hangfire;
 using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.RateLimiting;
-using System.Threading.RateLimiting;
 using Serilog;
-using CinemaVerse.Options;
-using Microsoft.Extensions.Options;
+using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
