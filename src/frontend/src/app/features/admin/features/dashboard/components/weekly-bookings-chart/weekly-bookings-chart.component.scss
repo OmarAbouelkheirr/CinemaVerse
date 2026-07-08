@@ -1,0 +1,21 @@
+:host {
+  display: block;
+}
+
+.chart-container {
+  height: 240px;
+  width: 100%;
+  position: relative;
+}
+
+@media (max-width: 1024px) {
+  .chart-container {
+    height: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .chart-container {
+    height: 200px;
+  }
+}

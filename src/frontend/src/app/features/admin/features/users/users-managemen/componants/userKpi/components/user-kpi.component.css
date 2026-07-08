@@ -1,0 +1,31 @@
+:host {
+  display: block;
+}
+
+.user-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+  margin-inline: 0;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 1440px) {
+  .user-kpi-grid {
+    grid-template-columns: repeat(4, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .user-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .user-kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}

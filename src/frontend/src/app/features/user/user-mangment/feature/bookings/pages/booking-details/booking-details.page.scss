@@ -1,0 +1,158 @@
+:host {
+  display: block;
+}
+
+.booking-details-page {
+  background: var(--cinema-bg);
+  min-height: calc(100vh - var(--nav-height, 3.5rem));
+}
+
+.booking-details-page__container {
+  width: min(92%, 90rem);
+  margin-inline: auto;
+  padding-block: clamp(1.5rem, 4vw, 3rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.booking-details-page__back {
+  width: fit-content;
+}
+
+.booking-details-page__not-found {
+  min-height: 55vh;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 0.75rem;
+  color: var(--on-surface-variant);
+}
+
+.booking-details-page__not-found .material-symbols-outlined {
+  font-size: 2rem;
+  color: var(--status-danger);
+}
+
+.booking-details-page__not-found h1 {
+  margin: 0;
+  font-size: var(--text-title);
+  color: var(--on-surface);
+}
+
+.booking-details-header {
+  background: var(--surface-container-low);
+  border: 1px solid var(--ghost-border);
+  border-radius: var(--radius-lg);
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.booking-details-header__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.booking-details-header__title {
+  margin: 0;
+  font-size: var(--text-page);
+  color: var(--on-surface);
+  line-height: 1.2;
+}
+
+.booking-details-header__subline {
+  margin: 0;
+  color: var(--on-surface-variant);
+  font-size: var(--text-body);
+}
+
+.booking-details-content {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+.booking-details-content__summary,
+.booking-details-content__tickets {
+  min-width: 0;
+}
+
+.tickets-panel {
+  height: 100%;
+  background: var(--surface-container-low);
+  border: 1px solid var(--ghost-border);
+  border-radius: var(--radius-lg);
+  padding: clamp(1rem, 2.2vw, 1.25rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tickets-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.tickets-panel__header h2 {
+  margin: 0;
+  font-size: var(--text-title-sm);
+  color: var(--on-surface);
+}
+
+.tickets-panel__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  padding: 0 0.5rem;
+  font-size: var(--text-label);
+  font-weight: 700;
+  color: var(--on-primary);
+  background: var(--primary);
+}
+
+.tickets-panel__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (max-width: 1024px) {
+  .booking-details-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .booking-details-page__container {
+    width: 94%;
+    gap: 0.875rem;
+  }
+
+  .booking-details-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .booking-details-header__cancel {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .booking-details-header__title {
+    font-size: var(--text-subtitle);
+  }
+
+  .tickets-panel {
+    padding: 0.875rem;
+  }
+}

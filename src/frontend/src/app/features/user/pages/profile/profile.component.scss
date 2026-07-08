@@ -1,0 +1,130 @@
+:host {
+  display: block;
+}
+
+.profile-page {
+  min-height: calc(100vh - var(--nav-height, 3.5rem));
+  background: var(--cinema-bg);
+}
+
+.profile-page__container {
+  width: min(92%, 75rem);
+  margin-inline: auto;
+  padding-block: clamp(1.5rem, 4vw, 3rem);
+}
+
+.profile-page__header {
+  margin-bottom: 1.25rem;
+}
+
+.profile-page__title {
+  margin: 0;
+  font-size: var(--text-page);
+  color: var(--on-surface);
+  font-weight: 700;
+}
+
+.profile-page__subtitle {
+  margin: 0.375rem 0 0;
+  color: var(--on-surface-variant);
+  font-size: var(--text-body);
+}
+
+.profile-state,
+.profile-card,
+.profile-details {
+  background: var(--surface-container-low);
+  border: 1px solid var(--ghost-border) !important;
+  border-radius: var(--radius-xl);
+}
+
+.profile-state {
+  color: var(--on-surface);
+}
+
+.profile-state--error {
+  background: var(--status-danger-bg);
+  border-color: var(--status-danger-br) !important;
+  color: var(--status-danger);
+}
+
+.profile-avatar {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin-bottom: 1rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--on-primary);
+  background: linear-gradient(135deg, var(--primary), var(--primary-container));
+}
+
+.profile-name {
+  margin: 0 0 0.75rem;
+  font-size: var(--text-subtitle);
+  color: var(--on-surface);
+  font-weight: 700;
+}
+
+.role-badge {
+  background: var(--primary-dim);
+  color: var(--primary);
+  border: 1px solid var(--primary-container);
+}
+
+.profile-actions .btn {
+  border-radius: var(--radius-md);
+}
+
+.profile-details__title {
+  margin: 0 0 1rem;
+  font-size: var(--text-subtitle);
+  color: var(--on-surface);
+  font-weight: 700;
+}
+
+.info-item {
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--ghost-border);
+  background: var(--surface-container);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-height: 84px;
+}
+
+.info-item__label {
+  color: var(--on-surface-muted);
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.info-item__value {
+  color: var(--on-surface);
+  font-size: var(--text-body);
+  font-weight: 600;
+  word-break: break-word;
+}
+
+@media (max-width: 991.98px) {
+  .profile-actions {
+    max-width: 420px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .profile-page__container {
+    width: 94%;
+    padding-block: 1.25rem 2rem;
+  }
+
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+    font-size: 1.5rem;
+  }
+}

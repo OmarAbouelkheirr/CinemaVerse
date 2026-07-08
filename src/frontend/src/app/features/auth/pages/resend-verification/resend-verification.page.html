@@ -1,0 +1,48 @@
+<main class="auth-page">
+  <section class="auth-card" aria-labelledby="resend-verification-title">
+    <div class="brand">
+      <span class="brand__mark">CV</span>
+      <p class="eyebrow">Email verification</p>
+      <h1 id="resend-verification-title">Resend verification</h1>
+      <p class="subtitle">Enter your email to receive a new verification link.</p>
+    </div>
+
+    @if (error()) {
+      <div class="alert" role="alert">
+        <span class="material-symbols-outlined" aria-hidden="true">error</span>
+        <span>{{ error() }}</span>
+      </div>
+    }
+
+    @if (successMessage()) {
+      <div class="success" role="status">
+        <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+        <span>{{ successMessage() }}</span>
+      </div>
+    }
+
+    <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <p class="section-label">Account email</p>
+
+      <label class="field">
+        <span>Email address</span>
+        <span class="input-shell">
+          <span class="material-symbols-outlined" aria-hidden="true">mail</span>
+          <input formControlName="email" type="email" autocomplete="email" placeholder="you@cinemaverse.com" />
+        </span>
+        @if (hasError('required')) {
+          <small>Email is required.</small>
+        }
+        @if (hasError('email')) {
+          <small>Enter a valid email address.</small>
+        }
+      </label>
+
+      <button class="primary-action" type="submit" [disabled]="loading() || form.invalid">
+        <span>{{ loading() ? 'Sending...' : 'Resend Verification' }}</span>
+      </button>
+
+      <p class="switch-link"><a routerLink="/login">Back to sign in</a></p>
+    </form>
+  </section>
+</main>

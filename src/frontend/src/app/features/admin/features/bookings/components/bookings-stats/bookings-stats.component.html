@@ -1,0 +1,6 @@
+<section class="bookings-stats-grid" aria-label="Bookings overview">
+  <app-kpi-card icon="confirmation_number" title="Total Bookings" [value]="stats().totalBookings.toString()" />
+  <app-kpi-card icon="check_circle" title="Confirmed" [value]="stats().confirmedBookings.toString()" />
+  <app-kpi-card icon="pending" title="Pending" [value]="stats().pendingBookings.toString()" />
+  <app-kpi-card icon="payments" title="Revenue" [value]="'$' + stats().totalRevenue.toFixed(2)" />
+</section>

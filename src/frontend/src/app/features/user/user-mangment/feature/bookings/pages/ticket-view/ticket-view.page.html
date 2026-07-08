@@ -1,0 +1,143 @@
+<section class="ticket-page" aria-labelledby="ticket-page-title">
+  <div class="ticket-page__container">
+    <button
+      type="button"
+      class="btn btn-ghost btn-sm ticket-page__back"
+      (click)="onBackToBooking()"
+      aria-label="Back to booking details"
+    >
+      <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      Back to Booking
+    </button>
+
+    <p class="ticket-page__logo" aria-label="CinemaVerse logo">CINEMAVERSE</p>
+
+    @if (loading()) {
+    <app-ticket-skeleton />
+    } @else if (showNotFound()) {
+    <div class="ticket-page__error" role="status" aria-live="polite">
+      <span class="material-symbols-outlined" aria-hidden="true">error_outline</span>
+      <h1 id="ticket-page-title">Ticket not found.</h1>
+      <button
+        type="button"
+        class="btn btn-secondary btn-md"
+        (click)="onBackToBooking()"
+        aria-label="Back to booking"
+      >
+        Back to Booking
+      </button>
+    </div>
+    } @else if (ticket(); as selectedTicket) {
+    <h1 id="ticket-page-title" class="sr-only">Ticket View</h1>
+
+    <article class="ticket-card" aria-label="Cinema ticket card">
+      <section class="ticket-card__left" aria-label="Ticket movie details">
+        <img
+          class="ticket-card__poster"
+          [src]="ticketPosterUrl()"
+          [alt]="selectedTicket.movieName"
+          loading="lazy"
+        />
+
+        <h2 class="ticket-card__movie">{{ selectedTicket.movieName }}</h2>
+
+        <dl class="ticket-details">
+          <div class="ticket-details__row">
+            <dt>Genre</dt>
+            <dd>—</dd>
+          </div>
+          <div class="ticket-details__row">
+            <dt>Duration</dt>
+            <dd>{{ durationText() }}</dd>
+          </div>
+          <div class="ticket-details__row">
+            <dt>Age Rating</dt>
+            <dd>{{ selectedTicket.movieAgeRating }}</dd>
+          </div>
+          <div class="ticket-details__row">
+            <dt>Cinema Branch</dt>
+            <dd>{{ selectedTicket.branchName }}</dd>
+          </div>
+          <div class="ticket-details__row">
+            <dt>Hall</dt>
+            <dd>{{ selectedTicket.hallNumber }} ({{ selectedTicket.hallType }})</dd>
+          </div>
+          <div class="ticket-details__row">
+            <dt>Show Date</dt>
+            <dd>{{ showDate() }}</dd>
+          </div>
+          <div class="ticket-details__row">
+            <dt>Show Time</dt>
+            <dd>{{ showTime() }}</dd>
+          </div>
+          <div class="ticket-details__row">
+            <dt>Seat</dt>
+            <dd>{{ selectedTicket.seatLabel }}</dd>
+          </div>
+          <div class="ticket-details__row">
+            <dt>Ticket Number</dt>
+            <dd>{{ selectedTicket.ticketNumber }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="ticket-card__right" aria-label="QR and verification details">
+        <app-ticket-qr
+          [qrCode]="selectedTicket.qrToken"
+          [bookingId]="bookingId() ?? 0"
+          [ticketNumber]="selectedTicket.ticketNumber"
+        />
+
+        <dl class="ticket-meta">
+          <div class="ticket-meta__row">
+            <dt>Booking ID</dt>
+            <dd>{{ bookingId() ?? '—' }}</dd>
+          </div>
+          <div class="ticket-meta__row">
+            <dt>Ticket Number</dt>
+            <dd>{{ selectedTicket.ticketNumber }}</dd>
+          </div>
+          <div class="ticket-meta__row ticket-meta__row--status">
+            <dt>Status</dt>
+            <dd>
+              @switch (selectedTicket.status) { @case ('Active') {
+              <span class="status-badge status-badge--active">Active</span>
+              } @case ('Used') {
+              <span class="status-badge status-badge--used">Used</span>
+              } @case ('Cancelled') {
+              <span class="status-badge status-badge--cancelled">Cancelled</span>
+              } @default {
+              <span class="status-badge status-badge--expired">Expired</span>
+              } }
+            </dd>
+          </div>
+        </dl>
+
+        <p class="ticket-card__note">Scan this QR code at the cinema entrance.</p>
+      </section>
+    </article>
+
+    <div class="ticket-page__actions no-print" aria-label="Ticket actions">
+      <button
+        type="button"
+        class="btn btn-secondary btn-md"
+        (click)="onDownloadTicket()"
+        aria-label="Download ticket"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">download</span>
+        Download Ticket
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-primary btn-md"
+        (click)="onPrintTicket()"
+        aria-label="Print ticket"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">print</span>
+        Print Ticket
+      </button>
+    </div>
+    }
+  </div>
+</section>

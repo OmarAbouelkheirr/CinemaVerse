@@ -1,0 +1,299 @@
+:host {
+  display: block;
+}
+
+.tickets-management-layout {
+  width: 100%;
+  padding: 20px 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Page Header ─────────────────────────────────────── */
+.tickets-management-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.tickets-management-header__info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tickets-management-header__title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--on-surface);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.tickets-management-header__subtitle {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-body-sm);
+  color: var(--primary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+.tickets-management-header__api-icon {
+  font-size: 0.9rem;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.tickets-management-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* ── Action Buttons ──────────────────────────────────── */
+.tickets-management-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform var(--transition),
+    box-shadow var(--transition),
+    background-color var(--transition),
+    border-color var(--transition);
+}
+
+.tickets-management-btn:hover {
+  transform: translateY(-1px);
+}
+
+.tickets-management-btn__icon {
+  font-size: 1.1rem;
+}
+
+.tickets-management-btn--secondary {
+  background: var(--surface-container);
+  color: var(--on-surface);
+  border-color: var(--ghost-border);
+}
+
+.tickets-management-btn--secondary:hover {
+  background: var(--surface-container-high);
+  box-shadow: var(--shadow-card);
+}
+
+.tickets-management-btn--primary {
+  background: linear-gradient(135deg, var(--primary-container) 0%, var(--primary) 100%);
+  color: var(--on-primary);
+  box-shadow: var(--shadow-card);
+}
+
+.tickets-management-btn--primary:hover {
+  filter: brightness(1.06);
+}
+
+/* ── KPI Grid ────────────────────────────────────────── */
+.tickets-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+/* ── Search Toolbar ──────────────────────────────────── */
+.tickets-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tickets-toolbar__search {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 14px;
+  background: var(--surface-container);
+  border: 1px solid var(--ghost-border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition), box-shadow var(--transition);
+  cursor: text;
+}
+
+.tickets-toolbar__search:focus-within {
+  border-color: var(--primary-container);
+  box-shadow: var(--accent-glow-soft);
+}
+
+.tickets-toolbar__search-icon {
+  font-size: 1.1rem;
+  color: var(--on-surface-muted);
+  flex-shrink: 0;
+}
+
+.tickets-toolbar__search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--on-surface);
+  font-size: var(--text-body-sm);
+}
+
+.tickets-toolbar__search-input::placeholder {
+  color: var(--on-surface-muted);
+}
+
+/* clears the native X button in Chrome/Safari */
+.tickets-toolbar__search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.tickets-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.tickets-toolbar__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 18px;
+  border: 1px solid var(--ghost-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-container);
+  color: var(--on-surface);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  transition:
+    background-color var(--transition),
+    border-color var(--transition),
+    color var(--transition),
+    transform var(--transition);
+}
+
+.tickets-toolbar__btn-icon {
+  font-size: 1.05rem;
+}
+
+.tickets-toolbar__btn--filter:hover {
+  background: var(--surface-container-high);
+  border-color: rgba(138, 235, 255, 0.22);
+  color: var(--primary);
+}
+
+.tickets-toolbar__btn--filter-active {
+  background: var(--primary-dim) !important;
+  border-color: var(--status-active-br) !important;
+  color: var(--primary) !important;
+}
+
+.tickets-toolbar__filter-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  flex-shrink: 0;
+}
+
+/* ── Filter Panel Wrapper ────────────────────────────── */
+.tickets-filter-panel-wrapper {
+  animation: slideDown 0.22s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 1280px) {
+  .tickets-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .tickets-management-layout {
+    padding-inline: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .tickets-management-layout {
+    padding: 16px 16px 0;
+    gap: 16px;
+  }
+
+  .tickets-management-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tickets-management-header__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .tickets-management-btn {
+    flex: 1 1 auto;
+  }
+
+  .tickets-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .tickets-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tickets-toolbar__search {
+    width: 100%;
+  }
+
+  .tickets-toolbar__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 480px) {
+  .tickets-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}

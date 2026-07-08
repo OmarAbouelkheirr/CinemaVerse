@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36221.1 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CinemaVerse.API", "src\CinemaVerse\CinemaVerse.API.csproj", "{53E4CE79-9320-4D7D-82A1-C63FC1B93ABA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CinemaVerse.API", "src\backend\CinemaVerse\CinemaVerse.API.csproj", "{53E4CE79-9320-4D7D-82A1-C63FC1B93ABA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CinemaVerse.Services", "src\CinemaVerse.Services\CinemaVerse.Services.csproj", "{02692AFC-2408-451F-BB43-745A0CD9DCB9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CinemaVerse.Services", "src\backend\CinemaVerse.Services\CinemaVerse.Services.csproj", "{02692AFC-2408-451F-BB43-745A0CD9DCB9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CinemaVerse.Data", "src\CinemaVerse.Data\CinemaVerse.Data.csproj", "{047028E1-C5F1-4896-81BB-CE3402D7ADBB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CinemaVerse.Data", "src\backend\CinemaVerse.Data\CinemaVerse.Data.csproj", "{047028E1-C5F1-4896-81BB-CE3402D7ADBB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
