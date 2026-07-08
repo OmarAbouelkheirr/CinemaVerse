@@ -33,8 +33,8 @@
 Browse movies with search, genre, and language filters. View movie info, cast, images, and available showtimes.
 
 | Home Page | Movie Listing | Movie Detail |
-|-----------|--------------|--------------|
-| ![Home Page](docs/Images/user%20home.png) | ![Movie Listing](docs/Images/user%20movies.png) | ![Movie Detail](docs/Images/user%20movie%20details.png) |
+|:---------:|:-------------:|:------------:|
+| <img src="docs/Images/user%20home.png" width="300"> | <img src="docs/Images/user%20movies.png" width="300"> | <img src="docs/Images/user%20movie%20details.png" width="300"> |
 
 ---
 
@@ -454,34 +454,13 @@ Access at `https://cinemaverse.tryasp.net/hangfire` (Admin-only).
 
 ---
 
-## Email System
+## Authors
 
-### Email Types
-
-| Type | Template | Trigger |
-|------|----------|---------|
-| Welcome | `welcome.cshtml` | After registration |
-| Email Verification | `verification.cshtml` | After registration |
-| Password Reset | `password-reset.cshtml` | On forgot password request |
-| Booking Confirmation | `booking-confirmation.cshtml` | After payment success |
-| Booking Cancellation | `booking-cancellation.cshtml` | On booking cancellation |
-| Show Reminder | `show-reminder.cshtml` | 2 hours before showtime |
-| Payment Confirmation | `payment-confirmation.cshtml` | After payment success |
-
-### SMTP Configuration
-
-| Setting | Value |
-|---------|-------|
-| Server | `smtp.gmail.com` |
-| Port | 587 |
-| Security | STARTTLS |
-| Authentication | App password |
-
----
-
-## Author
-
-**Nour Eldeen** — [GitHub](https://github.com/butalib)
+| Name | Role | GitHub |
+|------|------|--------|
+| **Nour Eldeen Mahmoud** | Backend | [@NourEldeenMahmoud](https://github.com/NourEldeenMahmoud) |
+| **Omar Aboelkheir** | Backend | [@OmarAbouelkheirr](https://github.com/OmarAbouelkheirr) |
+| **Ahmed Kamal** | Frontend | [@butalib](https://github.com/butalib) |
 
 ---
 
