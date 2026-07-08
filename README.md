@@ -19,7 +19,6 @@
 - [Architecture](#architecture)
 - [Database](#database)
 - [Authentication](#authentication)
-- [Getting Started](#getting-started)
 - [API Documentation](#api-documentation)
 
 ---
@@ -32,9 +31,13 @@
 
 Browse movies with search, genre, and language filters. View movie info, cast, images, and available showtimes.
 
-| Home Page | Movie Listing | Movie Detail |
-|:---------:|:-------------:|:------------:|
-| <img src="docs/Images/user%20home.png" width="300"> | <img src="docs/Images/user%20movies.png" width="300"> | <img src="docs/Images/user%20movie%20details.png" width="300"> |
+| Home Page | Movie Listing |
+|:---------:|:-------------:|
+| <img src="docs/Images/user%20home.png" width="400"> | <img src="docs/Images/user%20movies.png" width="400"> |
+
+| Movie Detail |
+|:------------:|
+| <img src="docs/Images/user%20movie%20details.png" width="400"> |
 
 ---
 
@@ -137,172 +140,21 @@ QR code lookup and check-in management for ticket validation.
 
 ## Architecture
 
-### System Overview
-
 ```mermaid
 graph LR
-    subgraph Frontend["Frontend — Angular 21"]
-        A[Angular SPA]
+    subgraph Frontend["Angular 21"]
+        A[SPA]
     end
-
-    subgraph Backend["Backend — ASP.NET Core 9"]
-        B[API Controllers]
-        C[Services / Business Logic]
-        D[EF Core / Repositories]
+    subgraph Backend["ASP.NET Core 9"]
+        B[API] --> C[Services] --> D[EF Core]
     end
-
-    subgraph External["External Services"]
-        E[(SQL Server)]
-        F[Stripe]
-        G[Hangfire]
-        H[MailKit / SMTP]
+    subgraph External["External"]
+        E[(SQL)] & F[Stripe] & G[Hangfire] & H[Email]
     end
-
-    A -->|HTTP + JWT| B
-    B --> C
-    C --> D
+    A -->|JWT| B
     D --> E
-    C --> F
-    C --> G
-    C --> H
+    C --> F & G & H
 ```
-
-> **Note:** The frontend communicates with the backend via RESTful APIs using JWT authentication. External services like Stripe for payments, Hangfire for background jobs, and MailKit for emails are integrated at the service layer.
-
----
-
-### Backend — Clean Architecture
-
-The backend follows Clean Architecture with three distinct layers, ensuring separation of concerns and testability.
-
-```mermaid
-graph TB
-    subgraph Presentation["Presentation Layer — CinemaVerse"]
-        P1[Controllers]
-        P2[Middleware]
-        P3[Filters]
-        P4[Infrastructure]
-    end
-
-    subgraph Business["Business Layer — CinemaVerse.Services"]
-        S1[Interfaces]
-        S2[Implementations]
-        S3[DTOs]
-        S4[Mappers]
-        S5[Constants]
-    end
-
-    subgraph Data["Data Layer — CinemaVerse.Data"]
-        D1[AppDbContext]
-        D2[Models / Entities]
-        D3[Configurations]
-        D4[Repositories]
-        D5[Migrations]
-    end
-
-    P1 --> S1
-    P2 --> S1
-    P3 --> S1
-    S1 --> S2
-    S2 --> D1
-    S2 --> D2
-    D4 --> D1
-```
-
-> **Key Principles:**
-> - **Dependency Inversion:** Business layer defines interfaces; implementation details live in outer layers
-> - **Repository Pattern:** Data access is abstracted behind repository interfaces
-> - **Unit of Work:** Transaction management across multiple repositories
-
----
-
-### Frontend — Angular Architecture
-
-The frontend follows a modular architecture with lazy-loaded feature modules and shared components.
-
-```mermaid
-graph TB
-    subgraph Core["Core Module"]
-        C1[Auth]
-        C2[Config]
-        C3[Guards]
-        C4[HTTP Client]
-        C5[Interceptors]
-    end
-
-    subgraph Layout["Layout Module"]
-        L1[Header]
-        L2[Router Outlet]
-        L3[Footer]
-    end
-
-    subgraph Shared["Shared Module"]
-        SH1[Pagination]
-        SH2[Modals]
-        SH3[Design System UI]
-    end
-
-    subgraph Features["Feature Modules"]
-        F1[Auth — Login/Register]
-        subgraph User["User Features"]
-            U1[Home]
-            U2[Movie Detail]
-            U3[Movie Booking]
-            U4[Bookings]
-            U5[Profile]
-        end
-        subgraph Admin["Admin Features"]
-            A1[Dashboard]
-            A2[Movies]
-            A3[Users]
-            A4[Branches & Halls]
-            A5[Showtimes]
-            A6[Genres]
-            A7[Bookings]
-            A8[Payments]
-            A9[Tickets]
-        end
-    end
-
-    Layout --> Core
-    Features --> Core
-    Features --> Shared
-```
-
-> **Key Principles:**
-> - **Standalone Components:** Angular 21 standalone components without NgModules
-> - **Signal-Based State:** Using Angular Signals for reactive state management
-> - **Lazy Loading:** Feature modules are lazy-loaded for optimal bundle size
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- .NET SDK 9.0+, Node.js 18+, SQL Server 2019+, Stripe account
-
-### Backend Setup
-
-```bash
-cd "CinemaVerse Backend/src"
-dotnet restore
-dotnet ef database update --project CinemaVerse.Data --startup-project CinemaVerse
-cd CinemaVerse
-dotnet run
-```
-
-> **Tip:** Update `appsettings.json` with your connection string and Stripe keys before running migrations.
-
-### Frontend Setup
-
-```bash
-cd "CinmaVerse Front"
-npm install
-npm start
-```
-
-> **Note:** Update the API URL in `src/app/core/config/api.config.ts` for local development.
 
 ---
 
