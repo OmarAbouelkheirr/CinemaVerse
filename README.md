@@ -31,13 +31,13 @@
 
 Browse movies with search, genre, and language filters. View movie info, cast, images, and available showtimes.
 
-| Home Page | Movie Listing |
-|:---------:|:-------------:|
-| <img src="docs/Images/user%20home.png" width="400"> | <img src="docs/Images/user%20movies.png" width="400"> |
+| Home Page |
+|:---------:|
+| <img src="docs/Images/user%20home.png" width="500"> |
 
-| Movie Detail |
-|:------------:|
-| <img src="docs/Images/user%20movie%20details.png" width="400"> |
+| Movie Listing | Movie Detail |
+|:-------------:|:------------:|
+| <img src="docs/Images/user%20movies.png" width="400"> | <img src="docs/Images/user%20movie%20details.png" width="400"> |
 
 ---
 
