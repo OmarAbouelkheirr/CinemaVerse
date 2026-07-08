@@ -42,37 +42,6 @@ namespace CinemaVerse.Data.Repositories.Implementations
             }
             
         }
-        public async Task<Ticket?> GetByTicketNumberAsync(string TicketNumber)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(TicketNumber))
-                {
-                    _logger.LogWarning("Invalid TicketNumber provided: {TicketNumber}", TicketNumber);
-                    throw new ArgumentException("TicketNumber cannot be null or empty", nameof(TicketNumber));
-                }
-                _logger.LogInformation("Getting ticket by ticket number {TicketNumber}", TicketNumber);
-                var Result = await _dbSet
-                .Include(t => t.Seat)
-                .Include(t => t.Booking)
-                .FirstOrDefaultAsync(t => t.TicketNumber == TicketNumber);
-                if (Result == null)
-                {
-                    _logger.LogWarning("Ticket with ticket number {TicketNumber} not found", TicketNumber);
-                }
-                else
-                {
-                    _logger.LogInformation("Ticket with ticket number {TicketNumber} retrieved successfully", TicketNumber);
-                }
-                return Result;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex,"Error getting ticket by ticket number {TicketNumber}", TicketNumber);
-                throw;
-            }
-        }
-
         public async Task<Ticket?> GetTicketWithDetailsAsync(int TicketId)
         {
             try
@@ -86,12 +55,14 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 var Result = await _dbSet
                     .AsNoTracking()
                     .Include(t => t.Seat)
-                        .ThenInclude(s=>s.Hall)
+                        .ThenInclude(s => s.Hall)
+                            .ThenInclude(h => h.Branch)
                     .Include(t => t.Booking)
                         .ThenInclude(b => b.User)
                     .Include(t => t.Booking)
                         .ThenInclude(b => b.MovieShowTime)
                             .ThenInclude(ms => ms.Movie)
+                                .ThenInclude(m => m.MovieImages)
                     .FirstOrDefaultAsync(t => t.Id == TicketId);
 
                 if (Result == null)
@@ -111,14 +82,14 @@ namespace CinemaVerse.Data.Repositories.Implementations
             }
         }
 
-        public async Task<IEnumerable<Ticket>> GetUserTicketsAsync(Guid UserId)
+        public async Task<IEnumerable<Ticket>> GetUserTicketsAsync(int userId)
         {
             try
             {
-                _logger.LogInformation("Getting user tickets for user {UserId}",UserId);
+                _logger.LogInformation("Getting user tickets for user {UserId}", userId);
                 var Result = await _dbSet
                     .AsNoTracking()
-                    .Where(t => t.Booking.UserId == UserId)
+                    .Where(t => t.Booking.UserId == userId)
                     .Include(t => t.Booking)
                         .ThenInclude(b => b.MovieShowTime)
                         .ThenInclude(ms => ms.Movie)
@@ -126,15 +97,48 @@ namespace CinemaVerse.Data.Repositories.Implementations
                     .OrderByDescending(t => t.Booking.CreatedAt)
                     .ToListAsync();
 
-                _logger.LogDebug("Retrieved {Count} tickets for user {UserId}", Result.Count, UserId);
+                _logger.LogDebug("Retrieved {Count} tickets for user {UserId}", Result.Count, userId);
                 return Result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting user tickets for user {UserId}", UserId);
+                _logger.LogError(ex, "Error getting user tickets for user {UserId}", userId);
                 throw;
             }
         }
-        
+
+        public async Task<Ticket?> GetTicketByQrTokenAsync(string QrToken)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(QrToken))
+                {
+                    _logger.LogWarning("Invalid QrToken provided: {QrToken}", QrToken);
+                    throw new ArgumentException("QrToken cannot be null or empty", nameof(QrToken));
+                }
+                
+                _logger.LogInformation("Getting ticket by QrToken {QrToken}", QrToken);
+
+                var Result = await _dbSet
+                .Include(t => t.Seat)
+                .Include(t => t.Booking)
+                .FirstOrDefaultAsync((t => t.QrToken == QrToken));
+
+                if (Result == null)
+                {
+                    _logger.LogWarning("Ticket with QrToken {QrToken} not found", QrToken);
+                }
+                else
+                {
+                    _logger.LogInformation("Ticket with QrToken {QrToken} retrieved successfully", QrToken);
+                }
+                return Result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting ticket by QrToken {QrToken}", QrToken);
+                throw;
+            }
+        }
     }
 }

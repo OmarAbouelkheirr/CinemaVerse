@@ -1,4 +1,5 @@
-﻿using CinemaVerse.Data.Models;
+using CinemaVerse.Data.Enums;
+using CinemaVerse.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -16,19 +17,26 @@ namespace CinemaVerse.Data.Data.Configurations
 
             builder.Property(m => m.MovieDescription).IsRequired().HasMaxLength(1500);
 
-            builder.Property(m => m.MovieCast).IsRequired().HasMaxLength(500);
-
             builder.Property(m => m.TrailerUrl).HasMaxLength(500);
+
+            builder.Property(m => m.MoviePoster).HasMaxLength(500);
+
+            builder.Property(m => m.Language).HasMaxLength(100);
 
             builder.Property(m => m.MovieDuration).IsRequired();
 
-            builder.Property(m => m.Rating).HasPrecision(2, 1); 
+            builder.Property(m => m.MovieRating).HasPrecision(3, 2); 
             
-            builder.Property(m => m.MovieAgeRating).IsRequired();
+            builder.Property(m => m.MovieAgeRating)
+                .IsRequired()
+                .HasConversion<int>(); // Converts enum to int in database
 
             builder.Property(m => m.ReleaseDate).IsRequired();
 
-
+            builder.Property(m => m.Status)
+                .IsRequired()
+                .HasConversion<int>() // Converts enum to int in database
+                .HasDefaultValue(MovieStatus.Active); // Default value
 
         }
     }

@@ -1,4 +1,4 @@
-# Visual Studio
+﻿# Visual Studio
 .vs/
 *.user
 *.suo
@@ -85,3 +85,14 @@ appsettings.*.json
 !appsettings.json
 !appsettings.Development.json
 
+# Deployment artifacts (never commit these)
+publish_output/
+**/publish_output/
+*.zip
+!*.zip.license
+
+# Publish profiles (often include usernames/targets)
+**/Properties/PublishProfiles/
+
+# Local tooling/config
+**/.config/

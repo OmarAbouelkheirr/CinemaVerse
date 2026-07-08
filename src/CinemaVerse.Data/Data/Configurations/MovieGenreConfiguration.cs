@@ -1,4 +1,4 @@
-﻿using CinemaVerse.Data.Models;
+using CinemaVerse.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -20,7 +20,7 @@ namespace CinemaVerse.Data.Data.Configurations
             builder.HasOne(mg => mg.Genre)
                      .WithMany(g => g.MovieGenres)
                      .HasForeignKey(mg => mg.GenreID)
-                     .OnDelete(DeleteBehavior.Cascade);
+                     .OnDelete(DeleteBehavior.Restrict);
 
 
 

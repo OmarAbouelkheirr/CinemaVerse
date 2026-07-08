@@ -1,6 +1,5 @@
-﻿
+
 using CinemaVerse.Data.Data;
-using CinemaVerse.Data.Enums;
 using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -10,38 +9,14 @@ namespace CinemaVerse.Data.Repositories.Implementations
 {
     public class HallRepository : Repository<Hall>, IHallRepository
     {
-        private readonly AppDbContext _context;
+        private new readonly AppDbContext _context;
 
         public HallRepository(AppDbContext context, ILogger<Hall> logger)
     : base(context, logger)
         {
-            _context = context;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+
         }
-
-        public async Task<IEnumerable<Hall>> GetAvailableHallsByBranchIdAsync(int branchId)
-        {
-            try
-            {
-                _logger.LogInformation("Fetching available halls for  {BranchId}", branchId);
-
-                var halls = await _context.Halls
-                    .Where(h => h.BranchId == branchId && h.HallStatus == HallStatus.Available)
-                    .ToListAsync();
-
-                if (halls.Count == 0)
-                    _logger.LogWarning("No available halls found for BranchId: {BranchId}", branchId);
-                else
-                    _logger.LogInformation("Retrieved {Count} available halls for BranchId: {BranchId}", halls.Count, branchId);
-
-                return halls;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching available halls for BranchId: {BranchId}", branchId);
-                throw;
-            }
-        }
-
 
         public async Task<Hall?> GetByIdWithDetailsAsync(int id)
         {
@@ -53,7 +28,6 @@ namespace CinemaVerse.Data.Repositories.Implementations
                     .Include(h => h.Branch)
                     .Include(h => h.Seats)
                      .Include(h => h.MovieShowTimes)
-                    //.Include(h => h.MovieShowTimes.Where(st => st.ShowStartTime > DateTime.Now))
                     .FirstOrDefaultAsync(h => h.Id == id);
 
                 if (hall == null)
@@ -68,58 +42,6 @@ namespace CinemaVerse.Data.Repositories.Implementations
                 throw;
             }
         }
-
-        public async Task<IEnumerable<Hall>> GetHallsWithDetailsByBranchAsync(int branchId)
-        {
-            try
-            {
-                _logger.LogInformation("Fetching halls for BranchId: {BranchId}", branchId);
-
-                var halls = await _context.Halls
-                    .Where(h => h.BranchId == branchId)
-                    .Include(h => h.Seats)
-                    .Include(h => h.MovieShowTimes)
-                    .Include(h => h.Branch)
-                    .ToListAsync();
-
-                if (halls.Count == 0)
-                    _logger.LogWarning("No halls found for BranchId: {BranchId}", branchId);
-                else
-                    _logger.LogInformation("Retrieved {Count} halls for BranchId: {BranchId}", halls.Count, branchId);
-
-                return halls;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching halls for BranchId: {BranchId}", branchId);
-                throw;
-            }
-        }
-
-        public async Task<IEnumerable<Hall>> GetHallsByBranchIdAsync(int branchId)
-        {
-            try
-            {
-                _logger.LogInformation("Fetching halls for BranchId = {BranchId}", branchId);
-
-                var halls = await _context.Halls
-                    .Where(h => h.BranchId == branchId)
-                    .ToListAsync();
-
-                if (halls.Count == 0)
-                    _logger.LogWarning("No halls found for BranchId = {BranchId}", branchId);
-                else
-                    _logger.LogInformation("Retrieved {Count} halls for BranchId = {BranchId}", halls.Count, branchId);
-
-                return halls;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching halls for BranchId = {BranchId}", branchId);
-                throw;
-            }
-        }
-
 
         public async Task<bool> IsHallNumberExistsAsync(int branchId, string hallNumber)
         {

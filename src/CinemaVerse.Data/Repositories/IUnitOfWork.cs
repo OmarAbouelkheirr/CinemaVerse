@@ -1,11 +1,6 @@
-﻿using CinemaVerse.Data.Models;
-using CinemaVerse.Data.Repositories.Implementations;
+using CinemaVerse.Data.Models;
 using CinemaVerse.Data.Repositories.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Data;
 
 namespace CinemaVerse.Data.Repositories
 {
@@ -13,19 +8,24 @@ namespace CinemaVerse.Data.Repositories
     { 
         IBookingRepository Bookings { get; }
         IRepository<BookingPayment> BookingPayments { get; }
-        IRepository<Branch> Branchs { get; }
+        IRepository<Branch> Branches { get; }
         IRepository<Genre> Genres { get; }
         IMovieRepository Movies { get; }
         IMovieShowTimeRepository MovieShowTimes { get; }
         IRepository<Seat> Seats { get; }
         ITicketsRepository Tickets { get; }
-        IRepository<Hall> Halls { get; }
+        IHallRepository Halls { get; }
         IRepository<MovieGenre> MovieGenres { get; }
         IRepository<MovieImage> MovieImages { get; }
+        IRepository<MovieCastMember> MovieCastMembers { get; }
         IRepository<BookingSeat> BookingSeat { get; }
+        IUserRepository Users { get; }
+        IRepository<Review> Reviews { get; }
+        IDashboardRepository Dashboard { get; }
 
         Task<int> SaveChangesAsync();
         Task BeginTransactionAsync();
+        Task BeginTransactionAsync(IsolationLevel isolationLevel);
         Task CommitTransactionAsync();
         Task RollbackTransactionAsync();
 

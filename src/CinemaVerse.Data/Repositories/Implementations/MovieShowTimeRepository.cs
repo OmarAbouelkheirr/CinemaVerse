@@ -92,8 +92,13 @@ namespace CinemaVerse.Data.Repositories.Implementations
                         .ThenInclude(m => m.MovieImages)
                     .Include(mst => mst.Hall)
                         .ThenInclude(h => h.Branch)
+                    .Include(mst => mst.Hall)
+                        .ThenInclude(h => h.Seats)
                     .Include(mst => mst.Bookings)
                         .ThenInclude(b => b.User)
+                    .Include(mst => mst.Bookings)
+                        .ThenInclude(b => b.BookingSeats)
+                            .ThenInclude(bs => bs.Seat)
                     .Include(mst => mst.Bookings)
                         .ThenInclude(b => b.Tickets)
                             .ThenInclude(t => t.Seat)
@@ -118,31 +123,6 @@ namespace CinemaVerse.Data.Repositories.Implementations
             }
         }
 
-        public async Task<IEnumerable<Ticket>> GetReservedTicketsAsync(int movieShowTimeId)
-        {
-            try
-            {
-                _logger.LogInformation("Getting Reserved Tickets for movie show time {MovieShowTimeId}", movieShowTimeId);
-
-                var tickets = await _context.Tickets
-                    .AsNoTracking()
-                    .Where(t => t.Booking.MovieShowTimeId == movieShowTimeId)
-                    .Include(t => t.Booking)
-                        .ThenInclude(b => b.User)
-                    .Include(t => t.Seat)
-                    .OrderBy(t => t.CreatedAt)
-                    .ToListAsync();
-
-                _logger.LogInformation("Retrieved {Count} reserved tickets for movie show time {MovieShowTimeId}", tickets.Count, movieShowTimeId);
-
-                return tickets;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting Reserved Tickets for movie show time {MovieShowTimeId}", movieShowTimeId);
-                throw;
-            }
-        }
         public async Task<bool> IsSeatReservedAsync(int movieShowTimeId, int seatId)
         {
             try
@@ -166,6 +146,36 @@ namespace CinemaVerse.Data.Repositories.Implementations
             {
                 _logger.LogError(ex, "Error checking seat {SeatId} reservation for movie show time {MovieShowTimeId}",
                     seatId, movieShowTimeId);
+                throw;
+            }
+        }
+        public async Task<List<int>> GetReservedSeatIdsAsync(int movieShowTimeId)
+        {
+            try
+            {
+                _logger.LogInformation("Getting reserved seat IDs for MovieShowTimeId {MovieShowTimeId}", movieShowTimeId);
+
+                var reservedSeatIds = await _context.BookingSeat
+                    .AsNoTracking()
+                    .Where(bs => bs.Booking.MovieShowTimeId == movieShowTimeId &&
+                                bs.Booking.Status != BookingStatus.Cancelled &&
+                                bs.Booking.Status != BookingStatus.Expired &&
+                                (bs.Booking.Status == BookingStatus.Confirmed ||
+                                 (bs.Booking.Status == BookingStatus.Pending &&
+                                  bs.Booking.ExpiresAt.HasValue &&
+                                  bs.Booking.ExpiresAt.Value > DateTime.UtcNow)))
+                    .Select(bs => bs.SeatId)
+                    .Distinct()
+                    .ToListAsync();
+
+                _logger.LogInformation("Found {Count} reserved seats for MovieShowTimeId {MovieShowTimeId}",
+                    reservedSeatIds.Count, movieShowTimeId);
+
+                return reservedSeatIds;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting reserved seat IDs for MovieShowTimeId {MovieShowTimeId}", movieShowTimeId);
                 throw;
             }
         }

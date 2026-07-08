@@ -1,42 +1,217 @@
 using CinemaVerse.Data.Data;
 using CinemaVerse.Data.Repositories;
-using CinemaVerse.Services.Implementations;
-using CinemaVerse.Services.Interfaces;
+using CinemaVerse.Extensions;
+using CinemaVerse.Filters;
+using CinemaVerse.Infrastructure;
+using CinemaVerse.Middleware;
+using CinemaVerse.Options;
+using CinemaVerse.Services.Constants;
+using Hangfire;
+using Hangfire.SqlServer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Serilog;
+using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("Application", "CinemaVerse.API");
+});
+
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")??
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
     throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+// --- Hangfire (Background Jobs) ---
+builder.Services.AddHangfire(configuration =>
+{
+    configuration
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UseSqlServerStorage(connectionString, new SqlServerStorageOptions
+        {
+            PrepareSchemaIfNecessary = true
+        });
+});
+builder.Services.AddHangfireServer();
+
+// --- Data / Infrastructure ---
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddScoped<IMovieService, MovieService>();
-builder.Services.AddScoped<ITicketService, TicketService>();
-builder.Services.AddScoped<IHallSeatService, HallSeatService>();
 
+builder.Services.Configure<CachingOptions>(builder.Configuration.GetSection(CachingOptions.SectionName));
+builder.Services.AddMemoryCache();
 
+builder.Services.Configure<SeedDataOptions>(builder.Configuration.GetSection(SeedDataOptions.SectionName));
+builder.Services.AddScoped<DatabaseSeeder>();
 
-builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+// --- Application Services (Auth, User, Admin, Background) ---
+builder.Services.AddUserServices();
+builder.Services.AddAdminServices();
+builder.Services.AddBackgroundServices();
+
+builder.Services.AddScoped<ModelStateValidationFilter>();
+builder.Services.AddControllers(options =>
+    {
+        options.Filters.Add<ModelStateValidationFilter>();
+    })
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
+builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Enter your token from Login (without \"Bearer \" prefix).",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer"
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+var jwtSecret = builder.Configuration["Jwt:Secret"];
+if (string.IsNullOrWhiteSpace(jwtSecret))
+    throw new InvalidOperationException("JWT Secret must be configured and non-empty.");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
+        };
+    });
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CinemaVerseApiCorsPolicy", policy =>
+    {
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy("AuthLimiter", httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: ip,
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            });
+    });
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+// Ensure database is migrated/created on startup (uses current connection string)
+using (var scope = app.Services.CreateScope())
 {
-    app.MapOpenApi();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+
+    var seedOptions = scope.ServiceProvider.GetRequiredService<IOptions<SeedDataOptions>>().Value;
+    var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+    if (seedOptions.Enabled && (env.IsDevelopment() || seedOptions.AllowInProduction))
+    {
+        var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+        await seeder.SeedAsync(CancellationToken.None);
+    }
 }
 
-app.UseHttpsRedirection();
+app.UseSerilogRequestLogging(options =>
+{
+    options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+});
 
+app.UseSwagger();
+app.UseSwaggerUI();
+
+app.UseHttpsRedirection();
+app.UseStaticFiles(); // Added to serve uploaded images
+app.UseCors("CinemaVerseApiCorsPolicy");
+
+
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+
+app.UseRateLimiter();
+
+app.Use(async (context, next) =>
+{
+    await next();
+
+    if (context.Response.StatusCode == StatusCodes.Status429TooManyRequests)
+    {
+        await context.Response.WriteAsync("Too many authentication attempts. Please try again later.");
+    }
+});
+
+app.UseAuthentication();
 app.UseAuthorization();
+
+// Hangfire Dashboard (secured with Admin authorization)
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new HangfireAuthorizationFilter() }
+});
 
 app.MapControllers();
 
-app.Run();
+// Configure Hangfire recurring jobs
+HangfireJobsConfigurator.ConfigureRecurringJobs();
 
-
+try
+{
+    Log.Information("Starting CinemaVerse API");
+    app.Run();
+}
+finally
+{
+    Log.CloseAndFlush();
+}

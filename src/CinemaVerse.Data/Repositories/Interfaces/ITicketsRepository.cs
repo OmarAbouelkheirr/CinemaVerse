@@ -9,10 +9,9 @@ namespace CinemaVerse.Data.Repositories.Interfaces
 {
     public interface ITicketsRepository : IRepository<Ticket>
     {
-        Task<IEnumerable<Ticket>> GetUserTicketsAsync(Guid UserId);
-        Task<Ticket?> GetByTicketNumberAsync(string TicketNumber);
+        Task<IEnumerable<Ticket>> GetUserTicketsAsync(int userId);
+        Task<Ticket?> GetTicketByQrTokenAsync(string QrToken);
         Task<Ticket?> GetTicketWithDetailsAsync(int TicketId);
         Task<List<int>> GetIssuedSeatIdsAsync(int bookingId);
-
     }
 }

@@ -1,0 +1,138 @@
+using CinemaVerse.Models;
+using CinemaVerse.Services.DTOs.UserFlow.Auth;
+using CinemaVerse.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+
+namespace CinemaVerse.API.Controllers
+{
+    [AllowAnonymous]
+    [Route("api/auth")]
+    [ApiController]
+    public class AuthController : ControllerBase
+    {
+        private readonly IAuthService _authService;
+        private readonly ILogger<AuthController> _logger;
+
+        public AuthController(IAuthService authService, ILogger<AuthController> logger)
+        {
+            _authService = authService;
+            _logger = logger;
+        }
+
+        [HttpPost("register")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
+        {
+            if (request == null)
+                return BadRequest(new { error = new ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
+
+            var userId = await _authService.RegisterAsync(request);
+            _logger.LogInformation("User registered successfully with Id {UserId}", userId);
+            return StatusCode(StatusCodes.Status201Created, new { userId });
+        }
+
+        [HttpPost("login")]
+        [EnableRateLimiting("AuthLimiter")]
+        [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
+        {
+            if (request == null)
+                return BadRequest(new { error = new ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
+
+            var result = await _authService.LoginAsync(request);
+            _logger.LogInformation("User logged in successfully with Id {UserId}", result.UserId);
+            return Ok(result);
+        }
+
+        [HttpPost("refresh-token")]
+        [EnableRateLimiting("AuthLimiter")]
+        [ProducesResponseType(typeof(RefreshTokenResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshRequestDto request)
+        {
+            if (request == null)
+                return BadRequest(new { error = "Request body is required." });
+
+            var result = await _authService.RefreshTokenAsync(request);
+            return Ok(result);
+        }
+
+        [HttpPost("logout")]
+        [EnableRateLimiting("AuthLimiter")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> Logout([FromBody] RefreshRequestDto request)
+        {
+            if (request == null)
+                return BadRequest(new { error = "Request body is required." });
+
+            var success = await _authService.LogoutAsync(request);
+            if (!success)
+                return Unauthorized(new { error = "Invalid logout request." });
+
+            return Ok(new { message = "Logged out successfully." });
+        }
+
+        [HttpGet("verify-email")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> VerifyEmail([FromQuery] string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+                return BadRequest(new { error = new ErrorResponse { Message = "Verification token is required.", Code = "VALIDATION_ERROR" } });
+
+            var success = await _authService.VerifyEmailAsync(token);
+            if (!success)
+                return BadRequest(new { error = new ErrorResponse { Message = "Invalid or expired verification token.", Code = "VALIDATION_ERROR" } });
+
+            return Ok(new { message = "Email verified successfully." });
+        }
+
+        [HttpPost("resend-verification")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationRequestDto request)
+        {
+            if (request == null)
+                return BadRequest(new { error = new ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
+
+            await _authService.ResendEmailVerificationAsync(request.Email);
+            return Ok(new { message = "If the email is registered and not yet verified, a new verification link has been sent." });
+        }
+
+        [HttpPost("forgot-password")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto request)
+        {
+            if (request == null)
+                return BadRequest(new { error = new ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
+
+            await _authService.RequestPasswordResetAsync(request.Email);
+            return Ok(new { message = "If an account exists with this email, a password reset link has been sent." });
+        }
+
+        [HttpPost("reset-password")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto request)
+        {
+            if (request == null)
+                return BadRequest(new { error = new ErrorResponse { Message = "Request body is required.", Code = "VALIDATION_ERROR" } });
+
+            var success = await _authService.ResetPasswordAsync(request.Token, request.NewPassword);
+            if (!success)
+                return BadRequest(new { error = new ErrorResponse { Message = "Invalid or expired reset token.", Code = "VALIDATION_ERROR" } });
+
+            return Ok(new { message = "Password has been reset successfully." });
+        }
+    }
+}

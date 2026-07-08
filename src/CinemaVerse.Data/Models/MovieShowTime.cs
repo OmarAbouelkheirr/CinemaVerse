@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,7 +14,7 @@ namespace CinemaVerse.Data.Models
         public DateTime ShowStartTime { get; set; }
         public DateTime ShowEndTime { get; set; } //updated to be calculated based on movie duration
         public decimal Price { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
 
         // Navigation Properties

@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 
 namespace CinemaVerse.Data.Repositories.Interfaces
 {
@@ -6,7 +6,6 @@ namespace CinemaVerse.Data.Repositories.Interfaces
     {
         Task<IEnumerable<T>> GetAllAsync();
         Task<T?> GetByIdAsync(int Id);
-        Task<T?> GetByIdAsync(string Id);
         Task AddAsync(T entity);
         Task UpdateAsync(T entity);
         Task DeleteAsync(T entity);
@@ -18,7 +17,7 @@ namespace CinemaVerse.Data.Repositories.Interfaces
         Task<int> CountAsync(IQueryable<T> query);
         Task<List<T>> GetPagedAsync(
             IQueryable<T> query,
-            Func<IQueryable<T>, IOrderedQueryable<T>> orderBy,
+            Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy,
             int skip,
             int take,
             string? includeProperties = null

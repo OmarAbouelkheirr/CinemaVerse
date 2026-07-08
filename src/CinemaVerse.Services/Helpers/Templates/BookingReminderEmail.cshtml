@@ -1,0 +1,216 @@
+@model CinemaVerse.Services.DTOs.Email.Requests.BookingReminderEmailDto
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reminder - Your show in 2 hours - CineBook</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1A122E;
+            color: #F5F5F5;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #2C253D;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .header {
+            background: linear-gradient(135deg, #E67E22 0%, #D35400 100%);
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: #FFFFFF;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+        .reminder-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #FFFFFF;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .greeting {
+            font-size: 16px;
+            color: #E0E0E0;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .booking-details {
+            background-color: #352A4A;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #4A3A5A;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            color: #B0B0B0;
+            font-size: 14px;
+        }
+        .detail-value {
+            color: #FFFFFF;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .movie-name {
+            color: #E67E22;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .tickets-section {
+            background-color: #352A4A;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        .tickets-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #FFFFFF;
+            margin-bottom: 20px;
+        }
+        .ticket-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: #2C253D;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .ticket-item:last-child {
+            margin-bottom: 0;
+        }
+        .ticket-info {
+            flex: 1;
+        }
+        .ticket-number {
+            color: #E67E22;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .ticket-seat {
+            color: #E0E0E0;
+            font-size: 12px;
+        }
+        .ticket-price {
+            color: #FFFFFF;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .info-box {
+            background-color: #352A4A;
+            border-left: 4px solid #E67E22;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #E0E0E0;
+        }
+        .footer {
+            background-color: #1A122E;
+            padding: 30px;
+            text-align: center;
+            color: #A0A0A0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="logo">CineBook</div>
+            <div class="reminder-icon">⏰</div>
+        </div>
+        
+        <div class="content">
+            <h1 class="title">Reminder: Your show is in 2 hours!</h1>
+            <p class="greeting">Dear @Model.FullName,</p>
+            <p class="greeting">This is a friendly reminder that your movie is starting in about 2 hours. See you at the cinema!</p>
+            
+            <div class="booking-details">
+                <div class="detail-row">
+                    <span class="detail-label">Movie</span>
+                    <span class="detail-value movie-name">@Model.MovieName</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Show Time (UTC)</span>
+                    <span class="detail-value">@Model.ShowStartTime.ToString("MMMM dd, yyyy 'at' HH:mm") UTC</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Hall</span>
+                    <span class="detail-value">@Model.HallNumber</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Branch</span>
+                    <span class="detail-value">@Model.BranchName</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Booking ID</span>
+                    <span class="detail-value">#@Model.BookingId</span>
+                </div>
+            </div>
+            
+            @if (Model.Tickets != null && Model.Tickets.Any())
+            {
+                <div class="tickets-section">
+                    <h3 class="tickets-title">Your Tickets</h3>
+                    @foreach (var ticket in Model.Tickets)
+                    {
+                        <div class="ticket-item">
+                            <div class="ticket-info">
+                                <div class="ticket-number">@ticket.TicketNumber</div>
+                                <div class="ticket-seat">Seat: @ticket.SeatNumber</div>
+                            </div>
+                            <div class="ticket-price">@ticket.Price @Model.Currency</div>
+                        </div>
+                    }
+                </div>
+            }
+            
+            <div class="info-box">
+                <strong>📱 Important:</strong> Please arrive at least 15 minutes before the showtime. 
+                Your digital tickets are available in your account.
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Thank you for choosing CineBook!</p>
+            <p style="margin-top: 20px; font-size: 12px;">
+                © @DateTime.UtcNow.Year CineBook. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

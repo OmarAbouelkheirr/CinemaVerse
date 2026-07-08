@@ -1,8 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using CinemaVerse.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -14,7 +9,7 @@ namespace CinemaVerse.Data.Data.Configurations
         public void Configure(EntityTypeBuilder<Branch> builder)
         {
 
-            builder.ToTable("Branchs");
+            builder.ToTable("Branches");
 
             builder.HasKey(b => b.Id);
 

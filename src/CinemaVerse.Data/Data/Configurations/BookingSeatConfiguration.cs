@@ -1,4 +1,4 @@
-﻿using CinemaVerse.Data.Models;
+using CinemaVerse.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -17,11 +17,13 @@ namespace CinemaVerse.Data.Data.Configurations
 
             builder.HasOne(bs => bs.Booking)
                   .WithMany(b => b.BookingSeats)
-                  .HasForeignKey(bs => bs.BookingId);
+                  .HasForeignKey(bs => bs.BookingId)
+                  .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasOne(bs => bs.Seat)
                   .WithMany(s => s.BookingSeats)
-                  .HasForeignKey(bs => bs.SeatId);
+                  .HasForeignKey(bs => bs.SeatId)
+                  .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
