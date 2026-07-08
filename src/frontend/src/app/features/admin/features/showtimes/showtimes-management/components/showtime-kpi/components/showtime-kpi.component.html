@@ -1,0 +1,5 @@
+<section class="showtime-kpi-grid" aria-label="Showtimes KPIs">
+    @for (item of kpiItems; track item.title) {
+        <app-kpi-card [icon]="item.icon" [title]="item.title" [value]="item.value" />
+    }
+</section>

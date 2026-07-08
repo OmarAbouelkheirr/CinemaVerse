@@ -1,0 +1,5 @@
+<section class="genres-stats" aria-label="Genres overview">
+  <app-kpi-card icon="category" title="Total Genres" [value]="totalGenres().toString()" />
+  <app-kpi-card icon="trending_up" title="Most Popular" [value]="mostPopularValue()" [subtitle]="mostPopularSubtitle()" />
+  <app-kpi-card icon="new_releases" title="Recently Added" [value]="recentlyAddedValue()" [subtitle]="recentlyAddedSubtitle()" />
+</section>

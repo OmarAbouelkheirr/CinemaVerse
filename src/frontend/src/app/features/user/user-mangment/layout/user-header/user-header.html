@@ -1,0 +1,17 @@
+<header class="nav">
+  <div class="nav__inner">
+    <a routerLink="/user/dashboard" class="nav__logo"> CINEMAVERSE </a>
+
+    <nav class="nav__links">
+      <a routerLink="/movies" routerLinkActive="nav__link--active" class="nav__link"> Movies </a>
+      <a routerLink="/my-bookings" routerLinkActive="nav__link--active" class="nav__link">
+        My Bookings
+      </a>
+    </nav>
+
+    <button type="button" class="nav__profile" (click)="goToProfile()">
+      <i class="pi pi-user"></i>
+      <span>Profile</span>
+    </button>
+  </div>
+</header>

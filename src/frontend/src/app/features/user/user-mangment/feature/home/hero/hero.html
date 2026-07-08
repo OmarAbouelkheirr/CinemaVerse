@@ -1,0 +1,43 @@
+@if (movie$ | async; as movie) {
+  <section
+    class="hero"
+    [ngStyle]="getHeroStyle(movie.moviePosterImageUrl)">
+
+    <div class="hero__overlay"></div>
+    <div class="hero__fade"></div>
+
+    <div class="hero__content">
+      <div class="hero__badges">
+        @if (movie.language) {
+          <span class="hero__badge">{{ movie.language }}</span>
+        }
+        @if (movie.genres.length) {
+          @for (genre of movie.genres; track genre) {
+            <span class="hero__badge">{{ genre }}</span>
+          }
+        }
+      </div>
+
+      <h1 class="hero__title">{{ movie.movieName }}</h1>
+
+      <p class="hero__desc">
+        An immersive cinematic experience. {{ movie.movieDuration }} of breathtaking storytelling
+        that pushes the boundaries of modern cinema.
+      </p>
+
+      <div class="hero__actions">
+        <button class="hero__btn hero__btn--primary" type="button" (click)="navigateToBooking(movie.movieId)">
+          Get Tickets
+        </button>
+        <button class="hero__btn hero__btn--secondary" type="button">
+          Watch Trailer
+        </button>
+      </div>
+    </div>
+  </section>
+} @else {
+  <section class="hero hero--empty">
+    <div class="hero__overlay"></div>
+    <p class="hero__empty-text">No featured movie available right now.</p>
+  </section>
+}

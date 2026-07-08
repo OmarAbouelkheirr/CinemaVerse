@@ -1,0 +1,37 @@
+<main class="auth-page">
+  <section class="auth-card" aria-labelledby="verify-email-title">
+    <div class="brand">
+      <span class="brand__mark">CV</span>
+      <p class="eyebrow">Email verification</p>
+      <h1 id="verify-email-title">Verify email</h1>
+      <p class="subtitle">Confirming your email token.</p>
+    </div>
+
+    @if (tokenError()) {
+      <div class="alert" role="alert">
+        <span class="material-symbols-outlined" aria-hidden="true">error</span>
+        <span>{{ tokenError() }}</span>
+      </div>
+      <p class="switch-link"><a routerLink="/auth/resend-verification">Resend verification email</a></p>
+      <p class="switch-link"><a routerLink="/login">Back to sign in</a></p>
+    } @else if (loading()) {
+      <div class="status" role="status" aria-live="polite">
+        <span class="material-symbols-outlined" aria-hidden="true">hourglass_top</span>
+        <span>Verifying...</span>
+      </div>
+    } @else if (successMessage()) {
+      <div class="success" role="status">
+        <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+        <span>{{ successMessage() }}</span>
+      </div>
+      <button class="primary-action" type="button" (click)="goToLogin()">Go To Login</button>
+    } @else {
+      <div class="alert" role="alert">
+        <span class="material-symbols-outlined" aria-hidden="true">error</span>
+        <span>{{ error() ?? 'Verification failed' }}</span>
+      </div>
+      <p class="switch-link"><a routerLink="/auth/resend-verification">Resend verification email</a></p>
+      <p class="switch-link"><a routerLink="/login">Back to sign in</a></p>
+    }
+  </section>
+</main>

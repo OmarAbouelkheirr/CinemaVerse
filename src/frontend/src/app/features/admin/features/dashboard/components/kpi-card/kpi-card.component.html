@@ -1,0 +1,34 @@
+<article class="kpi-card">
+  <div class="kpi-card__top">
+    <div class="kpi-card__icon-box" [style.background]="accentColor()" aria-hidden="true">
+      <span class="material-symbols-outlined kpi-card__icon">{{ icon() }}</span>
+    </div>
+    @if (trend(); as trendValue) {
+      <div
+        class="kpi-card__trend"
+        [class.kpi-card__trend--up]="trendType() === 'up'"
+        [class.kpi-card__trend--down]="trendType() === 'down'"
+        [class.kpi-card__trend--neutral]="trendType() === 'neutral' || trendType() === undefined"
+      >
+        @switch (trendType()) {
+          @case ('up') {
+            <span class="material-symbols-outlined kpi-card__trend-arrow">trending_up</span>
+          }
+          @case ('down') {
+            <span class="material-symbols-outlined kpi-card__trend-arrow">trending_down</span>
+          }
+          @default {
+            <span class="material-symbols-outlined kpi-card__trend-arrow">trending_flat</span>
+          }
+        }
+        <span class="kpi-card__trend-value">{{ trendValue }}</span>
+      </div>
+    }
+  </div>
+
+  <p class="kpi-card__value">{{ value() }}</p>
+
+  <div class="kpi-card__bottom">
+    <p class="kpi-card__title">{{ title() }}</p>
+  </div>
+</article>

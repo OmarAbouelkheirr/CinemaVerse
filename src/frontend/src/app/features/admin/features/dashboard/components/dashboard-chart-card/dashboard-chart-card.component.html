@@ -1,0 +1,21 @@
+<div class="chart-card">
+  <div class="chart-card__header">
+    <div class="chart-card__title-group">
+      <h3 class="chart-card__title">{{ title() }}</h3>
+      @if (subtitle(); as subtitleText) {
+        <p class="chart-card__subtitle">{{ subtitleText }}</p>
+      }
+    </div>
+    <div class="chart-card__actions">
+      <ng-content select="[chart-actions]" />
+    </div>
+  </div>
+
+  @if (showDivider()) {
+    <div class="chart-card__divider"></div>
+  }
+
+  <div class="chart-card__body">
+    <ng-content />
+  </div>
+</div>

@@ -1,0 +1,74 @@
+<div class="bookings-search-toolbar">
+  <div class="bookings-search-toolbar__search">
+    <label class="bookings-search-toolbar__search-field" for="booking-search-toolbar-input">
+      <span class="bookings-search-toolbar__search-icon material-symbols-outlined" aria-hidden="true">search</span>
+
+      <input
+        id="booking-search-toolbar-input"
+        class="bookings-search-toolbar__search-input"
+        type="search"
+        placeholder="Search by movie name..."
+        aria-label="Search by movie name"
+        [ngModel]="currentFilters().searchTerm"
+        (ngModelChange)="onSearchChange($event)" />
+    </label>
+  </div>
+
+  <div class="bookings-search-toolbar__actions" aria-label="Booking filter actions">
+    <button
+      class="bookings-search-toolbar__button bookings-search-toolbar__button--secondary"
+      type="button"
+      (click)="toggleFilters()"
+      [attr.aria-expanded]="showFilters()"
+      aria-controls="bookings-advanced-filters">
+      <span class="material-symbols-outlined bookings-search-toolbar__button-icon" aria-hidden="true">tune</span>
+      <span>Filter</span>
+    </button>
+  </div>
+</div>
+
+@if (showFilters()) {
+  <section id="bookings-advanced-filters" class="filter-panel" aria-label="Bookings filters">
+    <div class="filter-form">
+      <div class="filter-groups">
+        <div class="filter-group">
+          <p class="group-label">STATUS & DATE</p>
+          <div class="group-row two-columns">
+            <select
+              id="booking-status"
+              class="form-control"
+              [ngModel]="currentFilters().status"
+              (ngModelChange)="onStatusChange($event)"
+              aria-label="Filter bookings by status">
+              <option [ngValue]="null">All Statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Expired">Expired</option>
+            </select>
+
+            <input
+              id="booking-date-from"
+              type="date"
+              class="form-control"
+              [ngModel]="currentFilters().createdFrom"
+              (ngModelChange)="onDateFromChange($event)"
+              aria-label="Filter bookings from date" />
+
+            <input
+              id="booking-date-to"
+              type="date"
+              class="form-control"
+              [ngModel]="currentFilters().createdTo"
+              (ngModelChange)="onDateToChange($event)"
+              aria-label="Filter bookings to date" />
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-actions">
+        <button type="button" class="btn-reset" (click)="clearFilters.emit()">Clear filters</button>
+      </div>
+    </div>
+  </section>
+}

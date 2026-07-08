@@ -1,0 +1,136 @@
+<section class="edit-profile-page">
+  <div class="edit-profile-page__container">
+    <header class="edit-profile-page__header">
+      <h1 class="edit-profile-page__title">Edit Profile</h1>
+      <p class="edit-profile-page__subtitle">Update your personal account details.</p>
+    </header>
+
+    @if (loading()) {
+      <div class="state-card card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+          <div class="spinner-border text-info" role="status" aria-hidden="true"></div>
+          <p class="mt-3 mb-0">Loading profile data...</p>
+        </div>
+      </div>
+    } @else {
+      <article class="edit-card card border-0 shadow-sm">
+        <div class="card-body">
+          @if (error(); as errorMsg) {
+            <div class="alert alert-danger" role="alert">
+              {{ errorMsg }}
+            </div>
+          }
+
+          <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+            <div class="row g-3">
+              <div class="col-12 col-md-6">
+                <label class="form-label">First Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  formControlName="firstName"
+                  [class.is-invalid]="hasControlError('firstName')"
+                />
+                @if (hasControlError('firstName') && form.controls.firstName.hasError('required')) {
+                  <small class="text-danger">This field is required</small>
+                }
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label">Last Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  formControlName="lastName"
+                  [class.is-invalid]="hasControlError('lastName')"
+                />
+                @if (hasControlError('lastName') && form.controls.lastName.hasError('required')) {
+                  <small class="text-danger">This field is required</small>
+                }
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label">Phone Number</label>
+                <input
+                  type="tel"
+                  class="form-control"
+                  formControlName="phoneNumber"
+                  [class.is-invalid]="hasControlError('phoneNumber')"
+                />
+                @if (hasControlError('phoneNumber') && form.controls.phoneNumber.hasError('required')) {
+                  <small class="text-danger">This field is required</small>
+                }
+                @if (hasControlError('phoneNumber') && form.controls.phoneNumber.hasError('pattern')) {
+                  <small class="text-danger">Invalid phone number</small>
+                }
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label">City</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  formControlName="city"
+                  [class.is-invalid]="hasControlError('city')"
+                />
+                @if (hasControlError('city') && form.controls.city.hasError('required')) {
+                  <small class="text-danger">This field is required</small>
+                }
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Address</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  formControlName="address"
+                  [class.is-invalid]="hasControlError('address')"
+                />
+                @if (hasControlError('address') && form.controls.address.hasError('required')) {
+                  <small class="text-danger">This field is required</small>
+                }
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label">Date Of Birth</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  formControlName="dateOfBirth"
+                  [class.is-invalid]="hasControlError('dateOfBirth')"
+                />
+                @if (hasControlError('dateOfBirth') && form.controls.dateOfBirth.hasError('required')) {
+                  <small class="text-danger">This field is required</small>
+                }
+                @if (hasControlError('dateOfBirth') && (form.controls.dateOfBirth.hasError('pattern') || form.controls.dateOfBirth.hasError('invalidDate'))) {
+                  <small class="text-danger">Invalid date</small>
+                }
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label">Gender</label>
+                <select class="form-select" formControlName="gender" [class.is-invalid]="hasControlError('gender')">
+                  @for (gender of genderOptions; track gender) {
+                    <option [value]="gender">{{ gender }}</option>
+                  }
+                </select>
+                @if (hasControlError('gender') && form.controls.gender.hasError('required')) {
+                  <small class="text-danger">This field is required</small>
+                }
+              </div>
+            </div>
+
+            <div class="edit-profile-page__actions mt-4 d-flex flex-wrap gap-2 justify-content-end">
+              <button type="button" class="btn btn-outline-secondary" (click)="onCancel()" [disabled]="saving()">
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-info" [disabled]="form.invalid || saving()">
+                {{ saving() ? 'Saving...' : 'Save Changes' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </article>
+    }
+  </div>
+</section>

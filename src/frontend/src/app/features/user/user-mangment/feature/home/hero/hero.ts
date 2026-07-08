@@ -1,0 +1,55 @@
+import { AsyncPipe, NgStyle } from '@angular/common';
+import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, map, of } from 'rxjs';
+import { API_BASE_URL } from '../../../../../../core/config/api.config';
+import { IMovie } from '../../../../user-core/user-services/user-movie/movie-interface';
+import { MoviesService } from '../../../../user-core/user-services/user-movie/user-movie';
+
+@Component({
+  selector: 'app-hero-banner',
+  standalone: true,
+  imports: [AsyncPipe, NgStyle],
+  templateUrl: './hero.html',
+  styleUrl: './hero.css'
+})
+export class HeroBannerComponent {
+
+  private readonly moviesService = inject(MoviesService);
+  private readonly router = inject(Router);
+
+  readonly movie$ = this.moviesService.getMovies().pipe(
+    map((movies) => {
+      if (!movies.length) {
+        return null;
+      }
+
+      return {
+        ...movies[4],
+        moviePosterImageUrl: this.resolvePosterUrl(movies[4].moviePosterImageUrl)
+      } satisfies IMovie;
+    }),
+    catchError((error) => {
+      console.error('Hero movie load failed:', error);
+      return of(null);
+    })
+  );
+
+  getHeroStyle(posterUrl: string): Record<string, string> {
+    return {
+      'background-image': `url("${posterUrl}")`
+    };
+  }
+
+  private resolvePosterUrl(posterUrl: string): string {
+    if (posterUrl.startsWith('http://') || posterUrl.startsWith('https://')) {
+      return posterUrl;
+    }
+
+    return `${API_BASE_URL}${posterUrl}`;
+  }
+
+  navigateToBooking(movieId: number): void {
+    this.router.navigate(['/movies', movieId]);
+  }
+}

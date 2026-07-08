@@ -1,0 +1,206 @@
+<div class="payment-page">
+  @if (isValidating()) {
+  <section class="state-card state-card--loading" aria-live="polite">
+    <div class="spinner"></div>
+    <h2>Preparing Payment</h2>
+    <p>Validating your booking details...</p>
+  </section>
+  } @else if (!isBookingValid()) {
+  <section class="state-card state-card--error" aria-live="assertive">
+    <span class="material-symbols-outlined">error</span>
+    <h2>Invalid Booking State</h2>
+    <p>
+      {{ errorMessage() || 'Missing booking information. Please complete seat selection first.' }}
+    </p>
+    <button class="btn btn-primary" (click)="redirectToCheckout()">Return to Seat Selection</button>
+  </section>
+  } @else {
+  <div class="payment-layout">
+    <section class="payment-card booking-card" aria-label="Booking details card">
+      <header class="payment-card__header">
+        <h2>Booking Details</h2>
+        <p>Confirm your show and seat selection.</p>
+      </header>
+
+      <div class="payment-card__rows">
+        <div class="summary-row">
+          <span>Movie</span>
+          <strong>{{ movie()?.movieName || '—' }}</strong>
+        </div>
+        <div class="summary-row">
+          <span>Duration</span>
+          <strong>{{ movie()?.movieDuration || '—' }}</strong>
+        </div>
+        <div class="summary-row">
+          <span>Cinema</span>
+          <strong>{{ showtime()?.branchName || '—' }}</strong>
+        </div>
+        <div class="summary-row">
+          <span>Hall</span>
+          <strong>{{ showtime()?.hallNumber || '—' }} ({{ showtime()?.hallType || '—' }})</strong>
+        </div>
+        <div class="summary-row">
+          <span>Date</span>
+          <strong>{{ formatShowtimeDate(showtime()?.showStartTime) }}</strong>
+        </div>
+        <div class="summary-row">
+          <span>Time</span>
+          <strong>{{ formatShowtimeTime(showtime()?.showStartTime) }}</strong>
+        </div>
+        <div class="summary-row">
+          <span>Seats</span>
+          <strong>{{ seatLabels() || '—' }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="payment-card payment-method-card" aria-label="Payment method card">
+      <header class="payment-card__header">
+        <h2>Payment Method</h2>
+        <p>Card details are validated locally before confirmation.</p>
+      </header>
+
+      <form class="payment-form" [formGroup]="paymentForm" novalidate>
+        <div class="form-group">
+          <label for="cardHolderName">Name on Card</label>
+          <input
+            id="cardHolderName"
+            type="text"
+            class="form-control"
+            formControlName="cardHolderName"
+            [class.is-invalid]="paymentForm.controls.cardHolderName.touched && paymentForm.controls.cardHolderName.invalid"
+            autocomplete="cc-name"
+          />
+          @if (paymentForm.controls.cardHolderName.touched &&
+          paymentForm.controls.cardHolderName.hasError('required')) {
+          <small class="invalid-feedback d-block">Card holder name is required.</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="cardNumber">Card Number</label>
+          <input
+            id="cardNumber"
+            type="text"
+            class="form-control"
+            formControlName="cardNumber"
+            [class.is-invalid]="paymentForm.controls.cardNumber.touched && paymentForm.controls.cardNumber.invalid"
+            inputmode="numeric"
+            maxlength="16"
+            autocomplete="cc-number"
+            (input)="onCardNumberInput($event)"
+          />
+          @if (paymentForm.controls.cardNumber.touched &&
+          paymentForm.controls.cardNumber.hasError('required')) {
+          <small class="invalid-feedback d-block">Card number is required.</small>
+          } @if (paymentForm.controls.cardNumber.touched &&
+          paymentForm.controls.cardNumber.hasError('pattern')) {
+          <small class="invalid-feedback d-block">Card number must be exactly 16 digits.</small>
+          }
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="expiryDate">Expiry Date</label>
+            <input
+              id="expiryDate"
+              type="text"
+              class="form-control"
+              formControlName="expiryDate"
+              [class.is-invalid]="paymentForm.controls.expiryDate.touched && paymentForm.controls.expiryDate.invalid"
+              inputmode="numeric"
+              maxlength="5"
+              placeholder="MM/YY"
+              autocomplete="cc-exp"
+              (input)="onExpiryInput($event)"
+            />
+            @if (paymentForm.controls.expiryDate.touched &&
+            paymentForm.controls.expiryDate.hasError('required')) {
+            <small class="invalid-feedback d-block">Expiry date is required.</small>
+            } @if (paymentForm.controls.expiryDate.touched &&
+            paymentForm.controls.expiryDate.hasError('pattern')) {
+            <small class="invalid-feedback d-block">Use MM/YY format.</small>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="cvv">CVV</label>
+            <input
+              id="cvv"
+              type="password"
+              class="form-control"
+              formControlName="cvv"
+              [class.is-invalid]="paymentForm.controls.cvv.touched && paymentForm.controls.cvv.invalid"
+              inputmode="numeric"
+              maxlength="3"
+              autocomplete="cc-csc"
+              (input)="onCvvInput($event)"
+            />
+            @if (paymentForm.controls.cvv.touched && paymentForm.controls.cvv.hasError('required'))
+            {
+            <small class="invalid-feedback d-block">CVV is required.</small>
+            } @if (paymentForm.controls.cvv.touched && paymentForm.controls.cvv.hasError('pattern'))
+            {
+            <small class="invalid-feedback d-block">CVV must be exactly 3 digits.</small>
+            }
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <aside class="payment-card payment-summary" aria-label="Order summary card">
+      <header class="payment-card__header">
+        <h2>Order Summary</h2>
+        <p>Secure checkout</p>
+      </header>
+
+      <div class="payment-card__rows">
+        <div class="summary-row">
+          <span>Ticket total</span>
+          <strong>{{ total() | currency:'EGP':'symbol':'1.2-2' }}</strong>
+        </div>
+        <div class="summary-row">
+          <span>Currency</span>
+          <strong>EGP</strong>
+        </div>
+      </div>
+
+      <div class="final-amount">
+        <span>Final amount</span>
+        <strong>{{ total() | currency:'EGP':'symbol':'1.2-2' }}</strong>
+      </div>
+
+      @if (status() === 'creating' || status() === 'confirming') {
+      <div class="status status--loading" aria-live="polite">
+        <div class="spinner spinner--sm"></div>
+        <p>Processing Payment...</p>
+      </div>
+      } @if (status() === 'success') {
+      <div class="status status--success" aria-live="polite">
+        <span class="material-symbols-outlined">check_circle</span>
+        <p>Payment confirmed. Redirecting...</p>
+      </div>
+      } @if (status() === 'error' && errorMessage()) {
+      <div class="status status--error" aria-live="assertive">
+        <span class="material-symbols-outlined">error</span>
+        <p>{{ errorMessage() }}</p>
+      </div>
+      }
+
+      <div class="payment-actions">
+        <button
+          class="btn btn-primary btn-lg"
+          [disabled]="isProcessing() || isForbidden() || !canConfirm()"
+          (click)="confirmPayment()"
+        >
+          {{ isProcessing() ? 'Processing Payment...' : 'Confirm Payment' }}
+        </button>
+
+        @if (status() === 'error' && !isForbidden() && !isProcessing()) {
+        <button class="btn btn-outline-primary" (click)="retryCreateIntent()">Retry</button>
+        }
+      </div>
+    </aside>
+  </div>
+  }
+</div>

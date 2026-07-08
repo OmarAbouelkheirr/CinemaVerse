@@ -1,0 +1,98 @@
+<div class="modal-backdrop" (click)="closeModal.emit()">
+    <div class="modal-card modal-md" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <div>
+                <h2 class="modal-title">Add New Showtime</h2>
+                <p class="modal-subtitle">Schedule a new movie showtime</p>
+            </div>
+            <button type="button" class="modal-close" aria-label="Close modal" (click)="closeModal.emit()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group form-group--full">
+                        <label for="create-movieId">Movie</label>
+                        <select id="create-movieId" class="form-control" formControlName="movieId"
+                            [class.form-control--error]="isInvalid('movieId')">
+                            <option [ngValue]="null" disabled>Select a movie</option>
+                            @for (movie of movies(); track movie.id) {
+                                <option [ngValue]="movie.id">{{ movie.name }}</option>
+                            }
+                        </select>
+                        @if (getErrorMessage('movieId'); as msg) {
+                            <span class="form-error">{{ msg }}</span>
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <label for="create-branchId">Branch</label>
+                        <select id="create-branchId" class="form-control" formControlName="branchId"
+                            [class.form-control--error]="isInvalid('branchId')">
+                            <option [ngValue]="null" disabled>Select a branch</option>
+                            @for (branch of branches(); track branch.id) {
+                                <option [ngValue]="branch.id">{{ branch.name }}</option>
+                            }
+                        </select>
+                        @if (getErrorMessage('branchId'); as msg) {
+                            <span class="form-error">{{ msg }}</span>
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <label for="create-hallId">Hall</label>
+                        <select id="create-hallId" class="form-control" formControlName="hallId"
+                            [class.form-control--error]="isInvalid('hallId')"
+                            [disabled]="!form.controls.branchId.value">
+                            <option [ngValue]="null" disabled>Select a hall</option>
+                            @for (hall of halls(); track hall.id) {
+                                <option [ngValue]="hall.id">{{ hall.hallNumber }}</option>
+                            }
+                        </select>
+                        @if (getErrorMessage('hallId'); as msg) {
+                            <span class="form-error">{{ msg }}</span>
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <label for="create-date">Date</label>
+                        <input id="create-date" type="date" class="form-control" formControlName="date"
+                            [class.form-control--error]="isInvalid('date')" />
+                        @if (getShowTimeError(); as msg) {
+                            <span class="form-error">{{ msg }}</span>
+                        }
+                        @if (getErrorMessage('date'); as msg) {
+                            <span class="form-error">{{ msg }}</span>
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <label for="create-time">Time</label>
+                        <input id="create-time" type="time" class="form-control" formControlName="time"
+                            [class.form-control--error]="isInvalid('time')" />
+                        @if (getErrorMessage('time'); as msg) {
+                            <span class="form-error">{{ msg }}</span>
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <label for="create-price">Ticket Price ($)</label>
+                        <input id="create-price" type="number" class="form-control" formControlName="price"
+                            placeholder="0.00" min="0.1" max="10000" step="0.01"
+                            [class.form-control--error]="isInvalid('price')" />
+                        @if (getErrorMessage('price'); as msg) {
+                            <span class="form-error">{{ msg }}</span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" (click)="closeModal.emit()">Cancel</button>
+                <button type="submit" class="btn btn-primary" [disabled]="isFormInvalid">Create Showtime</button>
+            </div>
+        </form>
+    </div>
+</div>

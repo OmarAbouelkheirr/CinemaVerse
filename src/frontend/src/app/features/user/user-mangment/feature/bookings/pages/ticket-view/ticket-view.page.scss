@@ -1,0 +1,257 @@
+:host {
+  display: block;
+}
+
+.ticket-page {
+  background: var(--cinema-bg);
+  min-height: calc(100vh - var(--nav-height, 3.5rem));
+}
+
+.ticket-page__container {
+  width: min(92%, 70rem);
+  margin-inline: auto;
+  padding-block: clamp(1.5rem, 4vw, 3rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ticket-page__back {
+  align-self: flex-start;
+}
+
+.ticket-page__logo {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: var(--on-surface);
+}
+
+.ticket-page__error {
+  min-height: 55vh;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 0.75rem;
+  color: var(--on-surface-variant);
+}
+
+.ticket-page__error .material-symbols-outlined {
+  font-size: 2rem;
+  color: var(--status-danger);
+}
+
+.ticket-page__error h1 {
+  margin: 0;
+  font-size: var(--text-title);
+  color: var(--on-surface);
+}
+
+.ticket-card {
+  width: 100%;
+  background: var(--surface-container-low);
+  border: 1px solid var(--ghost-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+}
+
+.ticket-card__left,
+.ticket-card__right {
+  padding: clamp(1rem, 2.2vw, 1.4rem);
+}
+
+.ticket-card__left {
+  border-right: 1px dashed var(--ghost-border);
+}
+
+.ticket-card__poster {
+  width: 100%;
+  max-width: 360px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--ghost-border);
+  object-fit: cover;
+  display: block;
+  margin-bottom: 0.9rem;
+}
+
+.ticket-card__movie {
+  margin: 0 0 0.9rem;
+  font-size: var(--text-title);
+  color: var(--on-surface);
+}
+
+.ticket-details,
+.ticket-meta {
+  margin: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ticket-details__row,
+.ticket-meta__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.85rem;
+  border-bottom: 1px solid var(--ghost-border);
+  padding-bottom: 0.45rem;
+}
+
+.ticket-details__row dt,
+.ticket-meta__row dt {
+  color: var(--on-surface-variant);
+  font-size: var(--text-body-sm);
+}
+
+.ticket-details__row dd,
+.ticket-meta__row dd {
+  margin: 0;
+  color: var(--on-surface);
+  font-size: var(--text-body);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  font-size: var(--text-label);
+  font-weight: 600;
+  border: 1px solid transparent;
+  text-transform: uppercase;
+}
+
+.status-badge--active {
+  color: var(--status-active);
+  background: var(--status-active-bg);
+  border-color: var(--status-active-br);
+}
+
+.status-badge--used {
+  color: var(--status-suspended);
+  background: var(--status-suspended-bg);
+  border-color: var(--status-suspended-br);
+}
+
+.status-badge--cancelled {
+  color: var(--status-danger);
+  background: var(--status-danger-bg);
+  border-color: var(--status-danger-br);
+}
+
+.status-badge--expired {
+  color: var(--status-pending);
+  background: var(--status-pending-bg);
+  border-color: var(--status-pending-br);
+}
+
+.ticket-card__note {
+  margin: 1rem 0 0;
+  color: var(--on-surface-variant);
+  font-size: var(--text-body-sm);
+}
+
+.ticket-page__actions {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 1024px) {
+  .ticket-card {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ticket-card__left,
+  .ticket-card__right {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .ticket-page__container {
+    width: 94%;
+  }
+
+  .ticket-card {
+    grid-template-columns: 1fr;
+  }
+
+  .ticket-card__left {
+    border-right: 0;
+    border-bottom: 1px dashed var(--ghost-border);
+  }
+
+  .ticket-page__actions {
+    flex-direction: column;
+  }
+
+  .ticket-page__actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media print {
+  :host {
+    background: #fff;
+  }
+
+  .ticket-page {
+    background: #fff;
+    min-height: auto;
+  }
+
+  .ticket-page__container {
+    width: 100%;
+    padding: 0;
+    gap: 0;
+  }
+
+  .ticket-page__back,
+  .ticket-page__logo,
+  .ticket-page__actions,
+  .no-print {
+    display: none !important;
+  }
+
+  .ticket-card {
+    box-shadow: none;
+    border-color: #b5b5b5;
+    border-radius: 0;
+    width: 100%;
+    break-inside: avoid;
+  }
+
+  .ticket-card__left,
+  .ticket-card__right {
+    color: #111;
+  }
+
+  .ticket-card__movie,
+  .ticket-details__row dd,
+  .ticket-meta__row dd {
+    color: #111;
+  }
+}

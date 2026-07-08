@@ -1,0 +1,26 @@
+<div class="modal-backdrop" (click)="closeModal.emit()">
+  <div class="modal-card modal-lg add-movie-modal-card" (click)="$event.stopPropagation()">
+
+    <div class="modal-header" style="display:flex; align-items:flex-start; justify-content:space-between;">
+      <div>
+        <h2 class="modal-title">Edit Movie</h2>
+        <p class="modal-subtitle">Update the details for "{{ movie().title }}".</p>
+      </div>
+      <button class="modal-close" type="button" aria-label="Close" (click)="closeModal.emit()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <app-movie-form
+      [movieForm]="movieForm"
+      [genres]="genres()"
+      submitLabel="Update Movie"
+      (formSubmitted)="onFormSubmitted($event)">
+      <ng-container modal-footer>
+        <button type="button" class="btn btn-ghost btn-md" (click)="closeModal.emit()">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-md">Update Movie</button>
+      </ng-container>
+    </app-movie-form>
+
+  </div>
+</div>

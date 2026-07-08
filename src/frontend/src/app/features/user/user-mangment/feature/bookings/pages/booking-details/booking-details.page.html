@@ -1,0 +1,127 @@
+<section class="booking-details-page" aria-labelledby="booking-details-heading">
+  <div class="booking-details-page__container">
+    <button
+      type="button"
+      class="btn btn-ghost btn-sm booking-details-page__back"
+      (click)="onBackToBookings()"
+      aria-label="Back to My Bookings"
+    >
+      <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      Back to My Bookings
+    </button>
+
+    @if (loading()) {
+    <app-booking-details-skeleton />
+    } @else if (showNotFound()) {
+    <div class="booking-details-page__not-found" role="status" aria-live="polite">
+      <span class="material-symbols-outlined" aria-hidden="true">error_outline</span>
+      <h1 id="booking-details-heading">Booking not found</h1>
+      <button
+        type="button"
+        class="btn btn-secondary btn-md"
+        (click)="onBackToBookings()"
+        aria-label="Back to My Bookings"
+      >
+        Back to My Bookings
+      </button>
+    </div>
+    } @else if (showGenericError()) {
+    <div class="booking-details-page__not-found" role="alert" aria-live="assertive">
+      <span class="material-symbols-outlined" aria-hidden="true">wifi_off</span>
+      <h1 id="booking-details-heading">{{ error() || 'Unable to load booking details' }}</h1>
+      <button
+        type="button"
+        class="btn btn-secondary btn-md"
+        (click)="onBackToBookings()"
+        aria-label="Back to My Bookings"
+      >
+        Back to My Bookings
+      </button>
+    </div>
+    } @else if (booking(); as selectedBooking) {
+    <header class="booking-details-header">
+      <div class="booking-details-header__meta">
+        <h1 id="booking-details-heading" class="booking-details-header__title">
+          Booking #{{ selectedBooking.bookingId }}
+        </h1>
+        <p class="booking-details-header__subline">Created {{ createdDateText() }}</p>
+        <div class="booking-details-header__status" aria-label="Booking status">
+          <app-booking-status-badge [status]="selectedBooking.status" />
+        </div>
+      </div>
+
+      @if (canCancelBooking()) {
+      <button
+        type="button"
+        class="btn btn-danger btn-md booking-details-header__cancel"
+        (click)="onCancelClick()"
+        aria-label="Cancel booking"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        Cancel Booking
+      </button>
+      }
+    </header>
+
+    <div class="booking-details-content">
+      <section class="booking-details-content__summary" aria-label="Booking summary">
+        <app-booking-summary [booking]="selectedBooking" />
+      </section>
+
+      <section class="booking-details-content__tickets" aria-label="Booking tickets">
+        <div class="tickets-panel">
+          <header class="tickets-panel__header">
+            <h2>Tickets</h2>
+            <span class="tickets-panel__count">{{ tickets().length }}</span>
+          </header>
+
+          <div class="tickets-panel__list">
+            @for (ticket of tickets(); track ticket.ticketId) {
+            <app-booking-ticket-card [ticket]="ticket" (viewTicket)="onViewTicket($event)" />
+            }
+          </div>
+        </div>
+      </section>
+    </div>
+    }
+  </div>
+</section>
+
+@if (showCancelDialog()) {
+<div class="modal-backdrop" (click)="onCancelDismiss()" role="presentation">
+  <div
+    class="modal-card modal-sm"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="cancel-booking-title"
+    aria-describedby="cancel-booking-description"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="modal-header">
+      <h3 id="cancel-booking-title" class="modal-title">Cancel Booking</h3>
+      <p id="cancel-booking-description" class="modal-subtitle">
+        Are you sure you want to cancel this booking? This action cannot be undone.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button
+        type="button"
+        class="btn btn-ghost btn-md"
+        (click)="onCancelDismiss()"
+        aria-label="Keep booking"
+      >
+        Keep Booking
+      </button>
+      <button
+        type="button"
+        class="btn btn-danger btn-md"
+        (click)="onCancelConfirm()"
+        aria-label="Confirm cancellation"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        Confirm Cancel
+      </button>
+    </div>
+  </div>
+</div>
+}

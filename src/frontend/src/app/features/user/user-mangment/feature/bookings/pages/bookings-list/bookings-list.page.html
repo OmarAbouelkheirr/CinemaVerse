@@ -1,0 +1,109 @@
+<section class="bookings-page">
+  <div class="bookings-page__container">
+    <header class="bookings-page__header">
+      <h1 class="bookings-page__title">My Bookings</h1>
+      <p class="bookings-page__subtitle">View and manage all your cinema bookings.</p>
+    </header>
+
+    <app-booking-filter
+      [currentFilters]="filters()"
+      (searchChanged)="onSearchChange($event)"
+      (filterChanged)="onFilterChange($event)"
+      (clearFilters)="onClearFilters()"
+    />
+
+    @if (error(); as errorMsg) {
+      <div class="bookings-page__error">
+        <span class="material-symbols-outlined">error_outline</span>
+        <p>{{ errorMsg }}</p>
+      </div>
+    }
+
+    @if (loading()) {
+      <div class="bookings-page__grid">
+        @for (i of [].constructor(skeletonCount()); track $index) {
+          <app-booking-card-skeleton />
+        }
+      </div>
+    } @else if (isEmpty()) {
+      <app-booking-empty />
+    } @else {
+      <div class="bookings-page__grid">
+        @for (booking of bookings(); track booking.bookingId) {
+          <app-booking-card
+            [booking]="booking"
+            (viewDetails)="onViewDetails($event)"
+            (cancelBooking)="onCancelClick($event)"
+          />
+        }
+      </div>
+
+      @if (pagination().totalPages > 1) {
+        <nav class="bookings-page__pagination" aria-label="Bookings pagination">
+          <button
+            type="button"
+            class="page-btn"
+            [disabled]="!pagination().hasPreviousPage"
+            (click)="onPageChange(pagination().page - 1)"
+            aria-label="Previous page"
+          >
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+
+          @for (page of pageNumbers(); track page) {
+            <button
+              type="button"
+              class="page-btn"
+              [class.active]="page === pagination().page"
+              (click)="onPageChange(page)"
+              [attr.aria-label]="'Go to page ' + page"
+              [attr.aria-current]="page === pagination().page ? 'page' : null"
+            >
+              {{ page }}
+            </button>
+          }
+
+          <button
+            type="button"
+            class="page-btn"
+            [disabled]="!pagination().hasNextPage"
+            (click)="onPageChange(pagination().page + 1)"
+            aria-label="Next page"
+          >
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </nav>
+      }
+    }
+  </div>
+</section>
+
+@if (showCancelDialog()) {
+  <div class="modal-backdrop" (click)="onCancelDismiss()">
+    <div class="modal-card modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Cancel Booking</h3>
+        <p class="modal-subtitle">Are you sure you want to cancel this booking? This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-ghost btn-md"
+          (click)="onCancelDismiss()"
+          aria-label="Keep booking"
+        >
+          Keep Booking
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger btn-md"
+          (click)="onCancelConfirm()"
+          aria-label="Confirm cancellation"
+        >
+          <span class="material-symbols-outlined">close</span>
+          Cancel Booking
+        </button>
+      </div>
+    </div>
+  </div>
+}
