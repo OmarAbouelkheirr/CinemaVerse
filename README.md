@@ -142,19 +142,33 @@ QR code lookup and check-in management for ticket validation.
 
 ```mermaid
 graph LR
-    subgraph Frontend["Angular 21"]
-        A[SPA]
+    subgraph Frontend["Frontend — Angular 21"]
+        Core[Core Module] --> Auth & Guards & Intercept & HTTP
+        Layout[Layout Module] --> Header & Footer
+        subgraph User["User Features"]
+            Home & MovieDetail & Booking & Bookings & Profile
+        end
+        subgraph Admin["Admin Features"]
+            Dashboard & Movies & Users & Branches & Showtimes & Genres & AdminBookings & Payments & Tickets
+        end
+        User --> Core
+        Admin --> Core
     end
-    subgraph Backend["ASP.NET Core 9"]
-        B[API] --> C[Services] --> D[EF Core]
+    subgraph Backend["Backend — ASP.NET Core 9"]
+        API[Controllers] --> SVC[Services / Business Logic]
+        SVC --> DTOs & Mappers & Interfaces
+        SVC --> Repository[Repositories] --> DB[(SQL Server)]
     end
-    subgraph External["External"]
-        E[(SQL)] & F[Stripe] & G[Hangfire] & H[Email]
+    subgraph External["External Services"]
+        Stripe[Stripe Payments]
+        Hangfire[Hangfire Jobs]
+        Email[MailKit / SMTP]
     end
-    A -->|JWT| B
-    D --> E
-    C --> F & G & H
+    Frontend -->|REST + JWT| API
+    SVC --> Stripe & Hangfire & Email
 ```
+
+> **Layers:** Presentation (Controllers) → Business (Services + DTOs) → Data (EF Core + Repositories) | **External:** Stripe for payments, Hangfire for background jobs, MailKit for emails
 
 ---
 
