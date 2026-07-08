@@ -17,7 +17,6 @@
   - [Admin Features](#admin-features)
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
-- [Database](#database)
 - [Authentication](#authentication)
 - [API Documentation](#api-documentation)
 
@@ -276,32 +275,6 @@ Auth endpoints are rate-limited to **5 requests per minute per IP**:
 - `POST /api/auth/login`
 - `POST /api/auth/refresh-token`
 - `POST /api/auth/logout`
-
----
-
-## Database
-
-The database consists of 17 entities with clear relationships for users, movies, bookings, and cinema management.
-
-```mermaid
-erDiagram
-    User ||--o{ Booking : "creates"
-    User ||--o{ Review : "writes"
-    Booking ||--o{ BookingSeat : "has"
-    Booking ||--o{ Ticket : "generates"
-    Booking ||--o{ BookingPayment : "paid via"
-    Booking }o--|| MovieShowTime : "for"
-    MovieShowTime }o--|| Movie : "shows"
-    MovieShowTime }o--|| Hall : "in"
-    Hall }o--|| Branch : "belongs to"
-    Hall ||--o{ Seat : "contains"
-    Seat ||--o{ BookingSeat : "reserved in"
-    Seat ||--o{ Ticket : "assigned to"
-    Movie ||--o{ MovieGenre : "tagged with"
-    Genre ||--o{ MovieGenre : "categorizes"
-    Movie ||--o{ MovieImage : "has"
-    Movie ||--o{ MovieCastMember : "features"
-```
 
 ---
 
