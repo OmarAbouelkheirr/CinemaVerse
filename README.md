@@ -33,7 +33,7 @@ Browse movies with search, genre, and language filters. View movie info, cast, i
 
 | Home Page |
 |:---------:|
-| <img src="docs/Images/user%20home.png" width="500"> |
+| <img src="docs/Images/user%20home.png" width="100%"> |
 
 | Movie Listing | Movie Detail |
 |:-------------:|:------------:|
