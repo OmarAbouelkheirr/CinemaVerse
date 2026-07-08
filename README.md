@@ -1,34 +1,40 @@
-# CinemaVerse — Fullstack Cinema Ticket Booking Platform
+# CinemaVerse
 
-A complete cinema ticket booking platform built with **Angular 21** (frontend) and **ASP.NET Core 9.0** (backend), featuring user authentication, movie browsing, seat selection, Stripe payments, QR code tickets, and a full admin panel.
+[![Angular](https://img.shields.io/badge/Angular-21-DD0031?style=flat&logo=angular)](https://angular.dev/)
+[![.NET](https://img.shields.io/badge/.NET-9.0-512BD4?style=flat&logo=dotnet)](https://dotnet.microsoft.com/)
+[![SQL Server](https://img.shields.io/badge/SQL_Server-2019-CC2927?style=flat&logo=microsoftsqlserver)](https://www.microsoft.com/en-us/sql-server)
+[![Stripe](https://img.shields.io/badge/Stripe-Payments-635BFF?style=flat&logo=stripe)](https://stripe.com/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat)](LICENSE)
+
+> A complete cinema ticket booking platform built with **Angular 21** (frontend) and **ASP.NET Core 9.0** (backend), featuring user authentication, movie browsing, seat selection, Stripe payments, QR code tickets, and a full admin panel.
 
 ---
 
 ## Table of Contents
 
 - [Live Demo](#live-demo)
-- [Screenshots](#screenshots)
-  - [User — Home & Movies](#user--home--movies)
-  - [Admin — Dashboard](#admin--dashboard)
-  - [Admin — Movies Management](#admin--movies-management)
-  - [Admin — Branches & Halls](#admin--branches--halls)
-  - [Admin — Showtimes](#admin--showtimes)
-  - [Admin — Users Management](#admin--users-management)
-  - [Admin — Bookings](#admin--bookings)
-  - [Admin — Tickets](#admin--tickets)
-- [Tech Stack](#tech-stack)
 - [Features](#features)
+  - [User Features](#user-features)
+    - [Movie Browsing](#movie-browsing)
+    - [Seat Selection & Booking](#seat-selection--booking)
+  - [Admin Features](#admin-features)
+    - [Dashboard](#dashboard)
+    - [Movies Management](#movies-management)
+    - [Branches & Halls](#branches--halls)
+    - [Showtimes](#showtimes)
+    - [Users Management](#users-management)
+    - [Bookings Management](#bookings-management)
+    - [Tickets Management](#tickets-management)
+- [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Backend Setup](#backend-setup)
-  - [Frontend Setup](#frontend-setup)
-- [API Documentation](#api-documentation)
-- [Authentication](#authentication)
+  - [System Overview](#system-overview)
+  - [Backend — Clean Architecture](#backend--clean-architecture)
+  - [Frontend — Angular Architecture](#frontend--angular-architecture)
 - [Database](#database)
-- [Background Jobs](#background-jobs)
-- [Email System](#email-system)
+  - [Entity Relationship Diagram](#entity-relationship-diagram)
+- [Authentication](#authentication)
+- [Getting Started](#getting-started)
+- [API Documentation](#api-documentation)
 - [Deployment](#deployment)
 - [Test Credentials](#test-credentials)
 - [Known Issues](#known-issues)
@@ -46,25 +52,35 @@ A complete cinema ticket booking platform built with **Angular 21** (frontend) a
 
 ---
 
-## Screenshots
+## Features
 
-### User — Home & Movies
+### User Features
 
-| Home Page | Movie Listing |
-|-----------|--------------|
-| ![Home Page](docs/Images/user%20home.png) | ![Movie Listing](docs/Images/user%20movies.png) |
+#### Movie Browsing
 
-| Movie Detail | Booking |
-|--------------|---------|
-| ![Movie Detail](docs/Images/user%20movie%20details.png) | ![Booking](docs/Images/User%20movie%20booking.png) |
+Browse movies with search, genre, and language filters. View movie info, cast, images, and available showtimes.
 
-| Payment |
-|---------|
-| ![Payment](docs/Images/user%20payment.png) |
+| Home Page | Movie Listing | Movie Detail |
+|-----------|--------------|--------------|
+| ![Home Page](docs/Images/user%20home.png) | ![Movie Listing](docs/Images/user%20movies.png) | ![Movie Detail](docs/Images/user%20movie%20details.png) |
 
 ---
 
-### Admin — Dashboard
+#### Seat Selection & Booking
+
+Interactive seat grid with real-time availability, Stripe payment integration, and QR code ticket generation.
+
+| Booking | Payment |
+|---------|---------|
+| ![Booking](docs/Images/User%20movie%20booking.png) | ![Payment](docs/Images/user%20payment.png) |
+
+---
+
+### Admin Features
+
+#### Dashboard
+
+KPI cards, revenue charts, booking trends, and occupancy rate at a glance.
 
 | Dashboard |
 |-----------|
@@ -72,7 +88,9 @@ A complete cinema ticket booking platform built with **Angular 21** (frontend) a
 
 ---
 
-### Admin — Movies Management
+#### Movies Management
+
+Full CRUD with media upload, genre assignment, and detailed movie views.
 
 | Movies List | View Movie |
 |-------------|------------|
@@ -80,19 +98,19 @@ A complete cinema ticket booking platform built with **Angular 21** (frontend) a
 
 ---
 
-### Admin — Branches & Halls
+#### Branches & Halls
 
-| Branches | View Branch |
-|----------|-------------|
-| ![Branches](docs/Images/Admin%20branch.png) | ![View Branch](docs/Images/admin%20view%20branch.png) |
+Manage cinema branches, hall configurations, seat layouts, and hall types (2D, 3D, IMAX, VIP).
 
-| Edit Hall |
-|-----------|
-| ![Edit Hall](docs/Images/admin%20edit%20hall.png) |
+| Branches | View Branch | Edit Hall |
+|----------|-------------|-----------|
+| ![Branches](docs/Images/Admin%20branch.png) | ![View Branch](docs/Images/admin%20view%20branch.png) | ![Edit Hall](docs/Images/admin%20edit%20hall.png) |
 
 ---
 
-### Admin — Showtimes
+#### Showtimes
+
+Schedule showtimes with conflict detection across halls and movies.
 
 | Showtimes |
 |-----------|
@@ -100,7 +118,9 @@ A complete cinema ticket booking platform built with **Angular 21** (frontend) a
 
 ---
 
-### Admin — Users Management
+#### Users Management
+
+View, create, edit, activate/deactivate user accounts with role-based access control.
 
 | Users | View User |
 |-------|-----------|
@@ -108,7 +128,9 @@ A complete cinema ticket booking platform built with **Angular 21** (frontend) a
 
 ---
 
-### Admin — Bookings
+#### Bookings Management
+
+View all bookings, update status, and export to CSV.
 
 | Bookings |
 |----------|
@@ -116,7 +138,9 @@ A complete cinema ticket booking platform built with **Angular 21** (frontend) a
 
 ---
 
-### Admin — Tickets
+#### Tickets Management
+
+QR code lookup and check-in management for ticket validation.
 
 | Tickets | View Ticket |
 |---------|-------------|
@@ -157,125 +181,144 @@ A complete cinema ticket booking platform built with **Angular 21** (frontend) a
 
 ---
 
-## Features
+## Architecture
 
-### User Features
+### System Overview
 
-| Feature | Description |
-|---------|-------------|
-| **Registration & Login** | JWT-based authentication with email verification |
-| **Password Recovery** | Forgot password flow with email reset tokens |
-| **Movie Browsing** | Browse movies with search, genre, and language filters |
-| **Movie Details** | View movie info, cast, images, and available showtimes |
-| **Seat Selection** | Interactive seat grid with real-time availability |
-| **Payment** | Stripe-integrated payment with card validation |
-| **Booking Management** | View, cancel, and track booking status |
-| **Ticket History** | View tickets with QR codes for check-in |
-| **Profile Management** | View and edit profile, change password |
+```mermaid
+graph LR
+    subgraph Frontend["Frontend — Angular 21"]
+        A[Angular SPA]
+    end
 
-### Admin Features
+    subgraph Backend["Backend — ASP.NET Core 9"]
+        B[API Controllers]
+        C[Services / Business Logic]
+        D[EF Core / Repositories]
+    end
 
-| Feature | Description |
-|---------|-------------|
-| **Dashboard** | KPI cards, revenue charts, booking trends, occupancy rate |
-| **Movies Management** | Full CRUD with media upload, genre assignment |
-| **Branches & Halls** | Manage cinema branches and hall configurations |
-| **Showtimes** | Schedule showtimes with conflict detection |
-| **Genres** | Manage movie genres |
-| **Users** | View, create, edit, activate/deactivate users |
-| **Bookings** | View all bookings, update status, export to CSV |
-| **Payments** | View payment history and summaries |
-| **Tickets** | View tickets, QR lookup, check-in management |
-| **Hangfire Dashboard** | Monitor background jobs at `/hangfire` |
+    subgraph External["External Services"]
+        E[(SQL Server)]
+        F[Stripe]
+        G[Hangfire]
+        H[MailKit / SMTP]
+    end
+
+    A -->|HTTP + JWT| B
+    B --> C
+    C --> D
+    D --> E
+    C --> F
+    C --> G
+    C --> H
+```
+
+> **Note:** The frontend communicates with the backend via RESTful APIs using JWT authentication. External services like Stripe for payments, Hangfire for background jobs, and MailKit for emails are integrated at the service layer.
 
 ---
 
-## Architecture
+### Backend — Clean Architecture
 
-### Frontend — Angular 21 (Clean Architecture)
+The backend follows Clean Architecture with three distinct layers, ensuring separation of concerns and testability.
 
-```
-src/app/
-├── core/                    ← Singleton services, guards, interceptors
-│   ├── auth/                ← Authentication logic, JWT handling
-│   ├── config/              ← API configuration
-│   ├── guards/              ← Route guards (auth, role)
-│   ├── http/                ← API client service
-│   └── interceptors/        ← HTTP interceptors (auth, refresh token)
-│
-├── layout/                  ← App shell (header + router outlet + footer)
-│
-├── shared/                  ← Reusable components
-│   ├── components/          ← Pagination, modals
-│   └── ui/                  ← Design system components
-│
-└── features/                ← Feature modules
-    ├── auth/                ← Login, register, password recovery
-    ├── user/                ← User-facing features
-    │   ├── data-access/     ← API services
-    │   ├── models/          ← TypeScript interfaces
-    │   ├── pages/           ← Profile, edit profile, change password
-    │   ├── store/           ← Signal-based state
-    │   └── user-mangment/   ← Feature components
-    │       └── feature/
-    │           ├── home/           ← Home page with banner
-    │           ├── movie-detail/   ← Movie detail with showtimes
-    │           ├── movie-booking/  ← Seat selection + payment flow
-    │           └── bookings/       ← Booking list, detail, tickets
-    │
-    └── admin/               ← Admin panel
-        ├── admin-layout/    ← Admin shell (sidebar + header)
-        ├── features/
-        │   ├── dashboard/   ← KPI cards, charts
-        │   ├── movies/      ← Movie CRUD
-        │   ├── users/       ← User management
-        │   ├── branches/    ← Branch & hall management
-        │   ├── showtimes/   ← Showtime scheduling
-        │   ├── genres/      ← Genre management
-        │   ├── bookings/    ← Booking management
-        │   ├── payments/    ← Payment history
-        │   └── tickets/     ← Ticket management
-        └── shared/          ← Admin shared components
+```mermaid
+graph TB
+    subgraph Presentation["Presentation Layer — CinemaVerse"]
+        P1[Controllers]
+        P2[Middleware]
+        P3[Filters]
+        P4[Infrastructure]
+    end
+
+    subgraph Business["Business Layer — CinemaVerse.Services"]
+        S1[Interfaces]
+        S2[Implementations]
+        S3[DTOs]
+        S4[Mappers]
+        S5[Constants]
+    end
+
+    subgraph Data["Data Layer — CinemaVerse.Data"]
+        D1[AppDbContext]
+        D2[Models / Entities]
+        D3[Configurations]
+        D4[Repositories]
+        D5[Migrations]
+    end
+
+    P1 --> S1
+    P2 --> S1
+    P3 --> S1
+    S1 --> S2
+    S2 --> D1
+    S2 --> D2
+    D4 --> D1
 ```
 
-### Backend — ASP.NET Core 9.0 (Clean Architecture)
+> **Key Principles:**
+> - **Dependency Inversion:** Business layer defines interfaces; implementation details live in outer layers
+> - **Repository Pattern:** Data access is abstracted behind repository interfaces
+> - **Unit of Work:** Transaction management across multiple repositories
 
+---
+
+### Frontend — Angular Architecture
+
+The frontend follows a modular architecture with lazy-loaded feature modules and shared components.
+
+```mermaid
+graph TB
+    subgraph Core["Core Module"]
+        C1[Auth]
+        C2[Config]
+        C3[Guards]
+        C4[HTTP Client]
+        C5[Interceptors]
+    end
+
+    subgraph Layout["Layout Module"]
+        L1[Header]
+        L2[Router Outlet]
+        L3[Footer]
+    end
+
+    subgraph Shared["Shared Module"]
+        SH1[Pagination]
+        SH2[Modals]
+        SH3[Design System UI]
+    end
+
+    subgraph Features["Feature Modules"]
+        F1[Auth — Login/Register]
+        subgraph User["User Features"]
+            U1[Home]
+            U2[Movie Detail]
+            U3[Movie Booking]
+            U4[Bookings]
+            U5[Profile]
+        end
+        subgraph Admin["Admin Features"]
+            A1[Dashboard]
+            A2[Movies]
+            A3[Users]
+            A4[Branches & Halls]
+            A5[Showtimes]
+            A6[Genres]
+            A7[Bookings]
+            A8[Payments]
+            A9[Tickets]
+        end
+    end
+
+    Layout --> Core
+    Features --> Core
+    Features --> Shared
 ```
-CinemaVerse Backend/src/
-├── CinemaVerse/                    ← API Layer (Presentation)
-│   ├── Program.cs                  ← Entry point, DI, middleware
-│   ├── Controllers/
-│   │   ├── AuthController.cs       ← Public auth endpoints
-│   │   ├── MeController.cs         ← User profile endpoints
-│   │   ├── MovieController.cs      ← Public movie browsing
-│   │   ├── HallSeatController.cs   ← Seat information
-│   │   ├── BookingController.cs    ← User booking endpoints
-│   │   ├── TicketController.cs     ← User ticket endpoints
-│   │   ├── PaymentController.cs    ← Payment processing
-│   │   ├── ReviewController.cs     ← Movie reviews
-│   │   └── Admin/                  ← 10 admin controllers
-│   ├── Middleware/                  ← Global exception handling
-│   ├── Filters/                    ← Model validation, Hangfire auth
-│   └── Infrastructure/             ← Database seeder, Hangfire jobs
-│
-├── CinemaVerse.Services/           ← Business Logic Layer
-│   ├── DTOs/                       ← Data Transfer Objects
-│   │   ├── Common/                 ← Shared DTOs
-│   │   ├── UserFlow/               ← User-facing DTOs
-│   │   └── AdminFlow/              ← Admin DTOs
-│   ├── Interfaces/                 ← Service contracts
-│   ├── Implementations/            ← Service logic
-│   ├── Mappers/                    ← Entity ↔ DTO mappers
-│   └── Constants/                  ← Enums, cache keys, configs
-│
-└── CinemaVerse.Data/               ← Data Access Layer
-    ├── Data/
-    │   ├── AppDbContext.cs         ← EF Core DbContext
-    │   └── Configurations/        ← Entity configurations
-    ├── Models/                     ← 17 entity classes
-    ├── Repositories/               ← Repository + Unit of Work
-    └── Migrations/                 ← Database migrations
-```
+
+> **Key Principles:**
+> - **Standalone Components:** Angular 21 standalone components without NgModules
+> - **Signal-Based State:** Using Angular Signals for reactive state management
+> - **Lazy Loading:** Feature modules are lazy-loaded for optimal bundle size
 
 ---
 
@@ -290,6 +333,8 @@ CinemaVerse Backend/src/
 | npm | 9+ |
 | SQL Server | 2019+ (or Azure SQL) |
 | Stripe Account | For payment processing |
+
+> **Note:** Make sure all prerequisites are installed before proceeding with the setup.
 
 ### Backend Setup
 
@@ -319,6 +364,8 @@ dotnet run
 
 # API will be available at https://localhost:5001 or http://localhost:5000
 ```
+
+> **Tip:** Use `dotnet ef database update` to run migrations before starting the API. This will create the database and seed initial data.
 
 ### Frontend Setup
 
@@ -419,23 +466,32 @@ https://cinemaverse.tryasp.net/swagger/index.html
 
 ### Auth Flow
 
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant B as Backend
+    participant DB as Database
+
+    U->>F: Enter credentials
+    F->>B: POST /api/auth/login
+    B->>DB: Validate user
+    DB-->>B: User record
+    B-->>F: { accessToken, refreshToken, userId, email, role }
+    F->>F: Store tokens in localStorage
+
+    loop Every Authenticated Request
+        F->>B: GET /api/... + Bearer token
+        B->>B: Validate JWT
+        B-->>F: Protected resource
+    end
+
+    U->>F: Click "My Profile"
+    F->>B: GET /api/me + Bearer token
+    B-->>F: { userProfile }
 ```
-┌──────────┐     POST /api/auth/login      ┌──────────┐
-│ Frontend │ ──────────────────────────────▶│ Backend  │
-│          │◀──────────────────────────────│          │
-│          │  { accessToken, refreshToken,  │          │
-│          │    userId, email, role }        │          │
-└──────────┘                               └──────────┘
-     │
-     │  Store tokens in localStorage
-     │  Attach Bearer token to all requests
-     ▼
-┌──────────┐     GET /api/me (with Bearer)  ┌──────────┐
-│ Frontend │ ──────────────────────────────▶│ Backend  │
-│          │◀──────────────────────────────│          │
-│          │  { userProfile }               │          │
-└──────────┘                               └──────────┘
-```
+
+> **Note:** Access tokens expire after 60 minutes. Refresh tokens are valid for 7 days and enable silent token renewal without requiring the user to log in again.
 
 ### Token Storage
 
@@ -458,22 +514,26 @@ Auth endpoints are rate-limited to **5 requests per minute per IP**:
 
 ### Entity Relationship Diagram
 
-```
-Users ──────── Bookings ──────── MovieShowTimes ──────── Movies
-  │               │                    │
-  │               │                    └─────── Halls ──────── Branches
-  │               │
-  │               ├─── BookingSeat ──────── Seats
-  │               │
-  │               ├─── Tickets ──────── Seats
-  │               │
-  │               └─── BookingPayments
-  │
-  └─────── Reviews ──────── Movies
+The database consists of 17 entities with clear relationships for users, movies, bookings, and cinema management.
 
-Movies ──────── MovieGenres ──────── Genres
-Movies ──────── MovieImages
-Movies ──────── MovieCastMembers
+```mermaid
+erDiagram
+    User ||--o{ Booking : "creates"
+    User ||--o{ Review : "writes"
+    Booking ||--o{ BookingSeat : "has"
+    Booking ||--o{ Ticket : "generates"
+    Booking ||--o{ BookingPayment : "paid via"
+    Booking }o--|| MovieShowTime : "for"
+    MovieShowTime }o--|| Movie : "shows"
+    MovieShowTime }o--|| Hall : "in"
+    Hall }o--|| Branch : "belongs to"
+    Hall ||--o{ Seat : "contains"
+    Seat ||--o{ BookingSeat : "reserved in"
+    Seat ||--o{ Ticket : "assigned to"
+    Movie ||--o{ MovieGenre : "tagged with"
+    Genre ||--o{ MovieGenre : "categorizes"
+    Movie ||--o{ MovieImage : "has"
+    Movie ||--o{ MovieCastMember : "features"
 ```
 
 ### Entities (17 Total)
@@ -555,6 +615,8 @@ Access at `https://cinemaverse.tryasp.net/hangfire` (Admin-only).
 
 ## Deployment
 
+> **Warning:** Never commit secrets (Stripe keys, JWT secrets, database credentials) to version control. Use environment variables in production.
+
 ### Frontend (GitHub Pages)
 
 ```bash
@@ -595,11 +657,13 @@ dotnet publish -c Release -o ./publish
 | **Admin** | `admin@cinemaverse.local` | `YourAdminPassword123!` |
 | **User** | `user@cinemaverse.local` | `User@12345` |
 
-> These are seeded in development. Production credentials may differ.
+> **Warning:** These are development credentials only. Never use them in production. Production credentials are generated during deployment.
 
 ---
 
 ## Known Issues
+
+> **Note:** These issues are documented for transparency. Contributions to fix them are welcome!
 
 ### Critical
 
